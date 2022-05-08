@@ -34,7 +34,7 @@ jobs:
           rustup update stable
           rustup target add wasm32-unknown-unknown --toolchain nightly
 
-      - name: Chack Format Code
+      - name: Check Format Code
         run: |
           cargo +nightly fmt -- --check
 
