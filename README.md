@@ -1,4 +1,4 @@
-# Substrate Node Template
+# FinalBiome Node
 > Cloned from fbe735e456e8658b2c64445848eea5ba9be65c62 commit
 
 [![Try on playground](https://img.shields.io/badge/Playground-Node_Template-brightgreen?logo=Parity%20Substrate)](https://docs.substrate.io/playground/) [![Matrix](https://img.shields.io/matrix/substrate-technical:matrix.org)](https://matrix.to/#/#substrate-technical:matrix.org)

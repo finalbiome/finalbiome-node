@@ -107,7 +107,7 @@ development is to follow the steps in [our first Substrate tutorial](https://doc
 
 ## Troubleshooting Substrate builds
 
-Sometimes you can't get the Substrate node template
+Sometimes you can't get the Substrate node
 to compile out of the box. Here are some tips to help you work through that.
 
 ### Rust configuration check
