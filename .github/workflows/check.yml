@@ -1,4 +1,4 @@
-name: Check Set-Up & Build
+name: Check Set-Up & Format
 
 # Controls when the action will run.
 on:
@@ -34,11 +34,15 @@ jobs:
           rustup update stable
           rustup target add wasm32-unknown-unknown --toolchain nightly
 
-      - name: Check Build
+      - name: Chack Format Code
         run: |
-          SKIP_WASM_BUILD=1 cargo check --release
+          cargo +nightly fmt -- --check
 
-      - name: Check Build for Benchmarking
-        run: >
-          pushd node &&
-          cargo check --features=runtime-benchmarks --release
+      # - name: Check Build
+      #   run: |
+      #     SKIP_WASM_BUILD=1 cargo check --release
+
+      # - name: Check Build for Benchmarking
+      #   run: >
+      #     pushd node &&
+      #     cargo check --features=runtime-benchmarks --release
