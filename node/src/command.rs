@@ -4,8 +4,8 @@ use crate::{
 	command_helper::{inherent_benchmark_data, BenchmarkExtrinsicBuilder},
 	service,
 };
-use frame_benchmarking_cli::BenchmarkCmd;
 use finalbiome_node_runtime::Block;
+use frame_benchmarking_cli::BenchmarkCmd;
 use sc_cli::{ChainSpec, RuntimeVersion, SubstrateCli};
 use sc_service::PartialComponents;
 use std::sync::Arc;
