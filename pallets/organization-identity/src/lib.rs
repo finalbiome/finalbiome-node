@@ -13,6 +13,8 @@ mod tests;
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
+use sp_std::vec::Vec;
+
 mod types;
 pub use types::*;
 
@@ -51,7 +53,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	/// Details of an organization.
-	pub(super) type Organization<T: Config> = StorageMap<
+	pub(super) type Organizations<T: Config> = StorageMap<
 		_,
 		Blake2_128Concat,
 		OrganizationIdOf<T>, // account_id of the organization
@@ -91,7 +93,7 @@ pub mod pallet {
 		/// An organization has been created. [organization_name, who]
 		CreatedOrganization(Vec<u8>, T::AccountId),
 		/// An account was added to an organization. [organization_name, member]
-		AddedToOrganization(Vec<u8>, T::AccountId,),
+		AddedToOrganization(Vec<u8>, T::AccountId),
 	}
 
 	// Errors inform users that something went wrong.
@@ -131,6 +133,55 @@ pub mod pallet {
 			// Emit an event.
 			Self::deposit_event(Event::SomethingStored(something, who));
 			// Return a successful DispatchResultWithPostInfo
+			Ok(())
+		}
+
+
+		/// Create an organization.
+		/// Will return an OrganizationExists error if the organization has already
+		/// been created. Will emit a CreatedOrganization event on success.
+		///
+		/// The dispatch origin for this call must be Signed.
+		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
+		pub fn create_organization(origin: OriginFor<T>, name: Vec<u8>) -> DispatchResult {
+			let new_organization = ensure_signed(origin)?;
+
+			// We don't want to add duplicate organizations, so we check whether the potential new
+			// organization is already present in the list. Because the organization is stored as a hash
+			// map this check is constant time O(1)
+			ensure!(
+				!Organizations::<T>::contains_key(&new_organization),
+				Error::<T>::OrganizationExists
+			);
+
+			// let member_count = MemberCount::<T>::get(&new_organization);
+			// ensure!(
+			// 	member_count < T::MaxMembers::get(),
+			// 	Error::<T>::MembershipLimitReached
+			// );
+
+			// Insert new organization and emit the event
+			let bounded_name: BoundedVec<u8, T::StringLimit> =
+					name.clone().try_into().expect("Organization name is too long");
+			let new_org_details = OrganizationDetails::new(bounded_name);
+			Organizations::<T>::insert(&new_organization, new_org_details);
+			// Asset::<T, I>::try_mutate(id, |maybe_asset| {
+			// 	let mut asset = maybe_asset.take().ok_or(Error::<T, I>::Unknown)?;
+			// 	asset.owner = T::Lookup::lookup(owner)?;
+			// 	asset.issuer = T::Lookup::lookup(issuer)?;
+			// 	asset.admin = T::Lookup::lookup(admin)?;
+			// 	asset.freezer = T::Lookup::lookup(freezer)?;
+			// 	asset.min_balance = min_balance;
+			// 	asset.is_sufficient = is_sufficient;
+			// 	asset.is_frozen = is_frozen;
+			// 	*maybe_asset = Some(asset);
+
+			// 	Self::deposit_event(Event::AssetStatusChanged { asset_id: id });
+			// 	Ok(())
+			// })
+			// MemberCount::<T>::put(member_count + 1); // overflow check not necessary because of maximum
+			Self::deposit_event(Event::CreatedOrganization(name, new_organization));
+
 			Ok(())
 		}
 
