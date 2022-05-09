@@ -3,7 +3,6 @@
 /// Edit this file to define custom logic or remove it if it is not needed.
 /// Learn more about FRAME and the core library of Substrate FRAME pallets:
 /// <https://docs.substrate.io/v3/runtime/frame>
-pub use pallet::*;
 
 #[cfg(test)]
 mod mock;
@@ -14,8 +13,14 @@ mod tests;
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
+mod types;
+pub use types::*;
+
+pub use pallet::*;
+
 #[frame_support::pallet]
 pub mod pallet {
+	use super::*;
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
 
@@ -24,6 +29,12 @@ pub mod pallet {
 	pub trait Config: frame_system::Config {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		/// The maximum length of an organization's name stored on-chain.
+		#[pallet::constant]
+		type StringLimit: Get<u32>;
+		/// The maximum members per organization.
+		#[pallet::constant]
+		type MaxMembers: Get<u8>;
 	}
 
 	#[pallet::pallet]
@@ -38,6 +49,37 @@ pub mod pallet {
 	// https://docs.substrate.io/v3/runtime/storage#declaring-storage-items
 	pub type Something<T> = StorageValue<_, u32>;
 
+	#[pallet::storage]
+	/// Details of an organization.
+	pub(super) type Organization<T: Config> = StorageMap<
+		_,
+		Blake2_128Concat,
+		OrganizationIdOf<T>, // account_id of the organization
+		OrganizationDetails<BoundedVec<u8, T::StringLimit>>,
+	>;
+
+	#[pallet::storage]
+	/// Members of organizations.
+	pub(super) type MemberOf<T: Config> = StorageDoubleMap<
+		_,
+		Blake2_128Concat,
+		OrganizationIdOf<T>, // account_id of the organization
+		Blake2_128Concat,
+		T::AccountId, // account id of the member
+		()
+	>;
+
+	#[pallet::storage]
+	/// Counts of members in organization.
+	pub(super) type MemberCount<T: Config> = StorageMap<
+		_,
+		Blake2_128Concat,
+		OrganizationIdOf<T>, // account_id of the organization
+		u8,
+		ValueQuery,
+	>;
+
+
 	// Pallets use events to inform users when important changes are made.
 	// https://docs.substrate.io/v3/runtime/events-and-errors
 	#[pallet::event]
@@ -46,6 +88,10 @@ pub mod pallet {
 		/// Event documentation should end with an array that provides descriptive names for event
 		/// parameters. [something, who]
 		SomethingStored(u32, T::AccountId),
+		/// An organization has been created. [organization_name, who]
+		CreatedOrganization(Vec<u8>, T::AccountId),
+		/// An account was added to an organization. [organization_name, member]
+		AddedToOrganization(Vec<u8>, T::AccountId,),
 	}
 
 	// Errors inform users that something went wrong.
@@ -55,6 +101,14 @@ pub mod pallet {
 		NoneValue,
 		/// Errors should have helpful documentation associated with them.
 		StorageOverflow,
+		/// Cannot create the organization because it already exists.
+		OrganizationExists,
+		/// Cannot add users to a non-existent organization.
+		InvalidOrganization,
+		/// Cannot add a user to an organization to which they already belong.
+		AlreadyMember,
+		/// Cannot add another member because the limit is already reached.
+		MembershipLimitReached,
 	}
 
 	// Dispatchable functions allows users to interact with the pallet and invoke state changes.
