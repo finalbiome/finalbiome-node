@@ -98,6 +98,8 @@ pub mod pallet {
 		CreatedOrganization(Vec<u8>, T::AccountId),
 		/// An member was added to an organization. [organization, member]
 		MemberAdded(OrganizationIdOf<T>, T::AccountId),
+		/// An member was removed from organization. [organization, member]
+		MemberRemoved(OrganizationIdOf<T>, T::AccountId)
 	}
 
 	// Errors inform users that something went wrong.
@@ -111,8 +113,6 @@ pub mod pallet {
 		OrganizationExists,
 		/// Organization name is too long.
 		OrganizationNameTooLong,
-		/// Cannot add users to a non-existent organization.
-		InvalidOrganization,
 		/// Account is not an organization
 		NotOrganization,
 		/// Cannot add a user to an organization to which they already belong.
@@ -121,6 +121,8 @@ pub mod pallet {
 		MembershipLimitReached,
 		/// Cannot add organization as an organization's member.
 		InvalidMember,
+		/// Member not exits&
+		NotMember,
 	}
 
 	// Dispatchable functions allows users to interact with the pallet and invoke state changes.
@@ -153,7 +155,7 @@ pub mod pallet {
 		///
 		/// The dispatch origin for this call must be Signed.
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
-		pub fn create_organization(origin: OriginFor<T>, name: Vec<u8>) -> DispatchResult {
+		pub fn create_organization(origin: OriginFor<T>, name: Vec<u8>) -> DispatchResultWithPostInfo {
 			let new_organization = ensure_signed(origin)?;
 
 			// We don't want to add duplicate organizations, so we check whether the potential new
@@ -191,7 +193,7 @@ pub mod pallet {
 			
 			Self::deposit_event(Event::CreatedOrganization(name, new_organization));
 
-			Ok(())
+			Ok(().into())
 		}
 
 		/// Add member to an organization.
@@ -204,7 +206,7 @@ pub mod pallet {
 		/// * `InvalidMember` if member is organization
 		/// * `AlreadyMember` if member already added
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(4,2))]
-		pub fn add_member(origin: OriginFor<T>, who: T::AccountId) -> DispatchResult {
+		pub fn add_member(origin: OriginFor<T>, who: T::AccountId) -> DispatchResultWithPostInfo {
 			let org = ensure_signed(origin)?;
 			// only organization's account can add members
 			ensure!(
@@ -238,7 +240,38 @@ pub mod pallet {
 			
 			Self::deposit_event(Event::MemberAdded(org, who));
 
-			Ok(())
+			Ok(().into())
+		}
+
+		/// Removes a member from organization.
+		/// 
+		/// # Events
+		/// * `MemberRemoved`
+		/// 
+		/// # Errors
+		/// * `NotOrganization` if origin not an organization
+		/// * `NotMember` if a member doesn't exist
+		/// * ``
+		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(3,2))]
+		pub fn remove_member(origin: OriginFor<T>, who: T::AccountId) -> DispatchResultWithPostInfo {
+			let org = ensure_signed(origin)?;
+			// only organization's account can removes members
+			ensure!(
+				Self::is_organization(&org),
+				Error::<T>::NotOrganization
+			);
+			// ensure the member exists
+			ensure!(
+				MembersOf::<T>::contains_key(&org, &who),
+				Error::<T>::NotMember
+			);
+
+			MembersOf::<T>::remove(&org, &who);
+			MemberCount::<T>::mutate(&org, |c| *c -= 1);
+
+			Self::deposit_event(Event::MemberRemoved(org, who));
+
+			Ok(().into())
 		}
 
 		/// An example dispatchable that may throw a custom error.

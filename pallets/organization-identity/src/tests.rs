@@ -63,7 +63,6 @@ fn create_organization_already_exist() {
 	})
 }
 
-
 #[test]
 fn add_member_works() {
 	new_test_ext().execute_with(|| {
@@ -107,5 +106,31 @@ fn add_member_not_org() {
 		// add org 1 as member to org 2
 		assert_noop!(OrganizationIdentity::add_member(Origin::signed(2), 1), Error::<Test>::InvalidMember);
 
+	})
+}
+
+#[test]
+fn remove_member_works() {
+	new_test_ext().execute_with(|| {
+		assert_noop!(OrganizationIdentity::add_member(Origin::none(), 2), sp_runtime::traits::BadOrigin);
+
+		// Create org id 1
+		assert_ok!(OrganizationIdentity::create_organization(Origin::signed(1), br"some name".to_vec()));
+		// add member with id 2
+		assert_ok!(OrganizationIdentity::add_member(Origin::signed(1), 2));
+		assert_eq!(OrganizationIdentity::member_count(1), 1u8);
+		assert_eq!(OrganizationIdentity::member_count(0), 0u8);
+		// add member with id 3
+		assert_ok!(OrganizationIdentity::add_member(Origin::signed(1), 3));
+		assert_eq!(OrganizationIdentity::member_count(1), 2u8);
+		// remove member 2
+		assert_ok!(OrganizationIdentity::remove_member(Origin::signed(1), 2));
+		assert_eq!(OrganizationIdentity::member_count(1), 1u8);
+		// remove member 4
+		assert_noop!(OrganizationIdentity::remove_member(Origin::signed(1), 4), Error::<Test>::NotMember);
+		assert_eq!(OrganizationIdentity::member_count(1), 1u8);
+		// remove member as not org
+		assert_noop!(OrganizationIdentity::remove_member(Origin::signed(2), 4), Error::<Test>::NotOrganization);
+		assert_eq!(OrganizationIdentity::member_count(1), 1u8);
 	})
 }
