@@ -203,7 +203,7 @@ pub mod pallet {
 		/// * `MembershipLimitReached` if members limit exceeded
 		/// * `InvalidMember` if member is organization
 		/// * `AlreadyMember` if member already added
-		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(3,2))]
+		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(4,2))]
 		pub fn add_member(origin: OriginFor<T>, who: T::AccountId) -> DispatchResult {
 			let org = ensure_signed(origin)?;
 			// only organization's account can add members
