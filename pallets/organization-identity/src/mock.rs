@@ -52,7 +52,7 @@ impl system::Config for Test {
 impl pallet_organization_identity::Config for Test {
 	type Event = Event;
 	type StringLimit = frame_support::traits::ConstU32<10>;
-	type MaxMembers = frame_support::traits::ConstU8<16>;
+	type MaxMembers = frame_support::traits::ConstU8<3>;
 }
 
 // Build genesis storage according to the mock runtime.

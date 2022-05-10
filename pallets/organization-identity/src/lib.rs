@@ -14,6 +14,9 @@ mod tests;
 mod benchmarking;
 
 use sp_std::vec::Vec;
+use frame_support::{traits::EnsureOrigin};
+use frame_system::RawOrigin;
+use frame_system::pallet_prelude::*;
 
 mod types;
 pub use types::*;
@@ -24,7 +27,6 @@ pub use pallet::*;
 pub mod pallet {
 	use super::*;
 	use frame_support::pallet_prelude::*;
-	use frame_system::pallet_prelude::*;
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
@@ -63,7 +65,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	/// Members of organizations.
-	pub(super) type MemberOf<T: Config> = StorageDoubleMap<
+	pub(super) type MembersOf<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
 		OrganizationIdOf<T>, // account_id of the organization
@@ -73,6 +75,7 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
+	#[pallet::getter(fn member_count)]
 	/// Counts of members in organization.
 	pub(super) type MemberCount<T: Config> = StorageMap<
 		_,
@@ -93,8 +96,8 @@ pub mod pallet {
 		SomethingStored(u32, T::AccountId),
 		/// An organization has been created. [organization_name, who]
 		CreatedOrganization(Vec<u8>, T::AccountId),
-		/// An account was added to an organization. [organization_name, member]
-		AddedToOrganization(Vec<u8>, T::AccountId),
+		/// An member was added to an organization. [organization, member]
+		MemberAdded(OrganizationIdOf<T>, T::AccountId),
 	}
 
 	// Errors inform users that something went wrong.
@@ -110,10 +113,14 @@ pub mod pallet {
 		OrganizationNameTooLong,
 		/// Cannot add users to a non-existent organization.
 		InvalidOrganization,
+		/// Account is not an organization
+		NotOrganization,
 		/// Cannot add a user to an organization to which they already belong.
 		AlreadyMember,
 		/// Cannot add another member because the limit is already reached.
 		MembershipLimitReached,
+		/// Cannot add organization as an organization's member.
+		InvalidMember,
 	}
 
 	// Dispatchable functions allows users to interact with the pallet and invoke state changes.
@@ -157,11 +164,7 @@ pub mod pallet {
 				Error::<T>::OrganizationExists
 			);
 
-			// let member_count = MemberCount::<T>::get(&new_organization);
-			// ensure!(
-			// 	member_count < T::MaxMembers::get(),
-			// 	Error::<T>::MembershipLimitReached
-			// );
+			
 
 			// Insert new organization and emit the event
 			let bounded_name = name.clone().try_into();
@@ -185,8 +188,55 @@ pub mod pallet {
 			// 	Self::deposit_event(Event::AssetStatusChanged { asset_id: id });
 			// 	Ok(())
 			// })
-			// MemberCount::<T>::put(member_count + 1); // overflow check not necessary because of maximum
+			
 			Self::deposit_event(Event::CreatedOrganization(name, new_organization));
+
+			Ok(())
+		}
+
+		/// Add member to an organization.
+		/// 
+		/// # Events
+		/// * `MemberAdded`
+		/// # Errors
+		/// * `NotOrganization` if origin not an organization
+		/// * `MembershipLimitReached` if members limit exceeded
+		/// * `InvalidMember` if member is organization
+		/// * `AlreadyMember` if member already added
+		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(3,2))]
+		pub fn add_member(origin: OriginFor<T>, who: T::AccountId) -> DispatchResult {
+			let org = ensure_signed(origin)?;
+			// only organization's account can add members
+			ensure!(
+				Self::is_organization(&org),
+				Error::<T>::NotOrganization
+			);
+
+			let member_count = MemberCount::<T>::get(&org);
+
+			// check that the number of members in the organization does not exceed the limit
+			ensure!(
+				member_count < T::MaxMembers::get(),
+				Error::<T>::MembershipLimitReached
+			);
+
+			// organizations can't be a member
+			ensure!(
+				!Self::is_organization(&who),
+				Error::<T>::InvalidMember
+			);
+			
+
+			// check that the who is not a member
+			ensure!(
+				!MembersOf::<T>::contains_key(&org, &who),
+				Error::<T>::AlreadyMember
+			);
+
+			MembersOf::<T>::insert(&org, &who, ());
+			MemberCount::<T>::insert(&org, member_count + 1); // overflow check not necessary because of maximum
+			
+			Self::deposit_event(Event::MemberAdded(org, who));
 
 			Ok(())
 		}
@@ -209,5 +259,37 @@ pub mod pallet {
 				},
 			}
 		}
+	}
+}
+
+impl<T: Config> Pallet<T> {
+	/// Returns true if account is an organization
+	fn is_organization(account: &T::AccountId) -> bool {
+		Organizations::<T>::contains_key(&account)
+	}
+	// fn ensure_organization(o: OriginFor<T>) -> Result<T::AccountId, BadOrigin> {
+	// 	match o.into() {
+	// 		Ok(RawOrigin::Signed(t)) => Ok(t),
+	// 		_ => Err(BadOrigin),
+	// 	}
+	// }
+}
+
+/// Enshure that an organization is invoking a dispatch.
+pub struct EnsureOrganization<T: Config>(sp_std::marker::PhantomData<T>);
+impl<T: Config> EnsureOrigin<T::Origin> for EnsureOrganization<T> {
+	type Success = T::AccountId;
+
+	fn try_origin(o: T::Origin) -> Result<Self::Success, T::Origin> {
+		o.into().and_then(|o| match o {
+			RawOrigin::Signed(ref who)
+				if  <Pallet<T>>::is_organization(&who) => Ok(who.clone()),
+				r => Err(T::Origin::from(r)),
+		})
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn successful_origin() -> T::Origin {
+		T::Origin::from(RawOrigin::Signed(Default::default()))
 	}
 }
