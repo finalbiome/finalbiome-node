@@ -52,6 +52,7 @@ pub mod pallet {
 	pub type Something<T> = StorageValue<_, u32>;
 
 	#[pallet::storage]
+	#[pallet::getter(fn organizations)]
 	/// Details of an organization.
 	pub(super) type Organizations<T: Config> = StorageMap<
 		_,
@@ -105,6 +106,8 @@ pub mod pallet {
 		StorageOverflow,
 		/// Cannot create the organization because it already exists.
 		OrganizationExists,
+		/// Organization name is too long.
+		OrganizationNameTooLong,
 		/// Cannot add users to a non-existent organization.
 		InvalidOrganization,
 		/// Cannot add a user to an organization to which they already belong.
@@ -161,8 +164,11 @@ pub mod pallet {
 			// );
 
 			// Insert new organization and emit the event
-			let bounded_name: BoundedVec<u8, T::StringLimit> =
-					name.clone().try_into().expect("Organization name is too long");
+			let bounded_name = name.clone().try_into();
+			let bounded_name = match bounded_name {
+				Ok(name) => name,
+				Err(_) => return Err(Error::<T>::OrganizationNameTooLong.into()),
+			};
 			let new_org_details = OrganizationDetails::new(bounded_name);
 			Organizations::<T>::insert(&new_organization, new_org_details);
 			// Asset::<T, I>::try_mutate(id, |maybe_asset| {
