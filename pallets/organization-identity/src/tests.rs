@@ -32,7 +32,9 @@ fn create_organization_works() {
 
 		let stored_org = OrganizationIdentity::organizations(org);
 		assert_eq!(stored_org.unwrap().name.to_vec(), name);
-
+		// TODO: test the events.
+		//			 Impl bellow doesn't work
+		// System::assert_has_event(Event::OrganizationIdentity(crate::Event::AddedToOrganization(name, org)));
 	})
 }
 
