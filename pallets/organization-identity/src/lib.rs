@@ -85,6 +85,50 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
+	#[pallet::genesis_config]
+	pub struct GenesisConfig<T: Config> {
+		/// Genesis assets: account_id, name
+		pub organizations: Vec<(OrganizationIdOf<T>, Vec<u8>)>,
+		/// Genesis metadata: organization_id, account_id
+		pub members_of: Vec<(OrganizationIdOf<T>, T::AccountId)>,
+	}
+
+	#[cfg(feature = "std")]
+	impl<T: Config> Default for GenesisConfig<T> {
+		fn default() -> Self {
+			Self {
+				organizations: Default::default(),
+				members_of: Default::default(),
+			}
+		}
+	}
+
+	#[pallet::genesis_build]
+	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+		fn build(&self) {
+			for (org_id, name) in &self.organizations {
+				assert!(!Organizations::<T>::contains_key(&org_id), "Organization id already in use");
+				Organizations::<T>::insert(
+					org_id,
+					OrganizationDetails::new(name.clone().try_into().expect(Error::<T>::OrganizationNameTooLong.into())),
+				);
+			}
+			let members_limit = T::MaxMembers::get();
+			for (org_id, member_id) in &self.members_of {
+				assert!(Organizations::<T>::contains_key(&org_id), "Organization does not exist");
+				assert!(!MembersOf::<T>::contains_key(&org_id, &member_id), "Member id already in organization");
+				let member_count = MemberCount::<T>::get(&org_id);
+				assert!(member_count < members_limit, "The maximum members per organization exceeded");
+				MembersOf::<T>::insert(
+					&org_id,
+					&member_id,
+					()
+				);
+				MemberCount::<T>::insert(&org_id, member_count + 1);
+			}
+		}
+	}
+
 
 	// Pallets use events to inform users when important changes are made.
 	// https://docs.substrate.io/v3/runtime/events-and-errors
