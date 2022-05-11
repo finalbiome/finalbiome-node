@@ -84,16 +84,16 @@
     {
       "type": "lldb",
       "request": "launch",
-      "name": "Debug unit tests in library 'pallet-template'",
+      "name": "Debug unit tests in library 'pallet-organization-identity'",
       "cargo": {
         "args": [
           "test",
           "--no-run",
           "--lib",
-          "--package=pallet-template"
+          "--package=pallet-organization-identity"
         ],
         "filter": {
-          "name": "pallet-template",
+          "name": "pallet-organization-identity",
           "kind": "lib"
         }
       },
