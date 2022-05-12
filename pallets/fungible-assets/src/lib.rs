@@ -19,9 +19,9 @@ use codec::HasCompact;
 use sp_runtime::{
 	traits::{
 		AtLeast32BitUnsigned, Bounded, CheckedAdd, CheckedSub, Saturating, StaticLookup, Zero,
-		MaybeDisplay,
+		MaybeDisplay, One,
 	},
-	ArithmeticError, TokenError,
+	ArithmeticError, TokenError, DispatchError,
 };
 use sp_std::{fmt::Debug, marker::PhantomData, prelude::*};
 
@@ -43,16 +43,6 @@ pub mod pallet {
 			+ AtLeast32BitUnsigned
 			+ Default
 			+ Copy
-			+ MaybeSerializeDeserialize
-			+ MaxEncodedLen
-			+ TypeInfo;
-		
-		/// Identifier for the asset.
-		type AssetId: Member
-			+ Parameter
-			+ Default
-			+ Copy
-			+ HasCompact
 			+ MaybeSerializeDeserialize
 			+ MaxEncodedLen
 			+ TypeInfo;
@@ -81,9 +71,14 @@ pub mod pallet {
 	pub(super) type Assets<T: Config> = StorageMap<
 		_,
 		Blake2_128Concat,
-		T::AssetId,
+		AssetId,
 		AssetDetails<T::AccountId, T::Balance>
 	>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn next_asset_id)]
+	/// Storing next asset id
+	pub type NextAssetId<T: Config> = StorageValue<_, AssetId, ValueQuery>;
 
 	
 	#[pallet::storage]
@@ -94,7 +89,7 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// Asset was created.
-		Created { asset_id: T::AssetId, owner: T::AccountId },
+		Created { asset_id: AssetId, owner: T::AccountId },
 
 		/// Event documentation should end with an array that provides descriptive names for event
 		/// parameters. [something, who]
@@ -109,24 +104,25 @@ pub mod pallet {
 		StorageOverflow,
 		/// The asset ID is already taken.
 		InUse,
+		// No available fungible asset id.
+		NoAvailableAssetId,
 	}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 
-		#[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
+		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1, 2))]
 		pub fn create(
 			origin: OriginFor<T>,
 			organization_id: <T::Lookup as StaticLookup>::Source,
-			#[pallet::compact] asset_id: T::AssetId,
 		) -> DispatchResult {
 			let _ = ensure_signed(origin)?;
 			let owner = T::Lookup::lookup(organization_id)?;
 
-			ensure!(!Assets::<T>::contains_key(asset_id), Error::<T>::InUse);
+			// ensure!(!Assets::<T>::contains_key(asset_id), Error::<T>::InUse);
 
 			let new_asset_details = AssetDetailsBuilder::<T>::new(owner.clone()).build();
-
+			let asset_id = Self::get_next_asset_id()?;
 			Assets::<T>::insert(
 				asset_id,
 				new_asset_details
@@ -137,23 +133,6 @@ pub mod pallet {
 			// let deposit = T::AssetDeposit::get();
 			// T::Currency::reserve(&owner, deposit)?;
 
-			// Asset::<T, I>::insert(
-			// 	id,
-			// 	AssetDetails {
-			// 		owner: owner.clone(),
-			// 		issuer: admin.clone(),
-			// 		admin: admin.clone(),
-			// 		freezer: admin.clone(),
-			// 		supply: Zero::zero(),
-			// 		deposit,
-			// 		min_balance,
-			// 		is_sufficient: false,
-			// 		accounts: 0,
-			// 		sufficients: 0,
-			// 		approvals: 0,
-			// 		is_frozen: false,
-			// 	},
-			// );
 			Self::deposit_event(Event::Created { asset_id, owner });
 			
 
@@ -196,5 +175,16 @@ pub mod pallet {
 				},
 			}
 		}
+	}
+}
+
+impl<T: Config> Pallet<T> {
+	/// Generate next id for new asset
+	fn get_next_asset_id() -> Result<AssetId, DispatchError> {
+		NextAssetId::<T>::try_mutate(|id| -> Result<AssetId, DispatchError> {
+			let current_id = *id;
+			*id = id.checked_add(One::one()).ok_or(Error::<T>::NoAvailableAssetId)?;
+			Ok(current_id)
+		})
 	}
 }

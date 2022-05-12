@@ -52,7 +52,6 @@ impl system::Config for Test {
 impl pallet_fungible_assets::Config for Test {
 	type Event = Event;
 	type Balance = u64;
-	type AssetId = u32;
 	// type CreateOrigin = frame_system::EnsureRoot<u64>;
 	type OrganizationId = u64;
 }

@@ -45,3 +45,6 @@ impl<T: pallet::Config> AssetDetailsBuilder<T> {
   }
   
 }
+
+/// Type of the fungible asset's ids
+pub type AssetId = u32;
