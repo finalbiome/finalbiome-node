@@ -24,6 +24,7 @@ use sp_runtime::{
 	ArithmeticError, TokenError, DispatchError,
 };
 use sp_std::{fmt::Debug, marker::PhantomData, prelude::*};
+use frame_support::traits::EnsureOriginWithArg;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -48,7 +49,8 @@ pub mod pallet {
 			+ TypeInfo;
 		
 		/// The origin which may create or destroy an asset and acts as owner or the asset.
-		type CreateOrigin: EnsureOrigin<Self::Origin>;
+		/// Only organization member can crete an asset
+		type CreateOrigin: EnsureOriginWithArg<Self::Origin, Self::AccountId>;
 
 		/// The organization account identifier.
 		type OrganizationId: Parameter
@@ -88,7 +90,7 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		/// Asset was created.
+		/// The asset has been created.
 		Created { asset_id: AssetId, owner: T::AccountId },
 
 		/// Event documentation should end with an array that provides descriptive names for event
@@ -129,28 +131,20 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			organization_id: <T::Lookup as StaticLookup>::Source,
 		) -> DispatchResult {
-			// let _ = ensure_signed(origin)?;
-			T::CreateOrigin::ensure_origin(origin)?;
-			//.ok_or(Errors::T::NoPermission);
 
+			// owner of an asset wiil be orgnization
 			let owner = T::Lookup::lookup(organization_id)?;
+			// Only organization can create an asset
+			T::CreateOrigin::ensure_origin(origin, &owner)?;
 
-			// ensure!(!Assets::<T>::contains_key(asset_id), Error::<T>::InUse);
-
-			let new_asset_details = AssetDetailsBuilder::<T>::new(owner.clone()).build();
 			let asset_id = Self::get_next_asset_id()?;
+			let new_asset_details = AssetDetailsBuilder::<T>::new(owner.clone()).build();
 			Assets::<T>::insert(
 				asset_id,
 				new_asset_details
 			);
 
-			// ensure!(!min_balance.is_zero(), Error::<T, I>::MinBalanceZero);
-
-			// let deposit = T::AssetDeposit::get();
-			// T::Currency::reserve(&owner, deposit)?;
-
 			Self::deposit_event(Event::Created { asset_id, owner });
-			
 
 			Ok(())
 		}

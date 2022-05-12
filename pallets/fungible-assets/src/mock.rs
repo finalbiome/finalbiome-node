@@ -1,5 +1,5 @@
 use crate as pallet_fungible_assets;
-use frame_support::traits::{ConstU16, ConstU64};
+use frame_support::traits::{ConstU16, ConstU64, AsEnsureOriginWithArg};
 use frame_system as system;
 use sp_core::H256;
 use sp_runtime::{
@@ -52,7 +52,8 @@ impl system::Config for Test {
 impl pallet_fungible_assets::Config for Test {
 	type Event = Event;
 	type Balance = u64;
-	type CreateOrigin = frame_system::EnsureRoot<u64>;
+	// type CreateOrigin = frame_system::EnsureRoot<u64>;
+	type CreateOrigin = AsEnsureOriginWithArg<frame_system::EnsureSigned<u64>>;
 	type OrganizationId = u64;
 }
 
