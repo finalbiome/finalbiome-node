@@ -280,6 +280,10 @@ impl pallet_organization_identity::Config for Runtime {
 
 impl pallet_fungible_assets::Config for Runtime {
 	type Event = Event;
+	type AssetId = u32;
+	type Balance = Balance;
+	// type CreateOrigin = Origin;
+	type OrganizationId = AccountId;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
