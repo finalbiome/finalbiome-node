@@ -14,7 +14,7 @@ mod tests;
 mod benchmarking;
 
 use sp_std::vec::Vec;
-use frame_support::{traits::EnsureOrigin};
+use frame_support::{traits::{EnsureOrigin, EnsureOriginWithArg}};
 use frame_system::RawOrigin;
 use frame_system::pallet_prelude::*;
 
@@ -370,3 +370,26 @@ impl<T: Config> EnsureOrigin<T::Origin> for EnsureOrganization<T> {
 		T::Origin::from(RawOrigin::Signed(Default::default()))
 	}
 }
+
+pub struct EnsureMemberOfOrganization<T: Config>(sp_std::marker::PhantomData<T>);
+impl<T: Config> EnsureOriginWithArg<T::Origin, OrganizationIdOf<T>> for EnsureMemberOfOrganization<T> {
+	type Success = T::AccountId;
+
+	fn try_origin(o: T::Origin, a: &OrganizationIdOf<T>) -> Result<Self::Success, T::Origin> {
+		// o.into().and_then(|o| match (o, MembersOf::<T>::contains_key(&a, &o)) {
+		// 	(frame_system::RawOrigin::Signed(ref who), Some(ref f)) if who == f => Ok(who.clone()),
+		// 	(r, _) => Err(T::Origin::from(r)),
+		// })
+		o.into().and_then(|o| match o {
+			RawOrigin::Signed(ref who) if MembersOf::<T>::contains_key(&a, &who) => Ok(who.clone()),
+			r => Err(T::Origin::from(r)),
+		})
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn successful_origin(_: &OrganizationIdOf<T>) -> T::Origin {
+		T::Origin::from(RawOrigin::Signed(Default::default()))
+	}
+
+}
+

@@ -48,7 +48,7 @@ pub mod pallet {
 			+ TypeInfo;
 		
 		/// The origin which may create or destroy an asset and acts as owner or the asset.
-		// type CreateOrigin: EnsureOrigin<Self::Origin>;
+		type CreateOrigin: EnsureOrigin<Self::Origin>;
 
 		/// The organization account identifier.
 		type OrganizationId: Parameter
@@ -106,17 +106,33 @@ pub mod pallet {
 		InUse,
 		// No available fungible asset id.
 		NoAvailableAssetId,
+		/// The signing account has no permission to do the operation.
+		NoPermission,
 	}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 
+		/// Issue a new fungible asset from.
+		///
+		/// This new asset has owner as orgaization.
+		///
+		/// The origin must be Signed.
+		///
+		///
+		/// Parameters:
+		/// - `organization_id`: The identifier of the organization. Origin must be member of it.
+		///
+		/// Emits `Created` event when successful.
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1, 2))]
 		pub fn create(
 			origin: OriginFor<T>,
 			organization_id: <T::Lookup as StaticLookup>::Source,
 		) -> DispatchResult {
-			let _ = ensure_signed(origin)?;
+			// let _ = ensure_signed(origin)?;
+			T::CreateOrigin::ensure_origin(origin)?;
+			//.ok_or(Errors::T::NoPermission);
+
 			let owner = T::Lookup::lookup(organization_id)?;
 
 			// ensure!(!Assets::<T>::contains_key(asset_id), Error::<T>::InUse);
