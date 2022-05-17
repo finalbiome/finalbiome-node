@@ -11,6 +11,8 @@ mod tests;
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
+use sp_std::prelude::*;
+
 mod types;
 pub use types::*;
 
@@ -24,13 +26,16 @@ use sp_runtime::{
 	ArithmeticError, TokenError, DispatchError,
 };
 use sp_std::{fmt::Debug, marker::PhantomData, prelude::*};
-use frame_support::traits::EnsureOriginWithArg;
+use frame_support::{
+	traits::{ EnsureOriginWithArg},
+	BoundedVec,
+};
+use frame_support::pallet_prelude::*;
+use frame_system::pallet_prelude::*;
 
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use frame_support::pallet_prelude::*;
-	use frame_system::pallet_prelude::*;
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
@@ -60,11 +65,15 @@ pub mod pallet {
 			+ MaybeDisplay
 			+ Ord
 			+ MaxEncodedLen;
-
+		
+		// The maximum count of fungible asset for each owner
+		// #[pallet::constant]
+		// type MaxAssets: Get<u32>;
 	}
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
+	// #[pallet::without_storage_info]
 	pub struct Pallet<T>(_);
 
 	#[pallet::storage]
@@ -75,6 +84,18 @@ pub mod pallet {
 		Blake2_128Concat,
 		AssetId,
 		AssetDetails<T::AccountId, T::Balance>
+	>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn assets_of)]
+	/// Asset ids by owners (organizations).
+	pub(super) type AssetsOf<T: Config> = StorageDoubleMap<
+		_,
+		Blake2_128Concat,
+		T::AccountId,
+		Blake2_128Concat,
+		AssetId,
+		(),
 	>;
 
 	#[pallet::storage]
@@ -92,10 +113,11 @@ pub mod pallet {
 	pub enum Event<T: Config> {
 		/// The asset has been created.
 		Created { asset_id: AssetId, owner: T::AccountId },
-
 		/// Event documentation should end with an array that provides descriptive names for event
 		/// parameters. [something, who]
 		SomethingStored(u32, T::AccountId),
+		/// An asset class was destroyed.
+		Destroyed { asset_id: AssetId, owner: T::AccountId },
 	}
 
 	#[pallet::error]
@@ -126,7 +148,7 @@ pub mod pallet {
 		/// - `organization_id`: The identifier of the organization. Origin must be member of it.
 		///
 		/// Emits `Created` event when successful.
-		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1, 2))]
+		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(2, 2))]
 		pub fn create(
 			origin: OriginFor<T>,
 			organization_id: <T::Lookup as StaticLookup>::Source,
@@ -140,14 +162,43 @@ pub mod pallet {
 			let asset_id = Self::get_next_asset_id()?;
 			let new_asset_details = AssetDetailsBuilder::<T>::new(owner.clone()).build();
 			Assets::<T>::insert(
-				asset_id,
+				asset_id.clone(),
 				new_asset_details
+			);
+			// let mut asset_ids = Vec::<AssetId>::new();
+			// asset_ids.push(asset_id);
+			// let bounded_ids:BoundedVec<AssetId, T::MaxAssets> = asset_ids.clone().try_into().expect("exceed allowed length");
+			AssetsOf::<T>::insert(
+				&owner,
+				&asset_id,
+				()
 			);
 
 			Self::deposit_event(Event::Created { asset_id, owner });
 
 			Ok(())
 		}
+
+		/// Destroy a fungible asset.
+		/// 
+		/// The origin must be Signed and must be a member of the organization
+		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(2, 2))]
+		pub fn destroy(origin: OriginFor<T>,
+			organization_id: <T::Lookup as StaticLookup>::Source,
+			#[pallet::compact] asset_id: AssetId,
+		) -> DispatchResult {
+			// owner of an asset wiil be orgnization
+			let owner = T::Lookup::lookup(organization_id)?;
+			// Only member if the organization can create an asset
+			T::CreateOrigin::ensure_origin(origin, &owner)?;
+			// TODO: set limits on the number of assets created by each organization
+			Assets::<T>::remove(&asset_id);
+			AssetsOf::<T>::remove(&owner, &asset_id);
+
+			Self::deposit_event(Event::Destroyed { asset_id, owner });
+			Ok(())
+		}
+
 
 		/// An example dispatchable that takes a singles value as a parameter, writes the value to
 		/// storage and emits an event. This function must be dispatched by a signed extrinsic.

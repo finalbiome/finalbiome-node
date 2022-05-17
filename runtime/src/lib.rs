@@ -284,6 +284,7 @@ impl pallet_fungible_assets::Config for Runtime {
 	// type CreateOrigin = pallet_organization_identity::EnsureOrganization<Runtime>;
 	type CreateOrigin = pallet_organization_identity::EnsureMemberOfOrganization<Runtime>;
 	type OrganizationId = AccountId;
+	// type MaxAssets = ConstU32<6>;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.

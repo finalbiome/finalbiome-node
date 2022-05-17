@@ -55,6 +55,7 @@ impl pallet_fungible_assets::Config for Test {
 	// type CreateOrigin = frame_system::EnsureRoot<u64>;
 	type CreateOrigin = AsEnsureOriginWithArg<frame_system::EnsureSigned<u64>>;
 	type OrganizationId = u64;
+	// type MaxAssets = ConstU32<6>;
 }
 
 // Build genesis storage according to the mock runtime.
