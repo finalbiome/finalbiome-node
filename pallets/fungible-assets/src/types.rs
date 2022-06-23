@@ -19,28 +19,33 @@ use frame_support::{
 // pub type OrganizationIdOf<T> = <T as pallet::Config>::Balance;
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
-pub struct AssetDetails<AccountId, Balance> {
+pub struct AssetDetails<AccountId, Balance, BoundedString> {
   pub(super) owner: AccountId,
   /// The total supply across all accounts.
 	pub(super) supply: Balance,
+  /// Name of the Asset. Limited in length by `NameLimit`.
+	pub(super) name: BoundedString,
 }
 
 #[derive(Default)]
 pub struct AssetDetailsBuilder<T: Config> {
     owner: T::AccountId,
+    name: NameLimit<T>,
 }
 
 impl<T: pallet::Config> AssetDetailsBuilder<T> {
-  pub fn new(owner: T::AccountId) -> AssetDetailsBuilder<T> {
+  pub fn new(owner: T::AccountId, name: NameLimit<T>) -> AssetDetailsBuilder<T> {
     AssetDetailsBuilder {
       owner,
+      name,
     }
   }
 
-  pub fn build(self) -> AssetDetails<T::AccountId, T::Balance> {
+  pub fn build(self) -> AssetDetails<T::AccountId, T::Balance, NameLimit<T>> {
     AssetDetails {
       owner: self.owner,
       supply: Zero::zero(),
+      name: self.name,
     }
   }
   
@@ -48,3 +53,5 @@ impl<T: pallet::Config> AssetDetailsBuilder<T> {
 
 /// Type of the fungible asset's ids
 pub type AssetId = u32;
+
+type NameLimit<T> = BoundedVec<u8, <T as pallet::Config>::NameLimit>;

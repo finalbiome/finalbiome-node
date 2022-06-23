@@ -1,5 +1,5 @@
 use crate as pallet_fungible_assets;
-use frame_support::traits::{ConstU16, ConstU64, AsEnsureOriginWithArg};
+use frame_support::traits::{ConstU16, ConstU32, ConstU64, AsEnsureOriginWithArg};
 use frame_system as system;
 use sp_core::H256;
 use sp_runtime::{
@@ -55,6 +55,7 @@ impl pallet_fungible_assets::Config for Test {
 	// type CreateOrigin = frame_system::EnsureRoot<u64>;
 	type CreateOrigin = AsEnsureOriginWithArg<frame_system::EnsureSigned<u64>>;
 	type OrganizationId = u64;
+	type NameLimit = ConstU32<8>;
 	// type MaxAssets = ConstU32<6>;
 }
 

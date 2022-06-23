@@ -284,6 +284,7 @@ impl pallet_fungible_assets::Config for Runtime {
 	// type CreateOrigin = pallet_organization_identity::EnsureOrganization<Runtime>;
 	type CreateOrigin = pallet_organization_identity::EnsureMemberOfOrganization<Runtime>;
 	type OrganizationId = AccountId;
+	type NameLimit = ConstU32<32>;
 	// type MaxAssets = ConstU32<6>;
 }
 

@@ -25,7 +25,7 @@ use sp_runtime::{
 	},
 	ArithmeticError, TokenError, DispatchError,
 };
-use sp_std::{fmt::Debug, marker::PhantomData, prelude::*};
+use sp_std::{fmt::Debug, marker::PhantomData, prelude::*, vec::Vec};
 use frame_support::{
 	traits::{ EnsureOriginWithArg},
 	BoundedVec,
@@ -66,6 +66,10 @@ pub mod pallet {
 			+ Ord
 			+ MaxEncodedLen;
 		
+		/// The maximum length of an asset's name stored on-chain.
+		#[pallet::constant]
+		type NameLimit: Get<u32>;
+		
 		// The maximum count of fungible asset for each owner
 		// #[pallet::constant]
 		// type MaxAssets: Get<u32>;
@@ -83,7 +87,7 @@ pub mod pallet {
 		_,
 		Blake2_128Concat,
 		AssetId,
-		AssetDetails<T::AccountId, T::Balance>
+		AssetDetails<T::AccountId, T::Balance, BoundedVec<u8, T::NameLimit>>
 	>;
 
 	#[pallet::storage]
@@ -132,6 +136,8 @@ pub mod pallet {
 		NoAvailableAssetId,
 		/// The signing account has no permission to do the operation.
 		NoPermission,
+		/// Asset name is too long.
+		AssetNameTooLong,
 	}
 
 	#[pallet::call]
@@ -152,6 +158,7 @@ pub mod pallet {
 		pub fn create(
 			origin: OriginFor<T>,
 			organization_id: <T::Lookup as StaticLookup>::Source,
+			name: Vec<u8>,
 		) -> DispatchResult {
 
 			// owner of an asset wiil be orgnization
@@ -160,7 +167,14 @@ pub mod pallet {
 			T::CreateOrigin::ensure_origin(origin, &owner)?;
 
 			let asset_id = Self::get_next_asset_id()?;
-			let new_asset_details = AssetDetailsBuilder::<T>::new(owner.clone()).build();
+
+			let bounded_name = name.clone().try_into();
+			let bounded_name = match bounded_name {
+				Ok(name) => name,
+				Err(_) => return Err(Error::<T>::AssetNameTooLong.into()),
+			};
+
+			let new_asset_details = AssetDetailsBuilder::<T>::new(owner.clone(), bounded_name).build();
 			Assets::<T>::insert(
 				asset_id.clone(),
 				new_asset_details
