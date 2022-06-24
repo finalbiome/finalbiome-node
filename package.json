@@ -9,7 +9,8 @@
   "scripts": {
     "start": "./target/release/finalbiome-node --dev",
     "test": "cargo test",
-    "build": "cargo build --release"
+    "build release": "cargo build --release",
+    "build & start": "cargo build && ./target/release/finalbiome-node --dev"
   },
   "repository": {
     "type": "git",

@@ -138,6 +138,14 @@ pub mod pallet {
 		NoPermission,
 		/// Asset name is too long.
 		AssetNameTooLong,
+		/// Global Cup must be above zero.
+		ZeroGlobalCup,
+		/// Local Cup must be above zero.
+		ZeroLocalCup,
+		/// Top upped speed must be above zero.
+		ZeroTopUpped,
+		/// Top upped speed can't be set without a local cup.
+		TopUppedWithNoCup,
 	}
 
 	#[pallet::call]
@@ -159,6 +167,9 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			organization_id: <T::Lookup as StaticLookup>::Source,
 			name: Vec<u8>,
+			top_upped: Option<TopUppedFA>,
+			cup_global: Option<CupFA>,
+			cup_local: Option<CupFA>,
 		) -> DispatchResult {
 
 			// owner of an asset wiil be orgnization
@@ -166,15 +177,14 @@ pub mod pallet {
 			// Only organization can create an asset
 			T::CreateOrigin::ensure_origin(origin, &owner)?;
 
+			let new_asset_details = AssetDetailsBuilder::<T>::new(owner.clone(), name)?
+				.top_upped(top_upped)?
+				.cup_global(cup_global)?
+				.cup_local(cup_local)?
+				.build()?;
+
 			let asset_id = Self::get_next_asset_id()?;
 
-			let bounded_name = name.clone().try_into();
-			let bounded_name = match bounded_name {
-				Ok(name) => name,
-				Err(_) => return Err(Error::<T>::AssetNameTooLong.into()),
-			};
-
-			let new_asset_details = AssetDetailsBuilder::<T>::new(owner.clone(), bounded_name).build();
 			Assets::<T>::insert(
 				asset_id.clone(),
 				new_asset_details
