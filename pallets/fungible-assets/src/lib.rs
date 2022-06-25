@@ -14,6 +14,7 @@ mod benchmarking;
 use sp_std::prelude::*;
 
 mod types;
+mod functions;
 pub use types::*;
 
 use codec::HasCompact;
@@ -27,12 +28,18 @@ use sp_runtime::{
 };
 use sp_std::{fmt::Debug, marker::PhantomData, prelude::*, vec::Vec};
 use frame_support::{
-	traits::{ EnsureOriginWithArg},
-	BoundedVec,
+	traits::{
+		tokens::{fungibles, DepositConsequence, WithdrawConsequence},
+		EnsureOriginWithArg,
+		ReservableCurrency,
+		Currency,
+	},
+	BoundedVec, log,
 };
 use frame_support::pallet_prelude::*;
 use frame_system::pallet_prelude::*;
 
+use frame_system::Config as SystemConfig;
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
@@ -103,6 +110,20 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
+	/// The holdings of a specific account for a specific asset
+	pub(super) type Accounts<T: Config> = StorageDoubleMap<
+		_,
+		Blake2_128Concat,
+		AssetId,
+		Blake2_128Concat,
+		T::AccountId,
+		AssetAccountOf<T>,
+		// OptionQuery,
+		// GetDefault,
+		// ConstU32<300_000>,
+	>;
+
+	#[pallet::storage]
 	#[pallet::getter(fn next_asset_id)]
 	/// Storing next asset id
 	pub type NextAssetId<T: Config> = StorageValue<_, AssetId, ValueQuery>;
@@ -117,6 +138,8 @@ pub mod pallet {
 	pub enum Event<T: Config> {
 		/// The asset has been created.
 		Created { asset_id: AssetId, owner: T::AccountId },
+		/// Some assets were issued.
+		Issued { asset_id: AssetId, owner: T::AccountId, total_supply: T::Balance },
 		/// Event documentation should end with an array that provides descriptive names for event
 		/// parameters. [something, who]
 		SomethingStored(u32, T::AccountId),
@@ -146,6 +169,19 @@ pub mod pallet {
 		ZeroTopUpped,
 		/// Top upped speed can't be set without a local cup.
 		TopUppedWithNoCup,
+	}
+
+	// Implement the pallet hooks.
+	#[pallet::hooks]
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		fn on_initialize(_n: BlockNumberFor<T>) -> Weight {
+			log::info!(target: "runtime::fungible-assets", "hook called");
+			// unimplemented!();
+			T::DbWeight::get().reads_writes(1, 1)
+		}
+
+		// can implement also: on_finalize, on_runtime_upgrade, offchain_worker, ...
+		// see `Hooks` trait
 	}
 
 	#[pallet::call]
@@ -263,13 +299,3 @@ pub mod pallet {
 	}
 }
 
-impl<T: Config> Pallet<T> {
-	/// Generate next id for new asset
-	fn get_next_asset_id() -> Result<AssetId, DispatchError> {
-		NextAssetId::<T>::try_mutate(|id| -> Result<AssetId, DispatchError> {
-			let current_id = *id;
-			*id = id.checked_add(One::one()).ok_or(Error::<T>::NoAvailableAssetId)?;
-			Ok(current_id)
-		})
-	}
-}

@@ -18,11 +18,35 @@ use frame_support::{
 // type BalanceOf<F, T> = <F as fungible::Inspect<AccountIdOf<T>>>::Balance;
 // pub type OrganizationIdOf<T> = <T as pallet::Config>::Balance;
 
+pub(super) type AssetAccountOf<T> = AssetAccount<<T as Config>::Balance>;
+
+#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
+pub struct AssetAccount<Balance> {
+	/// The balance
+	pub(super) balance: Balance,
+  /// The reason for the existence of the account.
+	pub(super) reason: ExistenceReason<Balance>,
+}
+
+#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
+pub enum ExistenceReason<Balance> {
+	#[codec(index = 0)]
+	Consumer,
+	#[codec(index = 1)]
+	Sufficient,
+	#[codec(index = 2)]
+	DepositHeld(Balance),
+	#[codec(index = 3)]
+	DepositRefunded,
+}
+
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 pub struct AssetDetails<AccountId, Balance, BoundedString> {
   pub(super) owner: AccountId,
   /// The total supply across all accounts.
 	pub(super) supply: Balance,
+  /// The total number of accounts.
+	pub(super) accounts: u32,
   /// Name of the Asset. Limited in length by `NameLimit`.
 	pub(super) name: BoundedString,
   /// Characteristic of auto generation
@@ -61,7 +85,7 @@ pub trait AssetCharacteristic {
 }
 
 #[derive(Default)]
-pub struct AssetDetailsBuilder<T: Config> {
+pub(super) struct AssetDetailsBuilder<T: Config> {
     owner: T::AccountId,
     name: NameLimit<T>,
     top_upped: Option<TopUppedFA>,
@@ -126,6 +150,7 @@ impl<T: pallet::Config> AssetDetailsBuilder<T> {
     Ok(AssetDetails {
       owner: self.owner,
       supply: Zero::zero(),
+      accounts: Zero::zero(),
       name: self.name,
       top_upped: self.top_upped,
       cup_global: self.cup_global,
@@ -138,6 +163,9 @@ impl<T: pallet::Config> AssetDetailsBuilder<T> {
 /// Type of the fungible asset's ids
 pub type AssetId = u32;
 
-type NameLimit<T> = BoundedVec<u8, <T as pallet::Config>::NameLimit>;
+pub type NameLimit<T> = BoundedVec<u8, <T as pallet::Config>::NameLimit>;
 
 type AssetDetailsBuilderResult<T> = Result<AssetDetailsBuilder<T>, sp_runtime::DispatchError>;
+
+// pub(super) type DepositBalanceOf<T = ()> =
+// 	<<T as Config>::Currency as Currency<<T as SystemConfig>::AccountId>>::Balance;
