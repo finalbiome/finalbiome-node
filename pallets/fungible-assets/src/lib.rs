@@ -132,6 +132,73 @@ pub mod pallet {
 	#[pallet::getter(fn something)]
 	pub type Something<T> = StorageValue<_, u32>;
 
+	#[pallet::genesis_config]
+	pub struct GenesisConfig<T: Config> {
+		/// Genesis assets: asset_id, organization_id, name, top_upped_speed, cup_global, cup_local
+		pub assets: Vec<(AssetId, T::AccountId, Vec<u8>, Option<u32>, Option<u64>, Option<u64>)>,
+		/// Genesis account_balances: asset_id, account_id, balance
+		pub accounts: Vec<(AssetId, T::AccountId, T::Balance)>,
+	}
+
+	#[cfg(feature = "std")]
+	impl<T: Config> Default for GenesisConfig<T> {
+		fn default() -> Self {
+			Self {
+				assets: Default::default(),
+				accounts: Default::default(),
+			}
+		}
+	}
+
+	#[pallet::genesis_build]
+	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+		fn build(&self) {
+			// filling assets
+			for (asset_id, organization_id, name, top_upped, cup_global, cup_local) in &self.assets {
+				assert!(!Assets::<T>::contains_key(&asset_id), "Asset id already in use");
+				let top_upped = match top_upped {
+					None => None,
+					Some(speed) => Some(TopUppedFA {
+						speed: *speed,
+					})
+				};
+				let cup_global = match cup_global {
+					None => None,
+					Some(amount) => Some(CupFA {
+						amount: *amount,
+					})
+				};
+				let cup_local = match cup_local {
+					None => None,
+					Some(amount) => Some(CupFA {
+						amount: *amount,
+					})
+				};
+				let ad = AssetDetailsBuilder::<T>::new(organization_id.clone(), (&name).to_vec()).unwrap()
+					.top_upped(top_upped).unwrap()
+					.cup_global(cup_global).unwrap()
+					.cup_local(cup_local).unwrap()
+					.build().unwrap();
+				Assets::<T>::insert(
+					&asset_id,
+					&ad,
+				);
+				AssetsOf::<T>::insert(
+					&organization_id,
+					&asset_id,
+					()
+				);
+			};
+			// filling account balances
+			for (asset_id, account_id, balance) in &self.accounts {
+				assert!(Assets::<T>::contains_key(&asset_id), "Asset id not exists");
+				Pallet::<T>::increase_balance(*asset_id, account_id, *balance).unwrap();
+			};
+		}
+	}
+
+
+
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {

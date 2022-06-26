@@ -1,7 +1,9 @@
 use finalbiome_node_runtime::{
 	AccountId, AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig, Signature, SudoConfig,
-	SystemConfig, WASM_BINARY, OrganizationIdentityConfig
+	SystemConfig, WASM_BINARY, OrganizationIdentityConfig, FungibleAssetsConfig, Balance,
+	pallet_fungible_assets::{AssetId as AssetId}
 };
+
 use sc_service::ChainType;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{sr25519, Pair, Public};
@@ -65,14 +67,26 @@ pub fn development_config() -> Result<ChainSpec, String> {
 					get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
 					get_account_id_from_seed::<sr25519::Public>("Mike//stash"),
 				],
+				// Organization accounts
 				vec![
 					(get_account_id_from_seed::<sr25519::Public>("Eve"), br"Eve Org".to_vec()),
 					(get_account_id_from_seed::<sr25519::Public>("Oscar"), br"Oscar Org".to_vec()),
 				],
+				// Organization Members
 				vec![
 					(get_account_id_from_seed::<sr25519::Public>("Eve"), get_account_id_from_seed::<sr25519::Public>("Ferdie")),
 					(get_account_id_from_seed::<sr25519::Public>("Eve"), get_account_id_from_seed::<sr25519::Public>("Pat")),
 					(get_account_id_from_seed::<sr25519::Public>("Oscar"), get_account_id_from_seed::<sr25519::Public>("Mike")),
+				],
+				// Fungible Assets
+				vec![
+					(0, get_account_id_from_seed::<sr25519::Public>("Eve"), br"ass01".to_vec(), None, None, None),
+					(1, get_account_id_from_seed::<sr25519::Public>("Eve"), br"ass02".to_vec(), Some(5), None, Some(20)),
+				],
+				// Balances of Fungible Assets
+				vec![
+					(0, get_account_id_from_seed::<sr25519::Public>("Charlie"), 1000),
+					(1, get_account_id_from_seed::<sr25519::Public>("Dave"), 20),
 				],
 				true,
 			)
@@ -122,14 +136,26 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 					get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
 					get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
 				],
+				// Organization accounts
 				vec![
 					(get_account_id_from_seed::<sr25519::Public>("Eve"), br"Eve Org".to_vec()),
 					(get_account_id_from_seed::<sr25519::Public>("Oscar"), br"Oscar Org".to_vec()),
 				],
+				// Organization Members
 				vec![
 					(get_account_id_from_seed::<sr25519::Public>("Eve"), get_account_id_from_seed::<sr25519::Public>("Ferdie")),
 					(get_account_id_from_seed::<sr25519::Public>("Eve"), get_account_id_from_seed::<sr25519::Public>("Pat")),
 					(get_account_id_from_seed::<sr25519::Public>("Oscar"), get_account_id_from_seed::<sr25519::Public>("Mike")),
+				],
+				// Fungible Assets
+				vec![
+					(0, get_account_id_from_seed::<sr25519::Public>("Eve"), br"ass01".to_vec(), None, None, None),
+					(1, get_account_id_from_seed::<sr25519::Public>("Eve"), br"ass02".to_vec(), Some(5), None, Some(20)),
+				],
+				// Balances of Fungible Assets
+				vec![
+					(0, get_account_id_from_seed::<sr25519::Public>("Charlie"), 1000),
+					(1, get_account_id_from_seed::<sr25519::Public>("Dave"), 20),
 				],
 				true,
 			)
@@ -156,6 +182,8 @@ fn testnet_genesis(
 	endowed_accounts: Vec<AccountId>,
 	organization_accounts: Vec<(AccountId, Vec<u8>)>,
 	organization_members: Vec<(AccountId, AccountId)>,
+	fungible_assets: Vec<(AssetId, AccountId, Vec<u8>, Option<u32>, Option<u64>, Option<u64>)>,
+	fungible_assets_balances: Vec<(AssetId, AccountId, Balance)>,
 	_enable_println: bool,
 ) -> GenesisConfig {
 	GenesisConfig {
@@ -181,6 +209,10 @@ fn testnet_genesis(
 		organization_identity: OrganizationIdentityConfig {
 			organizations: organization_accounts,
 			members_of: organization_members,
-		}
+		},
+		fungible_assets: FungibleAssetsConfig {
+			assets: fungible_assets,
+			accounts: fungible_assets_balances,
+		},
 	}
 }

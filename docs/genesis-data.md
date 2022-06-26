@@ -11,3 +11,22 @@ The document contains data that is included in the genesis block.
       Organization Name - `Oscar Org`  
       Members:
         * Mike `5C8FmLeZqxRuvADkH7S23zBTpQ3azZqKQVzF1zie64YqvkfF` (non-standard)  
+
+## FA
+
+### Assets
+  1.  ass01 `1`
+      owner `Eve`
+      top up - None
+      local cup - None
+      global cup - None
+  2.  ass02
+      owner `Eve`
+      top up - 5
+      local cup - 20
+      global cup - None
+### Balances
+  1.  Charlie
+      ass01 - 1000
+  2.  Dave
+      ass02 - 20
