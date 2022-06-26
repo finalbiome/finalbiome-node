@@ -39,7 +39,6 @@ use frame_support::{
 use frame_support::pallet_prelude::*;
 use frame_system::pallet_prelude::*;
 
-use frame_system::Config as SystemConfig;
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;

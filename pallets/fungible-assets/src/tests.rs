@@ -1,7 +1,14 @@
 use super::*;
-use crate::{mock::*, Error, CupFA, TopUppedFA, AssetDetailsBuilder, ExistenceReason};
-use frame_support::{assert_noop, assert_ok};
+use crate::{
+	mock::*, Error, CupFA, TopUppedFA, AssetDetailsBuilder, ExistenceReason,
+	Event as FaEvent
+};
+
+use frame_support::{assert_noop, assert_ok, };
 use sp_runtime::{TokenError};
+
+use frame_system::{EventRecord, Phase};
+
 #[test]
 fn it_works_for_default_value() {
 	new_test_ext().execute_with(|| {
@@ -23,6 +30,7 @@ fn correct_error_for_none_value() {
 #[test]
 fn create_fa_works() {
 	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
 		// Create fa with some name
 		let name = br"fa name".to_vec();
 		let org_id = 2;
@@ -47,9 +55,16 @@ fn create_fa_works() {
 		assert_eq!(fa.cup_global, None);
 		assert_eq!(fa.cup_local, None);
 
-		// TODO: test the events.
-		//			 Impl bellow doesn't work
-		// System::assert_has_event(Event::OrganizationIdentity(crate::Event::AddedToOrganization(name, org)));
+		assert_eq!(
+			System::events(),
+			vec![
+				EventRecord {
+					phase: Phase::Initialization,
+					event: FaEvent::Created { asset_id: 0, owner: 2 }.into(),
+					topics: vec![],
+				},
+			]
+		);
 
 		assert_noop!(FungibleAssets::create(
 			Origin::none(),
@@ -255,7 +270,7 @@ fn increase_balance_zero() {
 }
 
 #[test]
-fn increase_balance() {
+fn increase_balance_straight_forward() {
 	new_test_ext().execute_with(|| {
 		// create asset
 		assert_ok!(FungibleAssets::create(
@@ -313,5 +328,39 @@ fn increase_balance() {
 		let acc = Accounts::<Test>::get(0, 3).unwrap();
 		assert_eq!(acc.balance, 1000);
 		assert_eq!(acc.reason, ExistenceReason::Sufficient);
+	})
+}
+
+#[test]
+fn increase_balance_event() {
+	new_test_ext().execute_with(|| {
+		// create asset
+		assert_ok!(FungibleAssets::create(
+			Origin::signed(1),
+			2,
+			br"fa name".to_vec(),
+			None,
+			None,
+			None,
+		));
+		System::set_block_number(1);
+		assert_ok!(
+			FungibleAssets::increase_balance(0, &1, 100)
+		);
+		assert_eq!(
+			System::events(),
+			vec![
+				EventRecord {
+					phase: Phase::Initialization,
+					event: SysEvent::NewAccount { account: 1 }.into(),
+					topics: vec![],
+				},
+				EventRecord {
+					phase: Phase::Initialization,
+					event: FaEvent::Issued { asset_id: 0, owner: 1, total_supply: 100 }.into(),
+					topics: vec![],
+				},
+			]
+		);
 	})
 }

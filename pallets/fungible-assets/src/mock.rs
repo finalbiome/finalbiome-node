@@ -63,3 +63,5 @@ impl pallet_fungible_assets::Config for Test {
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
 }
+
+pub type SysEvent = frame_system::Event<Test>;
