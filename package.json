@@ -10,7 +10,8 @@
     "start": "./target/release/finalbiome-node --dev",
     "test": "cargo test",
     "build release": "cargo build --release",
-    "build & start": "cargo build && ./target/release/finalbiome-node --dev"
+    "build & start": "cargo build && ./target/release/finalbiome-node --dev",
+    "check": "cargo check"
   },
   "repository": {
     "type": "git",
