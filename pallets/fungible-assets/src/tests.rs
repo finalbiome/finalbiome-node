@@ -9,6 +9,42 @@ use sp_runtime::{TokenError};
 
 use frame_system::{EventRecord, Phase};
 
+fn get_next_fa_id() -> u32 {
+	FungibleAssets::next_asset_id()
+}
+
+#[test]
+fn check_test_genesis_data() {
+	new_test_ext().execute_with(|| {
+		// genesis includes two assets with 0 & 1 ids
+		let fa0 = FungibleAssets::assets(0).unwrap();
+		assert_eq!(fa0.accounts, 1);
+		assert_eq!(fa0.owner, 2);
+		assert_eq!(fa0.name.to_vec(), br"asset01".to_vec());
+		assert_eq!(fa0.supply, 1000);
+		assert_eq!(fa0.top_upped, None);
+		assert_eq!(fa0.cup_global, None);
+		assert_eq!(fa0.cup_local, None);
+		let fa1 = FungibleAssets::assets(1).unwrap();
+		assert_eq!(fa1.accounts, 1);
+		assert_eq!(fa1.owner, 2);
+		assert_eq!(fa1.name.to_vec(), br"asset02".to_vec());
+		assert_eq!(fa1.supply, 20);
+		assert_eq!(fa1.top_upped.unwrap().speed, 5);
+		assert_eq!(fa1.cup_global, None);
+		assert_eq!(fa1.cup_local.unwrap().amount, 20);
+
+		// genesis includes two accounts
+		let acc1 = FungibleAssets::accounts(0, 1).unwrap();
+		let acc3 = FungibleAssets::accounts(1, 3).unwrap();
+		assert_eq!(acc1.balance, 1000);
+		assert_eq!(acc3.balance, 20);
+
+		// next fa id must be 2
+		assert_eq!(get_next_fa_id(), 2);
+	})
+}
+
 #[test]
 fn it_works_for_default_value() {
 	new_test_ext().execute_with(|| {
@@ -30,10 +66,10 @@ fn correct_error_for_none_value() {
 #[test]
 fn create_fa_works() {
 	new_test_ext().execute_with(|| {
-		System::set_block_number(1);
 		// Create fa with some name
 		let name = br"fa name".to_vec();
 		let org_id = 2;
+		let fa_id = get_next_fa_id();
 		let res = FungibleAssets::create(
 			Origin::signed(1),
 			org_id,
@@ -44,11 +80,7 @@ fn create_fa_works() {
 		);
 		assert_ok!(res);
 
-		// Read pallet storage and assert an expected result.
-		// let org = ensure_signed(Origin::signed(org_id)).unwrap();
-		
-		// TODO: change hardcoded asset id to extracting it from storage
-		let stored_fa = FungibleAssets::assets(0);
+		let stored_fa = FungibleAssets::assets(fa_id);
 		let fa = stored_fa.unwrap();
 		assert_eq!(fa.name.to_vec(), name);
 		assert_eq!(fa.top_upped, None);
@@ -60,7 +92,7 @@ fn create_fa_works() {
 			vec![
 				EventRecord {
 					phase: Phase::Initialization,
-					event: FaEvent::Created { asset_id: 0, owner: 2 }.into(),
+					event: FaEvent::Created { asset_id: fa_id, owner: org_id }.into(),
 					topics: vec![],
 				},
 			]
@@ -100,6 +132,7 @@ fn create_fa_with_cups() {
 		let name = br"fa name".to_vec();
 		let org_id = 2;
 		// local cup
+		let fa_id = get_next_fa_id();
 		assert_ok!(FungibleAssets::create(
 			Origin::signed(1),
 			org_id,
@@ -110,13 +143,14 @@ fn create_fa_with_cups() {
 				amount: 10
 			}),
 		));
-		// TODO: change hardcoded asset id to extracting it from storage
-		let fa = FungibleAssets::assets(0).unwrap();
+
+		let fa = FungibleAssets::assets(fa_id).unwrap();
 		assert_eq!(fa.name.to_vec(), name);
 		assert_eq!(fa.top_upped, None);
 		assert_eq!(fa.cup_global, None);
 		assert_eq!(fa.cup_local, Some(CupFA { amount: 10 }));
 		// global cup
+		let fa_id = get_next_fa_id();
 		assert_ok!(FungibleAssets::create(
 			Origin::signed(1),
 			org_id,
@@ -127,13 +161,13 @@ fn create_fa_with_cups() {
 			}),
 			None,
 		));
-		// TODO: change hardcoded asset id to extracting it from storage
-		let fa = FungibleAssets::assets(1).unwrap();
+		let fa = FungibleAssets::assets(fa_id).unwrap();
 		assert_eq!(fa.name.to_vec(), name);
 		assert_eq!(fa.top_upped, None);
 		assert_eq!(fa.cup_local, None);
 		assert_eq!(fa.cup_global, Some(CupFA { amount: 100 }));
 		// both cups
+		let fa_id = get_next_fa_id();
 		assert_ok!(FungibleAssets::create(
 			Origin::signed(1),
 			org_id,
@@ -146,8 +180,7 @@ fn create_fa_with_cups() {
 				amount: 10
 			}),
 		));
-		// TODO: change hardcoded asset id to extracting it from storage
-		let fa = FungibleAssets::assets(2).unwrap();
+		let fa = FungibleAssets::assets(fa_id).unwrap();
 		assert_eq!(fa.name.to_vec(), name);
 		assert_eq!(fa.top_upped, None);
 		assert_eq!(fa.cup_global, Some(CupFA { amount: 100 }));
@@ -200,6 +233,7 @@ fn create_fa_top_up() {
 			None,
 		), Error::<Test>::TopUppedWithNoCup);
 
+		let fa_id = get_next_fa_id();
 		assert_ok!(FungibleAssets::create(
 			Origin::signed(1),
 			org_id,
@@ -214,8 +248,7 @@ fn create_fa_top_up() {
 				amount: 10
 			}),
 		));
-		// TODO: change hardcoded asset id to extracting it from storage
-		let fa = FungibleAssets::assets(0).unwrap();
+		let fa = FungibleAssets::assets(fa_id).unwrap();
 		assert_eq!(fa.top_upped, Some(TopUppedFA { speed: 20 }));
 	})
 }
@@ -253,6 +286,7 @@ fn increase_balance_unknown_asset() {
 fn increase_balance_zero() {
 	new_test_ext().execute_with(|| {
 		// create asset
+		let fa_id = get_next_fa_id();
 		assert_ok!(FungibleAssets::create(
 			Origin::signed(1),
 			2,
@@ -264,7 +298,7 @@ fn increase_balance_zero() {
 		assert_ok!(
 			FungibleAssets::increase_balance(0, &1, 0)
 		);
-		let fa = FungibleAssets::assets(0).unwrap();
+		let fa = FungibleAssets::assets(fa_id).unwrap();
 		assert_eq!(fa.supply, 0);
 	})
 }
@@ -273,6 +307,7 @@ fn increase_balance_zero() {
 fn increase_balance_straight_forward() {
 	new_test_ext().execute_with(|| {
 		// create asset
+		let fa_id = get_next_fa_id();
 		assert_ok!(FungibleAssets::create(
 			Origin::signed(1),
 			2,
@@ -282,15 +317,16 @@ fn increase_balance_straight_forward() {
 			None,
 		));
 		assert_ok!(
-			FungibleAssets::increase_balance(0, &1, 100)
+			FungibleAssets::increase_balance(fa_id, &1, 100)
 		);
-		let fa = FungibleAssets::assets(0).unwrap();
+		let fa = FungibleAssets::assets(fa_id).unwrap();
 		assert_eq!(fa.supply, 100);
 		assert_eq!(fa.accounts, 1);
-		let acc = Accounts::<Test>::get(0, 1).unwrap();
+		let acc = Accounts::<Test>::get(fa_id, 1).unwrap();
 		assert_eq!(acc.balance, 100);
 		assert_eq!(acc.reason, ExistenceReason::Sufficient);
 		// add another one and deposit it for the same acc
+		let fa_id = get_next_fa_id();
 		assert_ok!(FungibleAssets::create(
 			Origin::signed(1),
 			2,
@@ -300,32 +336,32 @@ fn increase_balance_straight_forward() {
 			None,
 		));
 		assert_ok!(
-			FungibleAssets::increase_balance(1, &1, 200)
+			FungibleAssets::increase_balance(fa_id, &1, 200)
 		);
-		let fa = FungibleAssets::assets(1).unwrap();
+		let fa = FungibleAssets::assets(fa_id).unwrap();
 		assert_eq!(fa.supply, 200);
 		assert_eq!(fa.accounts, 1);
-		let acc = Accounts::<Test>::get(1, 1).unwrap();
+		let acc = Accounts::<Test>::get(fa_id, 1).unwrap();
 		assert_eq!(acc.balance, 200);
 		assert_eq!(acc.reason, ExistenceReason::Sufficient);
 		// add the same fa to the same acc
 		assert_ok!(
-			FungibleAssets::increase_balance(0, &1, 300)
+			FungibleAssets::increase_balance(fa_id-1, &1, 300)
 		);
-		let fa = FungibleAssets::assets(0).unwrap();
+		let fa = FungibleAssets::assets(fa_id-1).unwrap();
 		assert_eq!(fa.supply, 400);
 		assert_eq!(fa.accounts, 1);
-		let acc = Accounts::<Test>::get(0, 1).unwrap();
+		let acc = Accounts::<Test>::get(fa_id-1, 1).unwrap();
 		assert_eq!(acc.balance, 400);
 		assert_eq!(acc.reason, ExistenceReason::Sufficient);
 		// add fa to other acc
 		assert_ok!(
-			FungibleAssets::increase_balance(0, &3, 1000)
+			FungibleAssets::increase_balance(fa_id-1, &3, 1000)
 		);
-		let fa = FungibleAssets::assets(0).unwrap();
+		let fa = FungibleAssets::assets(fa_id-1).unwrap();
 		assert_eq!(fa.supply, 1400);
 		assert_eq!(fa.accounts, 2);
-		let acc = Accounts::<Test>::get(0, 3).unwrap();
+		let acc = Accounts::<Test>::get(fa_id-1, 3).unwrap();
 		assert_eq!(acc.balance, 1000);
 		assert_eq!(acc.reason, ExistenceReason::Sufficient);
 	})
@@ -334,30 +370,22 @@ fn increase_balance_straight_forward() {
 #[test]
 fn increase_balance_event() {
 	new_test_ext().execute_with(|| {
-		// create asset
-		assert_ok!(FungibleAssets::create(
-			Origin::signed(1),
-			2,
-			br"fa name".to_vec(),
-			None,
-			None,
-			None,
-		));
-		System::set_block_number(1);
+		let fa_id = 0;
+		let acc_id = 99;
 		assert_ok!(
-			FungibleAssets::increase_balance(0, &1, 100)
+			FungibleAssets::increase_balance(fa_id, &acc_id, 100)
 		);
 		assert_eq!(
 			System::events(),
 			vec![
 				EventRecord {
 					phase: Phase::Initialization,
-					event: SysEvent::NewAccount { account: 1 }.into(),
+					event: SysEvent::NewAccount { account: acc_id }.into(),
 					topics: vec![],
 				},
 				EventRecord {
 					phase: Phase::Initialization,
-					event: FaEvent::Issued { asset_id: 0, owner: 1, total_supply: 100 }.into(),
+					event: FaEvent::Issued { asset_id: fa_id, owner: acc_id, total_supply: 100 }.into(),
 					topics: vec![],
 				},
 			]

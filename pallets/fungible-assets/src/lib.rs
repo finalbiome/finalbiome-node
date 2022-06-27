@@ -109,6 +109,7 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
+	#[pallet::getter(fn accounts)]
 	/// The holdings of a specific account for a specific asset
 	pub(super) type Accounts<T: Config> = StorageDoubleMap<
 		_,
@@ -188,6 +189,10 @@ pub mod pallet {
 					&asset_id,
 					()
 				);
+				let id = *asset_id;
+				// WARN: assets ids in the genesis config should be monotonically increasing.
+				// TODO: refactor to setting a next id from max id in genesis config.
+				NextAssetId::<T>::put(id.checked_add(One::one()).unwrap());
 			};
 			// filling account balances
 			for (asset_id, account_id, balance) in &self.accounts {
