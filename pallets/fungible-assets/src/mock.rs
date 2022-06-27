@@ -70,8 +70,9 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 		],
 		// account_balances: asset_id, account_id, balance
 		accounts: vec![
-			(0, 1, 1000),
+			(0, 1, 1_000),
 			(1, 3, 20),
+			(0, 4, 10_000),
 		],
 	};
 	config.assimilate_storage(&mut storage).unwrap();

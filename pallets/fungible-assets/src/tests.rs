@@ -18,10 +18,10 @@ fn check_test_genesis_data() {
 	new_test_ext().execute_with(|| {
 		// genesis includes two assets with 0 & 1 ids
 		let fa0 = FungibleAssets::assets(0).unwrap();
-		assert_eq!(fa0.accounts, 1);
+		assert_eq!(fa0.accounts, 2);
 		assert_eq!(fa0.owner, 2);
 		assert_eq!(fa0.name.to_vec(), br"asset01".to_vec());
-		assert_eq!(fa0.supply, 1000);
+		assert_eq!(fa0.supply, 11_000);
 		assert_eq!(fa0.top_upped, None);
 		assert_eq!(fa0.cup_global, None);
 		assert_eq!(fa0.cup_local, None);
@@ -37,8 +37,10 @@ fn check_test_genesis_data() {
 		// genesis includes two accounts
 		let acc1 = FungibleAssets::accounts(0, 1).unwrap();
 		let acc3 = FungibleAssets::accounts(1, 3).unwrap();
-		assert_eq!(acc1.balance, 1000);
+		let acc4 = FungibleAssets::accounts(0, 4).unwrap();
+		assert_eq!(acc1.balance, 1_000);
 		assert_eq!(acc3.balance, 20);
+		assert_eq!(acc4.balance, 10_000);
 
 		// next fa id must be 2
 		assert_eq!(get_next_fa_id(), 2);
@@ -386,6 +388,270 @@ fn increase_balance_event() {
 				EventRecord {
 					phase: Phase::Initialization,
 					event: FaEvent::Issued { asset_id: fa_id, owner: acc_id, total_supply: 100 }.into(),
+					topics: vec![],
+				},
+			]
+		);
+	})
+}
+
+#[test]
+fn prep_debit_unknown_asset() {
+	new_test_ext().execute_with(|| {
+		let id = 999;
+		let target = 10;
+		let amount = 100;
+		let max_allowed = false;
+		assert_noop!(
+			FungibleAssets::prep_debit(id, &target, amount, max_allowed),
+			TokenError::UnknownAsset
+		);
+	})
+}
+
+#[test]
+fn prep_debit_unknown_account() {
+	new_test_ext().execute_with(|| {
+		let id = 0;
+		let target = 10;
+		let amount = 100;
+		let max_allowed = false;
+		assert_noop!(
+			FungibleAssets::prep_debit(id, &target, amount, max_allowed),
+			Error::<Test>::NoAccount
+		);
+	})
+}
+
+#[test]
+fn prep_debit_can_debit() {
+	new_test_ext().execute_with(|| {
+		let id = 0;
+		let target = 1; // account has 1000 of fa 0
+		let amount = 100;
+		let max_allowed = false;
+		assert_eq!(
+			FungibleAssets::prep_debit(id, &target, amount, max_allowed),
+			Ok(100)
+		);
+	})
+}
+
+#[test]
+fn prep_debit_cant_debit() {
+	new_test_ext().execute_with(|| {
+		let id = 0;
+		let target = 1; // account has 1000 of fa 0
+		let amount = 10000;
+		let max_allowed = false;
+		assert_noop!(
+			FungibleAssets::prep_debit(id, &target, amount, max_allowed),
+			TokenError::NoFunds
+		);
+	})
+}
+
+#[test]
+fn prep_debit_cant_debit_more_than_supply() {
+	new_test_ext().execute_with(|| {
+		let id = 0;
+		let target = 1; // account has 1000 of fa 0
+		let amount = 12_000; // total suply 11_000
+		let max_allowed = false;
+		assert_noop!(
+			FungibleAssets::prep_debit(id, &target, amount, max_allowed),
+			ArithmeticError::Underflow
+		);
+	})
+}
+
+#[test]
+fn prep_debit_can_debit_allowed_more_than_supply() {
+	new_test_ext().execute_with(|| {
+		let id = 0;
+		let target = 1; // account has 1000 of fa 0
+		let amount = 12_000; // total suply 11_000
+		let max_allowed = true;
+		assert_eq!(
+			FungibleAssets::prep_debit(id, &target, amount, max_allowed),
+			Ok(1000)
+		);
+	})
+}
+
+#[test]
+fn prep_debit_can_debit_allowed() {
+	new_test_ext().execute_with(|| {
+		let id = 0;
+		let target = 1; // account has 1000 of fa 0
+		let amount = 2_000; // total suply 11_000
+		let max_allowed = true;
+		assert_eq!(
+			FungibleAssets::prep_debit(id, &target, amount, max_allowed),
+			Ok(1000)
+		);
+	})
+}
+
+#[test]
+fn prep_debit_can_debit_allowed_2() {
+	new_test_ext().execute_with(|| {
+		let id = 0;
+		let target = 1; // account has 1000 of fa 0
+		let amount = 1_000; // total suply 11_000
+		let max_allowed = true;
+		assert_eq!(
+			FungibleAssets::prep_debit(id, &target, amount, max_allowed),
+			Ok(1000)
+		);
+	})
+}
+
+#[test]
+fn prep_debit_can_debit_allowed_3() {
+	new_test_ext().execute_with(|| {
+		let id = 0;
+		let target = 1; // account has 1000 of fa 0
+		let amount = 100; // total suply 11_000
+		let max_allowed = true;
+		assert_eq!(
+			FungibleAssets::prep_debit(id, &target, amount, max_allowed),
+			Ok(100)
+		);
+	})
+}
+
+#[test]
+fn decrease_balance_unknown_asset() {
+	new_test_ext().execute_with(|| {
+		let id = 20;
+		let target = 1; // account has 1000 of fa 0
+		let amount = 100; // total suply 11_000
+		let max_allowed = false;
+		assert_noop!(
+			FungibleAssets::decrease_balance(id, &target, amount, max_allowed),
+			TokenError::UnknownAsset
+		);
+	})
+}
+
+#[test]
+fn decrease_balance_unknown_account() {
+	new_test_ext().execute_with(|| {
+		let id = 0;
+		let target = 100;
+		let amount = 100; // total suply 11_000
+		let max_allowed = false;
+		assert_noop!(
+			FungibleAssets::decrease_balance(id, &target, amount, max_allowed),
+			Error::<Test>::NoAccount
+		);
+	})
+}
+
+#[test]
+fn decrease_balance_no_founds() {
+	new_test_ext().execute_with(|| {
+		let id = 0;
+		let target = 1; // account has 1_000 of fa 0
+		let amount = 10_000; // total suply 11_000
+		let max_allowed = false;
+		assert_noop!(
+			FungibleAssets::decrease_balance(id, &target, amount, max_allowed),
+			TokenError::NoFunds
+		);
+	})
+}
+
+#[test]
+fn decrease_balance_common() {
+	new_test_ext().execute_with(|| {
+		let id = 0;
+		let target = 1; // account has 1000 of fa 0
+		let amount = 100; // total suply 11_000
+		let max_allowed = false;
+		let fa_sup = FungibleAssets::assets(id).unwrap().supply;
+		let acc_balance = FungibleAssets::accounts(id, target).unwrap().balance;
+		assert_eq!(
+			FungibleAssets::decrease_balance(id, &target, amount, max_allowed),
+			Ok(100)
+		);
+		assert_eq!(
+			fa_sup - amount,
+			FungibleAssets::assets(id).unwrap().supply
+		);
+		assert_eq!(
+			acc_balance - amount,
+			FungibleAssets::accounts(id, target).unwrap().balance
+		);
+	})
+}
+
+#[test]
+fn decrease_balance_max_allowed() {
+	new_test_ext().execute_with(|| {
+		let id = 0;
+		let target = 1; // account has 1_000 of fa 0
+		let amount = 100_000; // total suply 11_000
+		let max_allowed = true;
+		let fa_sup = FungibleAssets::assets(id).unwrap().supply;
+		let acc_balance = FungibleAssets::accounts(id, target).unwrap().balance;
+		assert_eq!(
+			FungibleAssets::decrease_balance(id, &target, amount, max_allowed),
+			Ok(acc_balance)
+		);
+		assert_eq!(
+			fa_sup - acc_balance,
+			FungibleAssets::assets(id).unwrap().supply
+		);
+		assert_eq!(
+			FungibleAssets::accounts(id, target).unwrap().balance,
+			0
+		);
+	})
+}
+
+#[test]
+fn decrease_balance_max_allowed_2() {
+	new_test_ext().execute_with(|| {
+		let id = 0;
+		let target = 1; // account has 1_000 of fa 0
+		let amount = 900; // total suply 11_000
+		let max_allowed = true;
+		let fa_sup = FungibleAssets::assets(id).unwrap().supply;
+		let acc_balance = FungibleAssets::accounts(id, target).unwrap().balance;
+		assert_eq!(
+			FungibleAssets::decrease_balance(id, &target, amount, max_allowed),
+			Ok(amount)
+		);
+		assert_eq!(
+			fa_sup - amount,
+			FungibleAssets::assets(id).unwrap().supply
+		);
+		assert_eq!(
+			FungibleAssets::accounts(id, target).unwrap().balance,
+			acc_balance - amount
+		);
+	})
+}
+
+
+#[test]
+fn decrease_balance_event() {
+	new_test_ext().execute_with(|| {
+		let id = 0;
+		let target = 1; // account has 1_000 of fa 0
+		let amount = 900; // total suply 11_000
+		let max_allowed = true;
+		assert_ok!(
+			FungibleAssets::decrease_balance(id, &target, amount, max_allowed)
+		);
+		assert_eq!(
+			System::events(),
+			vec![
+				EventRecord {
+					phase: Phase::Initialization,
+					event: FaEvent::Burned { asset_id: id, owner: target, balance: amount }.into(),
 					topics: vec![],
 				},
 			]

@@ -42,20 +42,65 @@ impl<T: Config> Pallet<T> {
 		who: &T::AccountId,
 		amount: T::Balance,
 	) -> DepositConsequence {
+    use DepositConsequence::*;
 		let details = match Assets::<T>::get(id) {
 			Some(details) => details,
-			None => return DepositConsequence::UnknownAsset,
+			None => return UnknownAsset,
 		};
 		if details.supply.checked_add(&amount).is_none() {
-			return DepositConsequence::Overflow
+			return Overflow
 		}
 		if let Some(balance) = Self::maybe_balance(id, who) {
 			if balance.checked_add(&amount).is_none() {
-				return DepositConsequence::Overflow
+				return Overflow
 			}
 		}
-		DepositConsequence::Success
+		Success
 	}
+
+  pub(super) fn can_decrease(
+    id: AssetId,
+		who: &T::AccountId,
+		amount: T::Balance,
+  ) ->  WithdrawConsequence<T::Balance> {
+    use WithdrawConsequence::*;
+    let details = match Assets::<T>::get(id) {
+			Some(details) => details,
+			None => return UnknownAsset,
+		};
+    if details.supply.checked_sub(&amount).is_none() {
+			return Underflow
+		}
+    if let Some(balance) = Self::maybe_balance(id, who) {
+      if balance.checked_sub(&amount).is_none() {
+        return NoFunds
+      } else {
+        return Success
+      }
+    } else {
+      return NoFunds
+    }
+  }
+
+  /// Returns the amount which should be debt from target with respect to `max_allowed` flag.
+  /// If it `true`, then returns all accessible funds but no more than needed amount.
+  pub(super) fn prep_debit(
+    id: AssetId,
+		target: &T::AccountId,
+		amount: T::Balance,
+    max_allowed: bool,
+  ) -> Result<T::Balance, DispatchError> {
+    let _ = Assets::<T>::get(id).ok_or(TokenError::UnknownAsset)?;
+    let account = Accounts::<T>::get(id, target).ok_or(Error::<T>::NoAccount)?;
+    let actual = if max_allowed {
+      account.balance.min(amount)
+    } else {
+      amount
+    };
+    ensure!(max_allowed || actual >= amount, TokenError::NoFunds);
+    Self::can_decrease(id, target, actual).into_result()?;
+    Ok(actual)
+  }
 
   /// Increases the asset `id` balance of `beneficiary` by `amount`.
   pub(super) fn increase_balance(
@@ -98,5 +143,35 @@ impl<T: Config> Pallet<T> {
 		});
 
     Ok(())
+  }
+
+  /// Decreases the asset `id` balance of `target` by `amount`.
+  pub(super) fn decrease_balance(
+    id: AssetId,
+		target: &T::AccountId,
+		amount: T::Balance,
+    max_allowed: bool,
+  ) -> Result<T::Balance, DispatchError> {
+    if amount.is_zero() {
+			return Ok(amount)
+		}
+    let actual = Self::prep_debit(id, target, amount, max_allowed)?;
+    Assets::<T>::try_mutate(id, |maybe_details| -> DispatchResult {
+      let details = maybe_details.as_mut().ok_or(TokenError::UnknownAsset)?;
+      
+      // REFACT: support supply data in the asset details will be make huge resource consuming.
+      // Maybe need drop it or move to off-chain stats collector
+      details.supply = details.supply.saturating_sub(actual);
+
+      Accounts::<T>::try_mutate(id, target, |maybe_account| -> DispatchResult {
+        let mut account = maybe_account.take().ok_or(Error::<T>::NoAccount)?;
+        account.balance = account.balance.saturating_sub(actual);
+        *maybe_account = Some(account);
+        Ok(())
+      })?;
+      Ok(())
+    })?;
+    Self::deposit_event(Event::Burned { asset_id: id, owner: target.clone(), balance: actual });
+    Ok(actual)
   }
 }

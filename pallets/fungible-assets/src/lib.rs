@@ -211,6 +211,8 @@ pub mod pallet {
 		Created { asset_id: AssetId, owner: T::AccountId },
 		/// Some assets were issued.
 		Issued { asset_id: AssetId, owner: T::AccountId, total_supply: T::Balance },
+		/// Some assets were destroyed.
+		Burned { asset_id: AssetId, owner: T::AccountId, balance: T::Balance },
 		/// Event documentation should end with an array that provides descriptive names for event
 		/// parameters. [something, who]
 		SomethingStored(u32, T::AccountId),
@@ -240,6 +242,8 @@ pub mod pallet {
 		ZeroTopUpped,
 		/// Top upped speed can't be set without a local cup.
 		TopUppedWithNoCup,
+		/// The account to alter does not exist.
+		NoAccount,
 	}
 
 	// Implement the pallet hooks.
