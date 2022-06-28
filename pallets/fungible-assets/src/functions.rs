@@ -5,7 +5,7 @@ use super::*;
 impl<T: Config> Pallet<T> {
 
  /// Generate next id for new asset
- pub(super) fn get_next_asset_id() -> Result<AssetId, DispatchError> {
+  pub(super) fn get_next_asset_id() -> Result<AssetId, DispatchError> {
 		NextAssetId::<T>::try_mutate(|id| -> Result<AssetId, DispatchError> {
 			let current_id = *id;
 			*id = id.checked_add(One::one()).ok_or(Error::<T>::NoAvailableAssetId)?;
@@ -13,6 +13,7 @@ impl<T: Config> Pallet<T> {
 		})
 	}
 
+  /// Reads O(0), Writes(1)
   pub(super) fn new_account(
     who: &T::AccountId,
     asset_details: &mut AssetDetails<T::AccountId, T::Balance, NameLimit<T>>,
@@ -29,7 +30,8 @@ impl<T: Config> Pallet<T> {
     Ok(result)
   }
 
-  /// Get the asset `id` balance of `who` if the asset-account exists.
+  /// Get the asset `id` balance of `who` if the asset-account exists. \
+  /// Reads O(1), Writes(0)
 	pub fn maybe_balance(
 		id: AssetId,
 		who: impl sp_std::borrow::Borrow<T::AccountId>,
@@ -37,6 +39,7 @@ impl<T: Config> Pallet<T> {
 		Accounts::<T>::get(id, who.borrow()).map(|a| a.balance)
 	}
 
+  /// Reads O(1), Writes(0)
   pub(super) fn can_increase(
 		id: AssetId,
 		who: &T::AccountId,
@@ -103,6 +106,7 @@ impl<T: Config> Pallet<T> {
   }
 
   /// Increases the asset `id` balance of `beneficiary` by `amount`.
+  /// Reads O(3), Writes(2)
   pub(super) fn increase_balance(
     id: AssetId,
 		beneficiary: &T::AccountId,
@@ -156,6 +160,9 @@ impl<T: Config> Pallet<T> {
 			return Ok(amount)
 		}
     let actual = Self::prep_debit(id, target, amount, max_allowed)?;
+
+    let mut target_topup: TopUpConsequence<T::Balance> = TopUpConsequence::None;
+
     Assets::<T>::try_mutate(id, |maybe_details| -> DispatchResult {
       let details = maybe_details.as_mut().ok_or(TokenError::UnknownAsset)?;
       
@@ -166,12 +173,104 @@ impl<T: Config> Pallet<T> {
       Accounts::<T>::try_mutate(id, target, |maybe_account| -> DispatchResult {
         let mut account = maybe_account.take().ok_or(Error::<T>::NoAccount)?;
         account.balance = account.balance.saturating_sub(actual);
+
+        // Check if asset is top upped
+        target_topup = details.next_step_topup(account.balance);
+
         *maybe_account = Some(account);
         Ok(())
       })?;
       Ok(())
     })?;
+    // Put an account to the queue for top upped of the balance
+    match target_topup {
+      TopUpConsequence::TopUp(topup) => TopUpQueue::<T>::insert(&id, &target, TopUpConsequence::TopUp(topup)),
+      TopUpConsequence::TopUpFinal(topup) => TopUpQueue::<T>::insert(&id, &target, TopUpConsequence::TopUpFinal(topup)),
+      TopUpConsequence::None => (),
+    };
+
     Self::deposit_event(Event::Burned { asset_id: id, owner: target.clone(), balance: actual });
     Ok(actual)
+  }
+
+  /// Adds asset to TopUppedAssets storage.  \
+  /// It adds only unique ids  \
+  /// WARN: method doesn't check characteristics of the asset.  
+  pub fn top_upped_asset_add(
+    id: &AssetId,
+  ) -> DispatchResult {
+    let mut current_topupped = match <TopUppedAssets<T>>::try_get() {
+      Ok(curr) => curr,
+      Err(_) => <WeakBoundedVec<AssetId, T::MaxTopUppedAssets>>::try_from(Vec::new()).map_err(|()| Error::<T>::MaxTopUppedAssetsReached)?,
+    };
+    // let mut tu = current_topupped.into_inner();
+    if let Err(index) = current_topupped.binary_search(id) {
+      match current_topupped.try_insert(index, id.clone()) {
+        Ok(_) => <TopUppedAssets<T>>::put(current_topupped),
+        Err(_) => return Err(Error::<T>::MaxTopUppedAssetsReached.into())
+      };
+    };
+    Ok(())
+  }
+  
+  /// Removes asset from TopUppedAssets storage.
+  pub fn top_upped_asset_remove(
+    id: &AssetId,
+  ) {
+    let mut current_topupped = match <TopUppedAssets<T>>::try_get() {
+      Ok(curr) => curr,
+      Err(_) => return,
+    };
+    if let Ok(index) = current_topupped.binary_search(id) {
+      current_topupped.remove(index);
+      <TopUppedAssets<T>>::put(current_topupped);
+      // remove all records for that asset in TopUpQueue (if exisit)
+      <TopUpQueue<T>>::remove_prefix(&id, None);
+    };
+  }
+
+  /// Top up all assets which have demand.
+  pub fn process_top_upped_assets() -> Weight {
+    let mut reads: Weight = 1;
+    let mut writes: Weight = 0;
+    // get all top upped assets
+    let assets = match TopUppedAssets::<T>::try_get() {
+      Ok(assets) => assets,
+      Err(_) => return T::DbWeight::get().reads(reads),
+    };
+
+    // loop over all assets, retrieve accounts that have a demand for these assets
+    // and replenish their balance
+    let mut next_topup: Vec<(AssetId, T::AccountId, TopUpConsequence<T::Balance>)> = Vec::new();
+    for id in assets.iter() {
+      reads.saturating_accrue(1);
+      for (target, topup) in TopUpQueue::<T>::drain_prefix(&id) {
+        match topup {
+          TopUpConsequence::TopUpFinal(amount) => {
+            Self::increase_balance(*id, &target, amount).unwrap();
+            reads.saturating_accrue(3);
+            writes.saturating_accrue(2);
+          },
+          TopUpConsequence::TopUp(amount) => {
+            Self::increase_balance(*id, &target, amount).unwrap();
+            // it's not final top up. So, calculates next topup amount and stores it in the queue
+            let account = Accounts::<T>::get(&id, &target).unwrap();
+            let details = Assets::<T>::get(&id).unwrap();
+            let target_topup = details.next_step_topup(account.balance);
+            next_topup.push((*id, target, target_topup));
+            reads.saturating_accrue(5);
+            writes.saturating_accrue(2);
+          },
+          TopUpConsequence:: None => (),
+        }
+      }
+    }
+    // add to queue all unfinished top ups
+    for (id, target, topup) in next_topup {
+      TopUpQueue::<T>::insert(&id, &target, topup);
+      writes.saturating_accrue(1);
+    };
+
+    T::DbWeight::get().reads_writes(reads, writes)
   }
 }

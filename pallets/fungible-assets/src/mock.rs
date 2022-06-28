@@ -1,5 +1,5 @@
 use crate as pallet_fungible_assets;
-use frame_support::traits::{ConstU16, ConstU32, ConstU64, AsEnsureOriginWithArg, GenesisBuild};
+use frame_support::traits::{ConstU16, ConstU32, ConstU64, AsEnsureOriginWithArg, GenesisBuild, Hooks};
 use frame_system as system;
 use sp_core::H256;
 use sp_runtime::{
@@ -9,6 +9,8 @@ use sp_runtime::{
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
+
+pub(crate) type BlockNumber = u64;
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -56,6 +58,7 @@ impl pallet_fungible_assets::Config for Test {
 	type CreateOrigin = AsEnsureOriginWithArg<frame_system::EnsureSigned<u64>>;
 	type OrganizationId = u64;
 	type NameLimit = ConstU32<8>;
+	type MaxTopUppedAssets = ConstU32<{ u32::MAX }>;
 	// type MaxAssets = ConstU32<6>;
 }
 
@@ -77,8 +80,28 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	};
 	config.assimilate_storage(&mut storage).unwrap();
 	let mut ext: sp_io::TestExternalities = storage.into();
-	ext.execute_with(|| System::set_block_number(1));
+	ext.execute_with(|| {
+		System::set_block_number(1);
+		System::on_initialize(1);
+		FungibleAssets::on_initialize(1);
+	});
 	ext
+}
+
+/// Progress to the given block.
+///
+/// This will finalize the previous block, initialize up to the given block, essentially simulating
+/// a block import/propose process where we first initialize the block, then execute some stuff (not
+/// in the function), and then finalize the block.
+pub fn run_to_block(n: BlockNumber) {
+	while System::block_number() < n {
+		FungibleAssets::on_finalize(System::block_number());
+  	System::on_finalize(System::block_number());
+
+		System::set_block_number(System::block_number() + 1);
+		System::on_initialize(System::block_number());
+		FungibleAssets::on_initialize(System::block_number());
+	}
 }
 
 pub type SysEvent = frame_system::Event<Test>;

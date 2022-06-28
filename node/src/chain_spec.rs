@@ -182,7 +182,7 @@ fn testnet_genesis(
 	endowed_accounts: Vec<AccountId>,
 	organization_accounts: Vec<(AccountId, Vec<u8>)>,
 	organization_members: Vec<(AccountId, AccountId)>,
-	fungible_assets: Vec<(AssetId, AccountId, Vec<u8>, Option<u32>, Option<u64>, Option<u64>)>,
+	fungible_assets: Vec<(AssetId, AccountId, Vec<u8>, Option<Balance>, Option<Balance>, Option<Balance>)>,
 	fungible_assets_balances: Vec<(AssetId, AccountId, Balance)>,
 	_enable_println: bool,
 ) -> GenesisConfig {

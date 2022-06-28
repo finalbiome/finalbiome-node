@@ -34,7 +34,8 @@ use frame_support::{
 		ReservableCurrency,
 		Currency,
 	},
-	BoundedVec, log,
+		WeakBoundedVec,
+		BoundedVec, log, 
 };
 use frame_support::pallet_prelude::*;
 use frame_system::pallet_prelude::*;
@@ -75,6 +76,9 @@ pub mod pallet {
 		/// The maximum length of an asset's name stored on-chain.
 		#[pallet::constant]
 		type NameLimit: Get<u32>;
+
+		/// The maximum number of topupped assets that the pallet can hold.
+		type MaxTopUppedAssets: Get<u32>;
 		
 		// The maximum count of fungible asset for each owner
 		// #[pallet::constant]
@@ -128,6 +132,25 @@ pub mod pallet {
 	/// Storing next asset id
 	pub type NextAssetId<T: Config> = StorageValue<_, AssetId, ValueQuery>;
 
+	#[pallet::storage]
+	#[pallet::getter(fn top_upped_assets)]
+	/// Storing assets which marked as Top Upped
+	pub(super) type TopUppedAssets<T: Config> =
+		StorageValue<_, WeakBoundedVec<AssetId, T::MaxTopUppedAssets>, ValueQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn top_up_queue)]
+	/// Accounts with assets which need to top upped in next block.
+	/// Value contains amount to top up
+	pub(super) type TopUpQueue<T: Config> = StorageDoubleMap<
+		_,
+		Blake2_128Concat,
+		AssetId,
+		Blake2_128Concat,
+		T::AccountId,
+		TopUpConsequence<T::Balance>,
+	>;
+
 	
 	#[pallet::storage]
 	#[pallet::getter(fn something)]
@@ -136,7 +159,7 @@ pub mod pallet {
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
 		/// Genesis assets: asset_id, organization_id, name, top_upped_speed, cup_global, cup_local
-		pub assets: Vec<(AssetId, T::AccountId, Vec<u8>, Option<u32>, Option<u64>, Option<u64>)>,
+		pub assets: Vec<(AssetId, T::AccountId, Vec<u8>, Option<T::Balance>, Option<T::Balance>, Option<T::Balance>)>,
 		/// Genesis account_balances: asset_id, account_id, balance
 		pub accounts: Vec<(AssetId, T::AccountId, T::Balance)>,
 	}
@@ -193,6 +216,12 @@ pub mod pallet {
 				// WARN: assets ids in the genesis config should be monotonically increasing.
 				// TODO: refactor to setting a next id from max id in genesis config.
 				NextAssetId::<T>::put(id.checked_add(One::one()).unwrap());
+				// if asset is top upped, add it to top_upped_assets
+				if let Some(top_upped) = top_upped {
+					if top_upped.speed > Zero::zero() {
+						Pallet::<T>::top_upped_asset_add(asset_id).unwrap();
+					}
+				}
 			};
 			// filling account balances
 			for (asset_id, account_id, balance) in &self.accounts {
@@ -234,6 +263,8 @@ pub mod pallet {
 		NoPermission,
 		/// Asset name is too long.
 		AssetNameTooLong,
+		/// Limit of tipupped assets is reached.
+		MaxTopUppedAssetsReached,
 		/// Global Cup must be above zero.
 		ZeroGlobalCup,
 		/// Local Cup must be above zero.
@@ -251,8 +282,10 @@ pub mod pallet {
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_initialize(_n: BlockNumberFor<T>) -> Weight {
 			log::info!(target: "runtime::fungible-assets", "hook called");
-			// unimplemented!();
-			T::DbWeight::get().reads_writes(1, 1)
+			// All assets which need to be top upped (which stoded in TopUpQueue) must be processed
+			let weight = Self::process_top_upped_assets();
+
+			weight
 		}
 
 		// can implement also: on_finalize, on_runtime_upgrade, offchain_worker, ...
@@ -278,9 +311,9 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			organization_id: <T::Lookup as StaticLookup>::Source,
 			name: Vec<u8>,
-			top_upped: Option<TopUppedFA>,
-			cup_global: Option<CupFA>,
-			cup_local: Option<CupFA>,
+			top_upped: Option<TopUppedFA<T::Balance>>,
+			cup_global: Option<CupFA<T::Balance>>,
+			cup_local: Option<CupFA<T::Balance>>,
 		) -> DispatchResult {
 
 			// owner of an asset wiil be orgnization
@@ -308,6 +341,12 @@ pub mod pallet {
 				&asset_id,
 				()
 			);
+			// if asset is top upped, add it to top_upped_assets
+			if let Some(top_upped) = top_upped {
+				if top_upped.speed > Zero::zero() {
+					Self::top_upped_asset_add(&asset_id).unwrap();
+				}
+			}
 
 			Self::deposit_event(Event::Created { asset_id, owner });
 
@@ -329,6 +368,7 @@ pub mod pallet {
 			// TODO: set limits on the number of assets created by each organization
 			Assets::<T>::remove(&asset_id);
 			AssetsOf::<T>::remove(&owner, &asset_id);
+			Self::top_upped_asset_remove(&asset_id);
 
 			Self::deposit_event(Event::Destroyed { asset_id, owner });
 			Ok(())
