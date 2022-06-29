@@ -216,17 +216,28 @@ pub mod pallet {
 				// WARN: assets ids in the genesis config should be monotonically increasing.
 				// TODO: refactor to setting a next id from max id in genesis config.
 				NextAssetId::<T>::put(id.checked_add(One::one()).unwrap());
+				
+				// region: Top Up Filling
 				// if asset is top upped, add it to top_upped_assets
 				if let Some(top_upped) = top_upped {
 					if top_upped.speed > Zero::zero() {
 						Pallet::<T>::top_upped_asset_add(asset_id).unwrap();
 					}
 				}
+				// endregion: Top Up Filling
 			};
 			// filling account balances
 			for (asset_id, account_id, balance) in &self.accounts {
 				assert!(Assets::<T>::contains_key(&asset_id), "Asset id not exists");
 				Pallet::<T>::increase_balance(*asset_id, account_id, *balance).unwrap();
+				// add accounts to top up queue, if needed
+				let details = Assets::<T>::get(&asset_id).unwrap();
+				let target_topup = details.next_step_topup(*balance);
+				match target_topup {
+					TopUpConsequence::TopUp(topup) => TopUpQueue::<T>::insert(&asset_id, &account_id, TopUpConsequence::TopUp(topup)),
+					TopUpConsequence::TopUpFinal(topup) => TopUpQueue::<T>::insert(&asset_id, &account_id, TopUpConsequence::TopUpFinal(topup)),
+					TopUpConsequence::None => (),
+				};
 			};
 		}
 	}
@@ -281,10 +292,10 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_initialize(_n: BlockNumberFor<T>) -> Weight {
-			log::info!(target: "runtime::fungible-assets", "hook called");
 			// All assets which need to be top upped (which stoded in TopUpQueue) must be processed
 			let weight = Self::process_top_upped_assets();
-
+			log::info!("💫 Top up processed [weigth: {}]", &weight);
+			
 			weight
 		}
 

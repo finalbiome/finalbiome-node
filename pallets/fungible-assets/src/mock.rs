@@ -75,7 +75,8 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 		accounts: vec![
 			(0, 1, 1_000),
 			(1, 3, 20),
-			(0, 4, 10_000),
+			(1, 4, 5),
+			(0, 5, 10_000),
 		],
 	};
 	config.assimilate_storage(&mut storage).unwrap();

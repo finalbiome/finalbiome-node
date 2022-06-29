@@ -26,10 +26,10 @@ fn check_test_genesis_data() {
 		assert_eq!(fa0.cup_global, None);
 		assert_eq!(fa0.cup_local, None);
 		let fa1 = FungibleAssets::assets(1).unwrap();
-		assert_eq!(fa1.accounts, 1);
+		assert_eq!(fa1.accounts, 2);
 		assert_eq!(fa1.owner, 2);
 		assert_eq!(fa1.name.to_vec(), br"asset02".to_vec());
-		assert_eq!(fa1.supply, 20);
+		assert_eq!(fa1.supply, 30); // 25 initial + 5 top upped when start
 		assert_eq!(fa1.top_upped.unwrap().speed, 5);
 		assert_eq!(fa1.cup_global, None);
 		assert_eq!(fa1.cup_local.unwrap().amount, 20);
@@ -37,10 +37,10 @@ fn check_test_genesis_data() {
 		// genesis includes two accounts
 		let acc1 = FungibleAssets::accounts(0, 1).unwrap();
 		let acc3 = FungibleAssets::accounts(1, 3).unwrap();
-		let acc4 = FungibleAssets::accounts(0, 4).unwrap();
+		let acc4 = FungibleAssets::accounts(1, 4).unwrap();
 		assert_eq!(acc1.balance, 1_000);
 		assert_eq!(acc3.balance, 20);
-		assert_eq!(acc4.balance, 10_000);
+		assert_eq!(acc4.balance, 10); // initial 5 and 5 top upped
 
 		// next fa id must be 2
 		assert_eq!(get_next_fa_id(), 2);
@@ -49,6 +49,9 @@ fn check_test_genesis_data() {
 		let tua = FungibleAssets::top_upped_assets();
 		assert_eq!(tua.len(), 1);
 		assert_eq!(tua.contains(&1), true);
+		// TopUpQueue should include acc 4
+		let tuq = FungibleAssets::top_up_queue(&1, &4).unwrap();
+		assert_eq!(tuq, TopUpConsequence::TopUp(5));
 	})
 }
 
@@ -73,6 +76,7 @@ fn correct_error_for_none_value() {
 #[test]
 fn create_fa_works() {
 	new_test_ext().execute_with(|| {
+		System::reset_events();
 		// Create fa with some name
 		let name = br"fa name".to_vec();
 		let org_id = 2;
@@ -424,6 +428,7 @@ fn increase_balance_straight_forward() {
 #[test]
 fn increase_balance_event() {
 	new_test_ext().execute_with(|| {
+		System::reset_events();
 		let fa_id = 0;
 		let acc_id = 99;
 		assert_ok!(
@@ -726,6 +731,7 @@ fn decrease_balance_topup_check() {
 #[test]
 fn decrease_balance_event() {
 	new_test_ext().execute_with(|| {
+		System::reset_events();
 		let id = 0;
 		let target = 1; // account has 1_000 of fa 0
 		let amount = 900; // total suply 11_000
