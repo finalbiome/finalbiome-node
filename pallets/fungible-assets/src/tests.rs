@@ -10,14 +10,14 @@ use sp_runtime::{TokenError};
 use frame_system::{EventRecord, Phase};
 
 fn get_next_fa_id() -> u32 {
-	FungibleAssets::next_asset_id()
+	NextAssetId::<Test>::get()
 }
 
 #[test]
 fn check_test_genesis_data() {
 	new_test_ext().execute_with(|| {
 		// genesis includes two assets with 0 & 1 ids
-		let fa0 = FungibleAssets::assets(0).unwrap();
+		let fa0 = Assets::<Test>::get(0).unwrap();
 		assert_eq!(fa0.accounts, 2);
 		assert_eq!(fa0.owner, 2);
 		assert_eq!(fa0.name.to_vec(), br"asset01".to_vec());
@@ -25,7 +25,7 @@ fn check_test_genesis_data() {
 		assert_eq!(fa0.top_upped, None);
 		assert_eq!(fa0.cup_global, None);
 		assert_eq!(fa0.cup_local, None);
-		let fa1 = FungibleAssets::assets(1).unwrap();
+		let fa1 = Assets::<Test>::get(1).unwrap();
 		assert_eq!(fa1.accounts, 2);
 		assert_eq!(fa1.owner, 2);
 		assert_eq!(fa1.name.to_vec(), br"asset02".to_vec());
@@ -46,11 +46,11 @@ fn check_test_genesis_data() {
 		assert_eq!(get_next_fa_id(), 2);
 
 		// TopUppedAssets should includes asset02
-		let tua = FungibleAssets::top_upped_assets();
+		let tua = TopUppedAssets::<Test>::get();
 		assert_eq!(tua.len(), 1);
 		assert_eq!(tua.contains(&1), true);
 		// TopUpQueue should include acc 4
-		let tuq = FungibleAssets::top_up_queue(&1, &4).unwrap();
+		let tuq = TopUpQueue::<Test>::get(&1, &4).unwrap();
 		assert_eq!(tuq, TopUpConsequence::TopUp(5));
 	})
 }
@@ -61,7 +61,7 @@ fn it_works_for_default_value() {
 		// Dispatch a signed extrinsic.
 		assert_ok!(FungibleAssets::do_something(Origin::signed(1), 42));
 		// Read pallet storage and assert an expected result.
-		assert_eq!(FungibleAssets::something(), Some(42));
+		assert_eq!(Something::<Test>::get(), Some(42));
 	});
 }
 
@@ -91,7 +91,7 @@ fn create_fa_works() {
 		);
 		assert_ok!(res);
 
-		let stored_fa = FungibleAssets::assets(fa_id);
+		let stored_fa = Assets::<Test>::get(fa_id);
 		let fa = stored_fa.unwrap();
 		assert_eq!(fa.name.to_vec(), name);
 		assert_eq!(fa.top_upped, None);
@@ -155,7 +155,7 @@ fn create_fa_with_cups() {
 			}),
 		));
 
-		let fa = FungibleAssets::assets(fa_id).unwrap();
+		let fa = Assets::<Test>::get(fa_id).unwrap();
 		assert_eq!(fa.name.to_vec(), name);
 		assert_eq!(fa.top_upped, None);
 		assert_eq!(fa.cup_global, None);
@@ -172,7 +172,7 @@ fn create_fa_with_cups() {
 			}),
 			None,
 		));
-		let fa = FungibleAssets::assets(fa_id).unwrap();
+		let fa = Assets::<Test>::get(fa_id).unwrap();
 		assert_eq!(fa.name.to_vec(), name);
 		assert_eq!(fa.top_upped, None);
 		assert_eq!(fa.cup_local, None);
@@ -191,7 +191,7 @@ fn create_fa_with_cups() {
 				amount: 10
 			}),
 		));
-		let fa = FungibleAssets::assets(fa_id).unwrap();
+		let fa = Assets::<Test>::get(fa_id).unwrap();
 		assert_eq!(fa.name.to_vec(), name);
 		assert_eq!(fa.top_upped, None);
 		assert_eq!(fa.cup_global, Some(CupFA { amount: 100 }));
@@ -259,10 +259,10 @@ fn create_fa_top_up() {
 				amount: 10
 			}),
 		));
-		let fa = FungibleAssets::assets(fa_id).unwrap();
+		let fa = Assets::<Test>::get(fa_id).unwrap();
 		assert_eq!(fa.top_upped, Some(TopUppedFA { speed: 20 }));
 		
-		assert_eq!(true, FungibleAssets::top_upped_assets().contains(&fa_id));
+		assert_eq!(true, TopUppedAssets::<Test>::get().contains(&fa_id));
 	})
 }
 
@@ -356,7 +356,7 @@ fn increase_balance_zero() {
 		assert_ok!(
 			FungibleAssets::increase_balance(0, &1, 0)
 		);
-		let fa = FungibleAssets::assets(fa_id).unwrap();
+		let fa = Assets::<Test>::get(fa_id).unwrap();
 		assert_eq!(fa.supply, 0);
 	})
 }
@@ -377,7 +377,7 @@ fn increase_balance_straight_forward() {
 		assert_ok!(
 			FungibleAssets::increase_balance(fa_id, &1, 100)
 		);
-		let fa = FungibleAssets::assets(fa_id).unwrap();
+		let fa = Assets::<Test>::get(fa_id).unwrap();
 		assert_eq!(fa.supply, 100);
 		assert_eq!(fa.accounts, 1);
 		let acc = Accounts::<Test>::get(1, fa_id).unwrap();
@@ -396,7 +396,7 @@ fn increase_balance_straight_forward() {
 		assert_ok!(
 			FungibleAssets::increase_balance(fa_id, &1, 200)
 		);
-		let fa = FungibleAssets::assets(fa_id).unwrap();
+		let fa = Assets::<Test>::get(fa_id).unwrap();
 		assert_eq!(fa.supply, 200);
 		assert_eq!(fa.accounts, 1);
 		let acc = Accounts::<Test>::get(1, fa_id).unwrap();
@@ -406,7 +406,7 @@ fn increase_balance_straight_forward() {
 		assert_ok!(
 			FungibleAssets::increase_balance(fa_id-1, &1, 300)
 		);
-		let fa = FungibleAssets::assets(fa_id-1).unwrap();
+		let fa = Assets::<Test>::get(fa_id-1).unwrap();
 		assert_eq!(fa.supply, 400);
 		assert_eq!(fa.accounts, 1);
 		let acc = Accounts::<Test>::get(1, fa_id-1).unwrap();
@@ -416,7 +416,7 @@ fn increase_balance_straight_forward() {
 		assert_ok!(
 			FungibleAssets::increase_balance(fa_id-1, &3, 1000)
 		);
-		let fa = FungibleAssets::assets(fa_id-1).unwrap();
+		let fa = Assets::<Test>::get(fa_id-1).unwrap();
 		assert_eq!(fa.supply, 1400);
 		assert_eq!(fa.accounts, 2);
 		let acc = Accounts::<Test>::get(3, fa_id-1).unwrap();
@@ -627,7 +627,7 @@ fn decrease_balance_common() {
 		let target = 1; // account has 1000 of fa 0
 		let amount = 100; // total suply 11_000
 		let max_allowed = false;
-		let fa_sup = FungibleAssets::assets(id).unwrap().supply;
+		let fa_sup = Assets::<Test>::get(id).unwrap().supply;
 		let acc_balance = Accounts::<Test>::get(target, id).unwrap().balance;
 		assert_eq!(
 			FungibleAssets::decrease_balance(id, &target, amount, max_allowed),
@@ -635,7 +635,7 @@ fn decrease_balance_common() {
 		);
 		assert_eq!(
 			fa_sup - amount,
-			FungibleAssets::assets(id).unwrap().supply
+			Assets::<Test>::get(id).unwrap().supply
 		);
 		assert_eq!(
 			acc_balance - amount,
@@ -651,7 +651,7 @@ fn decrease_balance_max_allowed() {
 		let target = 1; // account has 1_000 of fa 0
 		let amount = 100_000; // total suply 11_000
 		let max_allowed = true;
-		let fa_sup = FungibleAssets::assets(id).unwrap().supply;
+		let fa_sup = Assets::<Test>::get(id).unwrap().supply;
 		let acc_balance = Accounts::<Test>::get(target, id).unwrap().balance;
 		assert_eq!(
 			FungibleAssets::decrease_balance(id, &target, amount, max_allowed),
@@ -659,7 +659,7 @@ fn decrease_balance_max_allowed() {
 		);
 		assert_eq!(
 			fa_sup - acc_balance,
-			FungibleAssets::assets(id).unwrap().supply
+			Assets::<Test>::get(id).unwrap().supply
 		);
 		assert_eq!(
 			Accounts::<Test>::get(target, id).unwrap().balance,
@@ -675,7 +675,7 @@ fn decrease_balance_max_allowed_2() {
 		let target = 1; // account has 1_000 of fa 0
 		let amount = 900; // total suply 11_000
 		let max_allowed = true;
-		let fa_sup = FungibleAssets::assets(id).unwrap().supply;
+		let fa_sup = Assets::<Test>::get(id).unwrap().supply;
 		let acc_balance = Accounts::<Test>::get(target, id).unwrap().balance;
 		assert_eq!(
 			FungibleAssets::decrease_balance(id, &target, amount, max_allowed),
@@ -683,7 +683,7 @@ fn decrease_balance_max_allowed_2() {
 		);
 		assert_eq!(
 			fa_sup - amount,
-			FungibleAssets::assets(id).unwrap().supply
+			Assets::<Test>::get(id).unwrap().supply
 		);
 		assert_eq!(
 			Accounts::<Test>::get(target, id).unwrap().balance,
@@ -701,7 +701,7 @@ fn decrease_balance_topup_check() {
 		let max_allowed = false;
 		let acc_balance = Accounts::<Test>::get(target, id).unwrap().balance;
 		
-		assert_eq!(FungibleAssets::top_up_queue(id, target).is_none(), true);
+		assert_eq!(TopUpQueue::<Test>::get(id, target).is_none(), true);
 		assert_eq!(
 			FungibleAssets::decrease_balance(id, &target, amount, max_allowed),
 			Ok(amount)
@@ -710,20 +710,20 @@ fn decrease_balance_topup_check() {
 			Accounts::<Test>::get(target, id).unwrap().balance,
 			acc_balance - amount // 17
 		);
-		assert_eq!(FungibleAssets::top_up_queue(id, target).is_none(), false);
-		assert_eq!(FungibleAssets::top_up_queue(id, target).unwrap(), TopUpConsequence::TopUpFinal(3));
+		assert_eq!(TopUpQueue::<Test>::get(id, target).is_none(), false);
+		assert_eq!(TopUpQueue::<Test>::get(id, target).unwrap(), TopUpConsequence::TopUpFinal(3));
 
 		assert_eq!(
 			FungibleAssets::decrease_balance(id, &target, 15, max_allowed),
 			Ok(15)
 		);
-		assert_eq!(FungibleAssets::top_up_queue(id, target).unwrap(), TopUpConsequence::TopUp(5));
+		assert_eq!(TopUpQueue::<Test>::get(id, target).unwrap(), TopUpConsequence::TopUp(5));
 
 		assert_eq!(
 			FungibleAssets::decrease_balance(id, &target, 1000, true),
 			Ok(2)
 		);
-		assert_eq!(FungibleAssets::top_up_queue(id, target).unwrap(), TopUpConsequence::TopUp(5));
+		assert_eq!(TopUpQueue::<Test>::get(id, target).unwrap(), TopUpConsequence::TopUp(5));
 
 	})
 }
@@ -755,34 +755,34 @@ fn decrease_balance_event() {
 #[test]
 fn top_upped_asset_manipulations_test() {
 		new_test_ext().execute_with(|| {
-			let curr_len = FungibleAssets::top_upped_assets().len();
+			let curr_len = TopUppedAssets::<Test>::get().len();
 			assert_ok!(FungibleAssets::top_upped_asset_add(&33));
-			assert_eq!(curr_len + 1, FungibleAssets::top_upped_assets().len());
-			assert_eq!(true, FungibleAssets::top_upped_assets().contains(&33));
+			assert_eq!(curr_len + 1, TopUppedAssets::<Test>::get().len());
+			assert_eq!(true, TopUppedAssets::<Test>::get().contains(&33));
 
 			assert_ok!(FungibleAssets::top_upped_asset_add(&33));
-			assert_eq!(curr_len + 1, FungibleAssets::top_upped_assets().len());
-			assert_eq!(true, FungibleAssets::top_upped_assets().contains(&33));
+			assert_eq!(curr_len + 1, TopUppedAssets::<Test>::get().len());
+			assert_eq!(true, TopUppedAssets::<Test>::get().contains(&33));
 
-			let curr_len = FungibleAssets::top_upped_assets().len();
+			let curr_len = TopUppedAssets::<Test>::get().len();
 			assert_ok!(FungibleAssets::top_upped_asset_add(&34));
-			assert_eq!(curr_len + 1, FungibleAssets::top_upped_assets().len());
-			assert_eq!(true, FungibleAssets::top_upped_assets().contains(&34));
+			assert_eq!(curr_len + 1, TopUppedAssets::<Test>::get().len());
+			assert_eq!(true, TopUppedAssets::<Test>::get().contains(&34));
 
-			let curr_len = FungibleAssets::top_upped_assets().len();
+			let curr_len = TopUppedAssets::<Test>::get().len();
 			FungibleAssets::top_upped_asset_remove(&34);
-			assert_eq!(curr_len - 1, FungibleAssets::top_upped_assets().len());
-			assert_eq!(false, FungibleAssets::top_upped_assets().contains(&34));
+			assert_eq!(curr_len - 1, TopUppedAssets::<Test>::get().len());
+			assert_eq!(false, TopUppedAssets::<Test>::get().contains(&34));
 
-			let curr_len = FungibleAssets::top_upped_assets().len();
+			let curr_len = TopUppedAssets::<Test>::get().len();
 			FungibleAssets::top_upped_asset_remove(&34);
-			assert_eq!(curr_len, FungibleAssets::top_upped_assets().len());
-			assert_eq!(false, FungibleAssets::top_upped_assets().contains(&34));
+			assert_eq!(curr_len, TopUppedAssets::<Test>::get().len());
+			assert_eq!(false, TopUppedAssets::<Test>::get().contains(&34));
 
-			let curr_len = FungibleAssets::top_upped_assets().len();
+			let curr_len = TopUppedAssets::<Test>::get().len();
 			FungibleAssets::top_upped_asset_remove(&33);
-			assert_eq!(curr_len - 1, FungibleAssets::top_upped_assets().len());
-			assert_eq!(false, FungibleAssets::top_upped_assets().contains(&33));
+			assert_eq!(curr_len - 1, TopUppedAssets::<Test>::get().len());
+			assert_eq!(false, TopUppedAssets::<Test>::get().contains(&33));
 		})
 }
 
@@ -791,15 +791,15 @@ fn top_upped_asset_manipulations_test() {
 fn top_upped_asset_remove_from_queue() {
 	new_test_ext().execute_with(|| {
 		// in genesis we have one asset with topup
-		assert_eq!(FungibleAssets::top_upped_assets().len(), 1);
+		assert_eq!(TopUppedAssets::<Test>::get().len(), 1);
 		// add fake record to TopUpQueue and check removing
-		assert_eq!(true, FungibleAssets::top_upped_assets().contains(&1));
+		assert_eq!(true, TopUppedAssets::<Test>::get().contains(&1));
 		TopUpQueue::<Test>::insert(&1, &3, TopUpConsequence::TopUpFinal(10));
 
-		assert_eq!(FungibleAssets::top_up_queue(&1, &3).is_some(), true);
-		_ = FungibleAssets::top_up_queue(&1, &3).unwrap();
+		assert_eq!(TopUpQueue::<Test>::get(&1, &3).is_some(), true);
+		_ = TopUpQueue::<Test>::get(&1, &3).unwrap();
 		FungibleAssets::top_upped_asset_remove(&1);
-		assert_eq!(FungibleAssets::top_up_queue(&1, &3).is_none(), true);
+		assert_eq!(TopUpQueue::<Test>::get(&1, &3).is_none(), true);
 	})
 }
 

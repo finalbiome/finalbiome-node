@@ -92,7 +92,6 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	#[pallet::storage]
-	#[pallet::getter(fn assets)]
 	/// Details of an asset.
 	pub(super) type Assets<T: Config> = StorageMap<
 		_,
@@ -102,7 +101,6 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn assets_of)]
 	/// Asset ids by owners (organizations).
 	pub(super) type AssetsOf<T: Config> = StorageDoubleMap<
 		_,
@@ -128,18 +126,15 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn next_asset_id)]
 	/// Storing next asset id
 	pub type NextAssetId<T: Config> = StorageValue<_, AssetId, ValueQuery>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn top_upped_assets)]
 	/// Storing assets which marked as Top Upped
 	pub(super) type TopUppedAssets<T: Config> =
 		StorageValue<_, WeakBoundedVec<AssetId, T::MaxTopUppedAssets>, ValueQuery>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn top_up_queue)]
 	/// Accounts with assets which need to top upped in next block.
 	/// Value contains amount to top up
 	pub(super) type TopUpQueue<T: Config> = StorageDoubleMap<
@@ -153,7 +148,6 @@ pub mod pallet {
 
 	
 	#[pallet::storage]
-	#[pallet::getter(fn something)]
 	pub type Something<T> = StorageValue<_, u32>;
 
 	#[pallet::genesis_config]
