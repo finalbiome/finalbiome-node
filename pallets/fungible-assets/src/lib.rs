@@ -113,14 +113,13 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn accounts)]
 	/// The holdings of a specific account for a specific asset
 	pub(super) type Accounts<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
-		AssetId,
-		Blake2_128Concat,
 		T::AccountId,
+		Blake2_128Concat,
+		AssetId,
 		AssetAccountOf<T>,
 		// OptionQuery,
 		// GetDefault,
@@ -160,8 +159,8 @@ pub mod pallet {
 	pub struct GenesisConfig<T: Config> {
 		/// Genesis assets: asset_id, organization_id, name, top_upped_speed, cup_global, cup_local
 		pub assets: Vec<(AssetId, T::AccountId, Vec<u8>, Option<T::Balance>, Option<T::Balance>, Option<T::Balance>)>,
-		/// Genesis account_balances: asset_id, account_id, balance
-		pub accounts: Vec<(AssetId, T::AccountId, T::Balance)>,
+		/// Genesis account_balances: account_id, asset_id, balance
+		pub accounts: Vec<(T::AccountId, AssetId, T::Balance)>,
 	}
 
 	#[cfg(feature = "std")]
@@ -227,7 +226,7 @@ pub mod pallet {
 				// endregion: Top Up Filling
 			};
 			// filling account balances
-			for (asset_id, account_id, balance) in &self.accounts {
+			for (account_id, asset_id, balance) in &self.accounts {
 				assert!(Assets::<T>::contains_key(&asset_id), "Asset id not exists");
 				Pallet::<T>::increase_balance(*asset_id, account_id, *balance).unwrap();
 				// add accounts to top up queue, if needed

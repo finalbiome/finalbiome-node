@@ -36,7 +36,7 @@ impl<T: Config> Pallet<T> {
 		id: AssetId,
 		who: impl sp_std::borrow::Borrow<T::AccountId>,
 	) -> Option<T::Balance> {
-		Accounts::<T>::get(id, who.borrow()).map(|a| a.balance)
+		Accounts::<T>::get(who.borrow(), id).map(|a| a.balance)
 	}
 
   /// Reads O(1), Writes(0)
@@ -94,7 +94,7 @@ impl<T: Config> Pallet<T> {
     max_allowed: bool,
   ) -> Result<T::Balance, DispatchError> {
     let _ = Assets::<T>::get(id).ok_or(TokenError::UnknownAsset)?;
-    let account = Accounts::<T>::get(id, target).ok_or(Error::<T>::NoAccount)?;
+    let account = Accounts::<T>::get(target, id ).ok_or(Error::<T>::NoAccount)?;
     let actual = if max_allowed {
       account.balance.min(amount)
     } else {
@@ -121,7 +121,7 @@ impl<T: Config> Pallet<T> {
       
       details.supply = details.supply.saturating_add(amount);
       
-      Accounts::<T>::try_mutate(id, beneficiary, |maybe_account| -> DispatchResult {
+      Accounts::<T>::try_mutate(beneficiary, id, |maybe_account| -> DispatchResult {
         match maybe_account {
           Some(ref mut account) => {
 						account.balance.saturating_accrue(amount);
@@ -170,7 +170,7 @@ impl<T: Config> Pallet<T> {
       // Maybe need drop it or move to off-chain stats collector
       details.supply = details.supply.saturating_sub(actual);
 
-      Accounts::<T>::try_mutate(id, target, |maybe_account| -> DispatchResult {
+      Accounts::<T>::try_mutate(target, id, |maybe_account| -> DispatchResult {
         let mut account = maybe_account.take().ok_or(Error::<T>::NoAccount)?;
         account.balance = account.balance.saturating_sub(actual);
 
@@ -254,7 +254,7 @@ impl<T: Config> Pallet<T> {
           TopUpConsequence::TopUp(amount) => {
             Self::increase_balance(*id, &target, amount).unwrap();
             // it's not final top up. So, calculates next topup amount and stores it in the queue
-            let account = Accounts::<T>::get(&id, &target).unwrap();
+            let account = Accounts::<T>::get(&target, &id).unwrap();
             let details = Assets::<T>::get(&id).unwrap();
             let target_topup = details.next_step_topup(account.balance);
             next_topup.push((*id, target, target_topup));

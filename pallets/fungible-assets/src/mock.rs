@@ -71,12 +71,12 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 			(0, 2, "asset01".into(), None, None, None),
 			(1, 2, "asset02".into(), Some(5), None, Some(20)),
 		],
-		// account_balances: asset_id, account_id, balance
+		// account_balances: account_id, asset_id, balance
 		accounts: vec![
-			(0, 1, 1_000),
-			(1, 3, 20),
-			(1, 4, 5),
-			(0, 5, 10_000),
+			(1, 0, 1_000),
+			(3, 1, 20),
+			(4, 1, 5),
+			(5, 0, 10_000),
 		],
 	};
 	config.assimilate_storage(&mut storage).unwrap();

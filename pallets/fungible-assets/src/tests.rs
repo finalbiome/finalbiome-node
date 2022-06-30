@@ -35,9 +35,9 @@ fn check_test_genesis_data() {
 		assert_eq!(fa1.cup_local.unwrap().amount, 20);
 
 		// genesis includes two accounts
-		let acc1 = FungibleAssets::accounts(0, 1).unwrap();
-		let acc3 = FungibleAssets::accounts(1, 3).unwrap();
-		let acc4 = FungibleAssets::accounts(1, 4).unwrap();
+		let acc1 = Accounts::<Test>::get(1, 0).unwrap();
+		let acc3 = Accounts::<Test>::get(3, 1).unwrap();
+		let acc4 = Accounts::<Test>::get(4, 1).unwrap();
 		assert_eq!(acc1.balance, 1_000);
 		assert_eq!(acc3.balance, 20);
 		assert_eq!(acc4.balance, 10); // initial 5 and 5 top upped
@@ -380,7 +380,7 @@ fn increase_balance_straight_forward() {
 		let fa = FungibleAssets::assets(fa_id).unwrap();
 		assert_eq!(fa.supply, 100);
 		assert_eq!(fa.accounts, 1);
-		let acc = Accounts::<Test>::get(fa_id, 1).unwrap();
+		let acc = Accounts::<Test>::get(1, fa_id).unwrap();
 		assert_eq!(acc.balance, 100);
 		assert_eq!(acc.reason, ExistenceReason::Sufficient);
 		// add another one and deposit it for the same acc
@@ -399,7 +399,7 @@ fn increase_balance_straight_forward() {
 		let fa = FungibleAssets::assets(fa_id).unwrap();
 		assert_eq!(fa.supply, 200);
 		assert_eq!(fa.accounts, 1);
-		let acc = Accounts::<Test>::get(fa_id, 1).unwrap();
+		let acc = Accounts::<Test>::get(1, fa_id).unwrap();
 		assert_eq!(acc.balance, 200);
 		assert_eq!(acc.reason, ExistenceReason::Sufficient);
 		// add the same fa to the same acc
@@ -409,7 +409,7 @@ fn increase_balance_straight_forward() {
 		let fa = FungibleAssets::assets(fa_id-1).unwrap();
 		assert_eq!(fa.supply, 400);
 		assert_eq!(fa.accounts, 1);
-		let acc = Accounts::<Test>::get(fa_id-1, 1).unwrap();
+		let acc = Accounts::<Test>::get(1, fa_id-1).unwrap();
 		assert_eq!(acc.balance, 400);
 		assert_eq!(acc.reason, ExistenceReason::Sufficient);
 		// add fa to other acc
@@ -419,7 +419,7 @@ fn increase_balance_straight_forward() {
 		let fa = FungibleAssets::assets(fa_id-1).unwrap();
 		assert_eq!(fa.supply, 1400);
 		assert_eq!(fa.accounts, 2);
-		let acc = Accounts::<Test>::get(fa_id-1, 3).unwrap();
+		let acc = Accounts::<Test>::get(3, fa_id-1).unwrap();
 		assert_eq!(acc.balance, 1000);
 		assert_eq!(acc.reason, ExistenceReason::Sufficient);
 	})
@@ -628,7 +628,7 @@ fn decrease_balance_common() {
 		let amount = 100; // total suply 11_000
 		let max_allowed = false;
 		let fa_sup = FungibleAssets::assets(id).unwrap().supply;
-		let acc_balance = FungibleAssets::accounts(id, target).unwrap().balance;
+		let acc_balance = Accounts::<Test>::get(target, id).unwrap().balance;
 		assert_eq!(
 			FungibleAssets::decrease_balance(id, &target, amount, max_allowed),
 			Ok(100)
@@ -639,7 +639,7 @@ fn decrease_balance_common() {
 		);
 		assert_eq!(
 			acc_balance - amount,
-			FungibleAssets::accounts(id, target).unwrap().balance
+			Accounts::<Test>::get(target, id).unwrap().balance
 		);
 	})
 }
@@ -652,7 +652,7 @@ fn decrease_balance_max_allowed() {
 		let amount = 100_000; // total suply 11_000
 		let max_allowed = true;
 		let fa_sup = FungibleAssets::assets(id).unwrap().supply;
-		let acc_balance = FungibleAssets::accounts(id, target).unwrap().balance;
+		let acc_balance = Accounts::<Test>::get(target, id).unwrap().balance;
 		assert_eq!(
 			FungibleAssets::decrease_balance(id, &target, amount, max_allowed),
 			Ok(acc_balance)
@@ -662,7 +662,7 @@ fn decrease_balance_max_allowed() {
 			FungibleAssets::assets(id).unwrap().supply
 		);
 		assert_eq!(
-			FungibleAssets::accounts(id, target).unwrap().balance,
+			Accounts::<Test>::get(target, id).unwrap().balance,
 			0
 		);
 	})
@@ -676,7 +676,7 @@ fn decrease_balance_max_allowed_2() {
 		let amount = 900; // total suply 11_000
 		let max_allowed = true;
 		let fa_sup = FungibleAssets::assets(id).unwrap().supply;
-		let acc_balance = FungibleAssets::accounts(id, target).unwrap().balance;
+		let acc_balance = Accounts::<Test>::get(target, id).unwrap().balance;
 		assert_eq!(
 			FungibleAssets::decrease_balance(id, &target, amount, max_allowed),
 			Ok(amount)
@@ -686,7 +686,7 @@ fn decrease_balance_max_allowed_2() {
 			FungibleAssets::assets(id).unwrap().supply
 		);
 		assert_eq!(
-			FungibleAssets::accounts(id, target).unwrap().balance,
+			Accounts::<Test>::get(target, id).unwrap().balance,
 			acc_balance - amount
 		);
 	})
@@ -699,7 +699,7 @@ fn decrease_balance_topup_check() {
 		let target = 3; // account has 20 of fa 1 and topup speed 5
 		let amount = 3; // total suply 20
 		let max_allowed = false;
-		let acc_balance = FungibleAssets::accounts(id, target).unwrap().balance;
+		let acc_balance = Accounts::<Test>::get(target, id).unwrap().balance;
 		
 		assert_eq!(FungibleAssets::top_up_queue(id, target).is_none(), true);
 		assert_eq!(
@@ -707,7 +707,7 @@ fn decrease_balance_topup_check() {
 			Ok(amount)
 		);
 		assert_eq!(
-			FungibleAssets::accounts(id, target).unwrap().balance,
+			Accounts::<Test>::get(target, id).unwrap().balance,
 			acc_balance - amount // 17
 		);
 		assert_eq!(FungibleAssets::top_up_queue(id, target).is_none(), false);
@@ -817,8 +817,8 @@ fn process_top_upped_assets() {
 
 		assert_eq!(FungibleAssets::process_top_upped_assets(), 0);
 
-		assert_eq!(FungibleAssets::accounts(id, 1100).unwrap().balance, 20);
-		assert_eq!(FungibleAssets::accounts(id, 1200).unwrap().balance, 16);
+		assert_eq!(Accounts::<Test>::get(1100, id).unwrap().balance, 20);
+		assert_eq!(Accounts::<Test>::get(1200, id).unwrap().balance, 16);
 		assert_eq!(TopUpQueue::<Test>::contains_key(&id, &1100), false);
 		assert_eq!(TopUpQueue::<Test>::contains_key(&id, &1200), true);
 		assert_eq!(TopUpQueue::<Test>::get(&id, &1200).unwrap(), TopUpConsequence::TopUpFinal(4));
@@ -838,15 +838,15 @@ fn process_top_up_in_progress() {
 
 		run_to_block(System::block_number() + 1);
 
-		assert_eq!(FungibleAssets::accounts(id, 1100).unwrap().balance, 20);
-		assert_eq!(FungibleAssets::accounts(id, 1200).unwrap().balance, 16);
+		assert_eq!(Accounts::<Test>::get(1100, id).unwrap().balance, 20);
+		assert_eq!(Accounts::<Test>::get(1200, id).unwrap().balance, 16);
 		assert_eq!(TopUpQueue::<Test>::contains_key(&id, &1100), false);
 		assert_eq!(TopUpQueue::<Test>::contains_key(&id, &1200), true);
 
 		run_to_block(System::block_number() + 1);
 
-		assert_eq!(FungibleAssets::accounts(id, 1100).unwrap().balance, 20);
-		assert_eq!(FungibleAssets::accounts(id, 1200).unwrap().balance, 20);
+		assert_eq!(Accounts::<Test>::get(1100, id).unwrap().balance, 20);
+		assert_eq!(Accounts::<Test>::get(1200, id).unwrap().balance, 20);
 		assert_eq!(TopUpQueue::<Test>::contains_key(&id, &1100), false);
 		assert_eq!(TopUpQueue::<Test>::contains_key(&id, &1200), false);
 

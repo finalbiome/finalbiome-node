@@ -85,8 +85,8 @@ pub fn development_config() -> Result<ChainSpec, String> {
 				],
 				// Balances of Fungible Assets
 				vec![
-					(0, get_account_id_from_seed::<sr25519::Public>("Charlie"), 1000),
-					(1, get_account_id_from_seed::<sr25519::Public>("Dave"), 20),
+					(get_account_id_from_seed::<sr25519::Public>("Charlie"), 0, 1000),
+					(get_account_id_from_seed::<sr25519::Public>("Dave"), 1, 20),
 				],
 				true,
 			)
@@ -154,8 +154,8 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 				],
 				// Balances of Fungible Assets
 				vec![
-					(0, get_account_id_from_seed::<sr25519::Public>("Charlie"), 1000),
-					(1, get_account_id_from_seed::<sr25519::Public>("Dave"), 20),
+					(get_account_id_from_seed::<sr25519::Public>("Charlie"), 0, 1000),
+					(get_account_id_from_seed::<sr25519::Public>("Dave"), 1, 20),
 				],
 				true,
 			)
@@ -183,7 +183,7 @@ fn testnet_genesis(
 	organization_accounts: Vec<(AccountId, Vec<u8>)>,
 	organization_members: Vec<(AccountId, AccountId)>,
 	fungible_assets: Vec<(AssetId, AccountId, Vec<u8>, Option<Balance>, Option<Balance>, Option<Balance>)>,
-	fungible_assets_balances: Vec<(AssetId, AccountId, Balance)>,
+	fungible_assets_balances: Vec<(AccountId, AssetId, Balance)>,
 	_enable_println: bool,
 ) -> GenesisConfig {
 	GenesisConfig {
