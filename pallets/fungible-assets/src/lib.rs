@@ -78,6 +78,7 @@ pub mod pallet {
 		type NameLimit: Get<u32>;
 
 		/// The maximum number of topupped assets that the pallet can hold.
+		#[pallet::constant]
 		type MaxTopUppedAssets: Get<u32>;
 		
 		// The maximum count of fungible asset for each owner
