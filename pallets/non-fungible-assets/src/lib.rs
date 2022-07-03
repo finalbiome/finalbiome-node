@@ -1,5 +1,9 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
+mod types;
+mod functions;
+pub use types::*;
+
 pub use pallet::*;
 
 #[cfg(test)]
@@ -11,10 +15,19 @@ mod tests;
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
+use sp_runtime::{
+	traits:: {
+		One,
+	},
+	DispatchError
+};
+
+use frame_support::pallet_prelude::*;
+use frame_system::pallet_prelude::*;
+
 #[frame_support::pallet]
 pub mod pallet {
-	use frame_support::pallet_prelude::*;
-	use frame_system::pallet_prelude::*;
+	use super::*;
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
@@ -26,6 +39,14 @@ pub mod pallet {
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
+
+	#[pallet::storage]
+	/// Storing the next asset id
+	pub type NextAssetId<T: Config> = StorageValue<_, AssetId, ValueQuery>;
+
+	#[pallet::storage]
+	/// Storing the next class id
+	pub type NextClassId<T: Config> = StorageValue<_, ClassId, ValueQuery>;
 
 	// The pallet's runtime storage items.
 	// https://docs.substrate.io/v3/runtime/storage
@@ -52,6 +73,10 @@ pub mod pallet {
 		NoneValue,
 		/// Errors should have helpful documentation associated with them.
 		StorageOverflow,
+		// No available non-fungible asset id.
+		NoAvailableAssetId,
+		// No available non-fungible asset id.
+		NoAvailableClassId,
 	}
 
 	// Dispatchable functions allows users to interact with the pallet and invoke state changes.
