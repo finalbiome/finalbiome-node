@@ -293,6 +293,7 @@ impl pallet_fungible_assets::Config for Runtime {
 impl pallet_non_fungible_assets::Config for Runtime {
 	type Event = Event;
 	type ClassNameLimit = ConstU32<32>;
+	type CreateOrigin = pallet_organization_identity::EnsureMemberOfOrganization<Runtime>;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.

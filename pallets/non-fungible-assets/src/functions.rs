@@ -4,7 +4,7 @@ use super::*;
 
 impl<T: Config> Pallet<T> {
    /// Generate next id for new class
-   pub(super) fn get_next_class_id() -> Result<ClassId, DispatchError> {
+   pub fn get_next_class_id() -> Result<ClassId, DispatchError> {
 		NextClassId::<T>::try_mutate(|id| -> Result<ClassId, DispatchError> {
 			let current_id = *id;
 			*id = id.checked_add(One::one()).ok_or(Error::<T>::NoAvailableClassId)?;
@@ -12,11 +12,27 @@ impl<T: Config> Pallet<T> {
 		})
 	}
    /// Generate next id for new asset
-   pub(super) fn get_next_asset_id() -> Result<AssetId, DispatchError> {
+   pub fn get_next_asset_id() -> Result<AssetId, DispatchError> {
 		NextAssetId::<T>::try_mutate(|id| -> Result<AssetId, DispatchError> {
 			let current_id = *id;
 			*id = id.checked_add(One::one()).ok_or(Error::<T>::NoAvailableAssetId)?;
 			Ok(current_id)
+		})
+	}
+
+	/// Reads = 1, writes = 2
+	pub fn do_destroy_class(
+		class_id: ClassId,
+		maybe_check_owner: Option<T::AccountId>,
+	) -> DispatchResult {
+		Classes::<T>::try_mutate_exists(class_id, |maybe_details| {
+			let class_details = maybe_details.take().ok_or(Error::<T>::UnknownClass)?;
+			if let Some(check_owner) = maybe_check_owner {
+				ensure!(class_details.owner == check_owner, Error::<T>::NoPermission);
+			}
+			ClassAccounts::<T>::remove(&class_details.owner, &class_id);
+			Self::deposit_event(Event::Destroyed { class_id });
+			Ok(())
 		})
 	}
 

@@ -3,8 +3,14 @@ use super::*;
 use crate::{
 	mock::*, Error,
 	ClassDetailsBuilder,
+	Event as NfaEvent
 };
 use frame_support::{assert_noop, assert_ok};
+use frame_system::{EventRecord, Phase};
+
+fn get_next_class_id() -> u32 {
+	NextClassId::<Test>::get()
+}
 
 #[test]
 fn template_test() {
@@ -66,5 +72,113 @@ fn correct_error_for_none_value() {
 	new_test_ext().execute_with(|| {
 		// Ensure the expected error is thrown when no value is present.
 		assert_noop!(NonFungibleAssets::cause_error(Origin::signed(1)), Error::<Test>::NoneValue);
+	});
+}
+
+#[test]
+fn create_class_unsigned() {
+	new_test_ext().execute_with(|| {
+		let name = br"nfa name".to_vec();
+		assert_noop!(NonFungibleAssets::create(Origin::none(), 2, name), sp_runtime::traits::BadOrigin);
+	});
+}
+#[test]
+fn create_class_created() {
+	new_test_ext().execute_with(|| {
+		let name = br"nfa name".to_vec();
+		let nfa_id = get_next_class_id();
+		let org = 2;
+		assert_ok!(NonFungibleAssets::create(
+			Origin::signed(1),
+			org,
+			name.clone()
+		));
+		let nfa = Classes::<Test>::get(nfa_id).unwrap();
+		assert_eq!(nfa.name.to_vec(), name);
+		assert_eq!(nfa.instances, 0);
+		assert_eq!(nfa.owner, org);
+		assert_eq!(ClassAccounts::<Test>::contains_key(org, nfa_id), true);
+		assert_eq!(
+			System::events(),
+			vec![
+				EventRecord {
+					phase: Phase::Initialization,
+					event: NfaEvent::Created { class_id: nfa_id, owner: org }.into(),
+					topics: vec![],
+				},
+			]
+		);
+
+	});
+}
+
+#[test]
+fn do_destroy_class_unknown_class() {
+	new_test_ext().execute_with(|| {
+		assert_noop!(NonFungibleAssets::do_destroy_class(888, Some(999)), Error::<Test>::UnknownClass);
+	});
+}
+
+#[test]
+fn do_destroy_class_not_owner() {
+	new_test_ext().execute_with(|| {
+		// create test asset
+		let name = br"nfa name".to_vec();
+		let nfa_id = get_next_class_id();
+		let org = 2;
+		assert_ok!(NonFungibleAssets::create(
+			Origin::signed(1),
+			org,
+			name.clone()
+		));
+		assert_noop!(NonFungibleAssets::do_destroy_class(nfa_id, Some(3)), Error::<Test>::NoPermission);
+		assert_eq!(Classes::<Test>::contains_key(nfa_id), true);
+		assert_eq!(ClassAccounts::<Test>::contains_key(org, nfa_id), true);
+	});
+}
+
+#[test]
+fn do_destroy_class_worked() {
+	new_test_ext().execute_with(|| {
+		// create test asset
+		let name = br"nfa name".to_vec();
+		let nfa_id = get_next_class_id();
+		let org = 2;
+		assert_ok!(NonFungibleAssets::create(
+			Origin::signed(1),
+			org,
+			name.clone()
+		));
+		System::reset_events();
+		assert_ok!(NonFungibleAssets::do_destroy_class(nfa_id, Some(org)));
+		assert_eq!(Classes::<Test>::contains_key(nfa_id), false);
+		assert_eq!(ClassAccounts::<Test>::contains_key(org, nfa_id), false);
+		assert_eq!(
+			System::events(),
+			vec![
+				EventRecord {
+					phase: Phase::Initialization,
+					event: NfaEvent::Destroyed { class_id: nfa_id }.into(),
+					topics: vec![],
+				},
+			]
+		);
+	});
+}
+
+#[test]
+fn destroy_class_not_org() {
+	new_test_ext().execute_with(|| {
+		// create test asset
+		let name = br"nfa name".to_vec();
+		let nfa_id = get_next_class_id();
+		let org = 2;
+		assert_ok!(NonFungibleAssets::create(
+			Origin::signed(1),
+			org,
+			name.clone()
+		));
+		System::reset_events();
+		assert_noop!(NonFungibleAssets::destroy(Origin::none(), org, nfa_id), sp_runtime::traits::BadOrigin);
 	});
 }
