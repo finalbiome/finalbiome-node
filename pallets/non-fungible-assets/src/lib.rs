@@ -17,10 +17,11 @@ mod benchmarking;
 
 use sp_runtime::{
 	traits:: {
-		One,
+		One, Zero,
 	},
 	DispatchError
 };
+use sp_std::{vec::Vec};
 
 use frame_support::pallet_prelude::*;
 use frame_system::pallet_prelude::*;
@@ -34,6 +35,9 @@ pub mod pallet {
 	pub trait Config: frame_system::Config {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		/// The maximum length of an class name stored on-chain.
+		#[pallet::constant]
+		type ClassNameLimit: Get<u32>;
 	}
 
 	#[pallet::pallet]
@@ -77,6 +81,8 @@ pub mod pallet {
 		NoAvailableAssetId,
 		// No available non-fungible asset id.
 		NoAvailableClassId,
+		/// Class name is too long.
+		ClassNameTooLong,
 	}
 
 	// Dispatchable functions allows users to interact with the pallet and invoke state changes.

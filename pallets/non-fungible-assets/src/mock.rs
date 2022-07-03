@@ -1,5 +1,5 @@
 use crate as pallet_non_fungible_assets;
-use frame_support::traits::{ConstU16, ConstU64};
+use frame_support::traits::{ConstU16, ConstU32, ConstU64};
 use frame_system as system;
 use sp_core::H256;
 use sp_runtime::{
@@ -46,11 +46,12 @@ impl system::Config for Test {
 	type SystemWeightInfo = ();
 	type SS58Prefix = ConstU16<42>;
 	type OnSetCode = ();
-	type MaxConsumers = frame_support::traits::ConstU32<16>;
+	type MaxConsumers = ConstU32<16>;
 }
 
 impl pallet_non_fungible_assets::Config for Test {
 	type Event = Event;
+	type ClassNameLimit = ConstU32<8>;
 }
 
 // Build genesis storage according to the mock runtime.
