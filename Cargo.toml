@@ -4,6 +4,7 @@ members = [
     "pallets/template",
     "pallets/organization-identity",
     "pallets/fungible-assets",
+    "pallets/non-fungible-assets",
     "runtime",
 ]
 [profile.release]

@@ -52,6 +52,7 @@ hex-literal = { version = "0.3.4", optional = true }
 pallet-template = { version = "1.0.0-dev", default-features = false, path = "../pallets/template" }
 pallet-organization-identity = { version = "1.0.0-dev", default-features = false, path = "../pallets/organization-identity" }
 pallet-fungible-assets = { version = "1.0.0-dev", default-features = false, path = "../pallets/fungible-assets" }
+pallet-non-fungible-assets = { version = "1.0.0-dev", default-features = false, path = "../pallets/non-fungible-assets" }
 
 [build-dependencies]
 substrate-wasm-builder = { version = "5.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.20" }
@@ -73,6 +74,7 @@ std = [
 	"pallet-template/std",
 	"pallet-organization-identity/std",
 	"pallet-fungible-assets/std",
+	"pallet-non-fungible-assets/std",
 	"pallet-timestamp/std",
 	"pallet-transaction-payment-rpc-runtime-api/std",
 	"pallet-transaction-payment/std",
@@ -98,6 +100,7 @@ runtime-benchmarks = [
 	"pallet-template/runtime-benchmarks",
 	"pallet-organization-identity/runtime-benchmarks",
 	"pallet-fungible-assets/runtime-benchmarks",
+	"pallet-non-fungible-assets/runtime-benchmarks",
 	"pallet-timestamp/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
 ]

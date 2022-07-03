@@ -47,6 +47,7 @@ pub use pallet_template;
 /// Import the organization identity pallet.
 pub use pallet_organization_identity;
 pub use pallet_fungible_assets;
+pub use pallet_non_fungible_assets;
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -289,6 +290,10 @@ impl pallet_fungible_assets::Config for Runtime {
 	// type MaxAssets = ConstU32<6>;
 }
 
+impl pallet_non_fungible_assets::Config for Runtime {
+	type Event = Event;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -308,6 +313,7 @@ construct_runtime!(
 		TemplateModule: pallet_template,
 		OrganizationIdentity: pallet_organization_identity,
 		FungibleAssets: pallet_fungible_assets,
+		NonFungibleAssets: pallet_non_fungible_assets,
 	}
 );
 
@@ -355,6 +361,7 @@ mod benches {
 		[pallet_template, TemplateModule]
 		[pallet_organization_identity, OrganizationIdentity]
 		[pallet_fungible_assets, FungibleAssets]
+		[pallet_non_fungible_assets, NonFungibleAssets]
 	);
 }
 
