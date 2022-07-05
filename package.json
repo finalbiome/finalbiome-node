@@ -1,0 +1,29 @@
+{
+  "name": "finalbiome-node",
+  "version": "1.0.0",
+  "description": "A node of the FinalBiome Network.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "start": "./target/release/finalbiome-node --dev",
+    "test": "cargo test",
+    "build release": "cargo build --release",
+    "build & start": "cargo build && ./target/release/finalbiome-node --dev",
+    "check": "cargo check"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/finalbiome/finalbiome-node.git"
+  },
+  "keywords": [
+    "finalbiome"
+  ],
+  "author": "FinalBiome",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/finalbiome/finalbiome-node/issues"
+  },
+  "homepage": "https://github.com/finalbiome/finalbiome-node#readme"
+}

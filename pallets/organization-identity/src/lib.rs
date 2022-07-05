@@ -14,7 +14,7 @@ mod tests;
 mod benchmarking;
 
 use sp_std::vec::Vec;
-use frame_support::{traits::EnsureOrigin};
+use frame_support::{traits::{EnsureOrigin, EnsureOriginWithArg}};
 use frame_system::RawOrigin;
 use frame_system::pallet_prelude::*;
 
@@ -169,13 +169,9 @@ pub mod pallet {
 		NotMember,
 	}
 
-	// Dispatchable functions allows users to interact with the pallet and invoke state changes.
-	// These functions materialize as "extrinsics", which are often compared to transactions.
-	// Dispatchable functions must be annotated with a weight and must return a DispatchResult.
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// An example dispatchable that takes a singles value as a parameter, writes the value to
-		/// storage and emits an event. This function must be dispatched by a signed extrinsic.
+
 		#[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
 		pub fn do_something(origin: OriginFor<T>, something: u32) -> DispatchResult {
 			// Check that the extrinsic was signed and get the signer.
@@ -344,15 +340,9 @@ impl<T: Config> Pallet<T> {
 	fn is_organization(account: &T::AccountId) -> bool {
 		Organizations::<T>::contains_key(&account)
 	}
-	// fn ensure_organization(o: OriginFor<T>) -> Result<T::AccountId, BadOrigin> {
-	// 	match o.into() {
-	// 		Ok(RawOrigin::Signed(t)) => Ok(t),
-	// 		_ => Err(BadOrigin),
-	// 	}
-	// }
 }
 
-/// Enshure that an organization is invoking a dispatch.
+/// Ensures that an organization is invoking a dispatch.
 pub struct EnsureOrganization<T: Config>(sp_std::marker::PhantomData<T>);
 impl<T: Config> EnsureOrigin<T::Origin> for EnsureOrganization<T> {
 	type Success = T::AccountId;
@@ -370,3 +360,23 @@ impl<T: Config> EnsureOrigin<T::Origin> for EnsureOrganization<T> {
 		T::Origin::from(RawOrigin::Signed(Default::default()))
 	}
 }
+
+/// Ensures that the origin is a member of given organization
+pub struct EnsureMemberOfOrganization<T: Config>(sp_std::marker::PhantomData<T>);
+impl<T: Config> EnsureOriginWithArg<T::Origin, OrganizationIdOf<T>> for EnsureMemberOfOrganization<T> {
+	type Success = T::AccountId;
+
+	fn try_origin(o: T::Origin, a: &OrganizationIdOf<T>) -> Result<Self::Success, T::Origin> {
+		o.into().and_then(|o| match o {
+			RawOrigin::Signed(ref who) if MembersOf::<T>::contains_key(&a, &who) => Ok(who.clone()),
+			r => Err(T::Origin::from(r)),
+		})
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn successful_origin(_: &OrganizationIdOf<T>) -> T::Origin {
+		T::Origin::from(RawOrigin::Signed(Default::default()))
+	}
+
+}
+

@@ -1504,7 +1504,9 @@ dependencies = [
  "hex-literal",
  "pallet-aura",
  "pallet-balances",
+ "pallet-fungible-assets",
  "pallet-grandpa",
+ "pallet-non-fungible-assets",
  "pallet-organization-identity",
  "pallet-randomness-collective-flip",
  "pallet-sudo",
@@ -1526,6 +1528,7 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "substrate-wasm-builder",
+ "support",
 ]
 
 [[package]]
@@ -4069,6 +4072,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-fungible-assets"
+version = "1.0.0-dev"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "support",
+]
+
+[[package]]
 name = "pallet-grandpa"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.20#563f4820d8f36d256ada7ea3fef46b2e94c4cd5a"
@@ -4089,6 +4108,22 @@ dependencies = [
  "sp-session",
  "sp-staking",
  "sp-std",
+]
+
+[[package]]
+name = "pallet-non-fungible-assets"
+version = "1.0.0-dev"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "support",
 ]
 
 [[package]]
@@ -4157,7 +4192,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-template"
-version = "4.0.0-dev"
+version = "1.0.0-dev"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -4167,6 +4202,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
+ "support",
 ]
 
 [[package]]
@@ -7300,6 +7336,21 @@ name = "subtle"
 version = "2.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6bdef32e8150c2a081110b42772ffe7d7c9032b606bc226c8260fd97e0976601"
+
+[[package]]
+name = "support"
+version = "1.0.0-dev"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
 
 [[package]]
 name = "syn"
