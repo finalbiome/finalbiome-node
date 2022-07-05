@@ -15,7 +15,11 @@ use sp_std::prelude::*;
 
 mod types;
 mod functions;
+mod impl_fungible_assets;
+
 pub use types::*;
+
+use support;
 
 use codec::HasCompact;
 
@@ -35,7 +39,7 @@ use frame_support::{
 		Currency,
 	},
 		WeakBoundedVec,
-		BoundedVec, log, 
+		BoundedVec, log,
 };
 use frame_support::pallet_prelude::*;
 use frame_system::pallet_prelude::*;
@@ -51,14 +55,7 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
 		/// The units in which we record balances.
-		type Balance: Member
-			+ Parameter
-			+ AtLeast32BitUnsigned
-			+ Default
-			+ Copy
-			+ MaybeSerializeDeserialize
-			+ MaxEncodedLen
-			+ TypeInfo;
+		type Balance: support::Balance;
 		
 		/// The origin which may create or destroy an asset and acts as owner or the asset.
 		/// Only organization member can crete an asset
@@ -89,6 +86,7 @@ pub mod pallet {
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	// #[pallet::without_storage_info]
+	/// Fungible Assets Pallet
 	pub struct Pallet<T>(_);
 
 	#[pallet::storage]

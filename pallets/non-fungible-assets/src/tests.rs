@@ -201,8 +201,8 @@ fn bettor_empty() {
 fn bettor_prob_more_100() {
 	new_test_ext().execute_with(|| {
 		let b:Bettor<
-			<Test as pallet::Config>::FungibleAssetId,
-			u32, <Test as pallet::Config>::FungibleAssetBalance,
+			<<Test as pallet::Config>::FungibleAssets as support::FungibleAssets>::AssetId,
+			u32, <<Test as pallet::Config>::FungibleAssets as support::FungibleAssets>::Balance,
 			BoundedVec<u8,<Test as pallet::Config>::BettorOutcomeNameLimit>> = Bettor {
 			outcomes: vec![
 				BettorOutcome {
@@ -224,8 +224,8 @@ fn bettor_prob_more_100() {
 fn bettor_probs_less_100() {
 	new_test_ext().execute_with(|| {
 		let b:Bettor<
-			<Test as pallet::Config>::FungibleAssetId,
-			u32, <Test as pallet::Config>::FungibleAssetBalance,
+			<<Test as pallet::Config>::FungibleAssets as support::FungibleAssets>::AssetId,
+			u32, <<Test as pallet::Config>::FungibleAssets as support::FungibleAssets>::Balance,
 			BoundedVec<u8,<Test as pallet::Config>::BettorOutcomeNameLimit>> = Bettor {
 			outcomes: vec![
 				BettorOutcome {
@@ -242,8 +242,8 @@ fn bettor_probs_less_100() {
 		assert_eq!(b.is_valid(), false);
 
 		let b:Bettor<
-			<Test as pallet::Config>::FungibleAssetId,
-			u32, <Test as pallet::Config>::FungibleAssetBalance,
+			<<Test as pallet::Config>::FungibleAssets as support::FungibleAssets>::AssetId,
+			u32, <<Test as pallet::Config>::FungibleAssets as support::FungibleAssets>::Balance,
 			BoundedVec<u8,<Test as pallet::Config>::BettorOutcomeNameLimit>> = Bettor {
 			outcomes: vec![
 				BettorOutcome {
@@ -265,8 +265,8 @@ fn bettor_probs_less_100() {
 fn bettor_wins_empty() {
 	new_test_ext().execute_with(|| {
 		let b:Bettor<
-			<Test as pallet::Config>::FungibleAssetId,
-			u32, <Test as pallet::Config>::FungibleAssetBalance,
+			<<Test as pallet::Config>::FungibleAssets as support::FungibleAssets>::AssetId,
+			u32, <<Test as pallet::Config>::FungibleAssets as support::FungibleAssets>::Balance,
 			BoundedVec<u8,<Test as pallet::Config>::BettorOutcomeNameLimit>> = Bettor {
 			outcomes: vec![
 				BettorOutcome {
@@ -286,8 +286,8 @@ fn bettor_wins_empty() {
 		assert_eq!(b.is_valid(), false);
 
 		let b:Bettor<
-			<Test as pallet::Config>::FungibleAssetId,
-			u32, <Test as pallet::Config>::FungibleAssetBalance,
+			<<Test as pallet::Config>::FungibleAssets as support::FungibleAssets>::AssetId,
+			u32, <<Test as pallet::Config>::FungibleAssets as support::FungibleAssets>::Balance,
 			BoundedVec<u8,<Test as pallet::Config>::BettorOutcomeNameLimit>> = Bettor {
 			outcomes: vec![
 				BettorOutcome {

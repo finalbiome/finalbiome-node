@@ -7,6 +7,8 @@ use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
 };
 
+use support;
+
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 
@@ -49,13 +51,19 @@ impl system::Config for Test {
 	type MaxConsumers = ConstU32<16>;
 }
 
+/// Mock of fungible-assets-pallet impl
+pub struct FAPallet {}
+impl support::FungibleAssets for FAPallet {
+	type AssetId = u32;
+	type Balance = u64;
+}
+
 impl pallet_non_fungible_assets::Config for Test {
 	type Event = Event;
 	type ClassNameLimit = ConstU32<8>;
 	type CreateOrigin = AsEnsureOriginWithArg<frame_system::EnsureSigned<u64>>;
 	type BettorOutcomeNameLimit = ConstU32<8>;
-	type FungibleAssetBalance = u64;
-	type FungibleAssetId = u32;
+	type FungibleAssets = FAPallet;
 }
 
 // Build genesis storage according to the mock runtime.

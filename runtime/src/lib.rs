@@ -48,6 +48,7 @@ pub use pallet_template;
 pub use pallet_organization_identity;
 pub use pallet_fungible_assets;
 pub use pallet_non_fungible_assets;
+pub use support;
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -295,8 +296,7 @@ impl pallet_non_fungible_assets::Config for Runtime {
 	type ClassNameLimit = ConstU32<32>;
 	type CreateOrigin = pallet_organization_identity::EnsureMemberOfOrganization<Runtime>;
 	type BettorOutcomeNameLimit = ConstU32<32>;
-	type FungibleAssetBalance = Balance;
-	type FungibleAssetId = u32;
+	type FungibleAssets = pallet_fungible_assets::Pallet<Runtime>;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.

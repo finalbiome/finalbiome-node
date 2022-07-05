@@ -1,8 +1,8 @@
 [package]
-name = "pallet-fungible-assets"
+name = "support"
 version = "1.0.0-dev"
-description = "Pallet provides fungible assets functionality."
-authors = ["Substrate DevHub <https://github.com/FinalBiome>"]
+description = "Support code for FinalBiome."
+authors = ["FinalBiome DevHub <https://github.com/FinalBiome>"]
 homepage = "https://finalbiome.net/"
 edition = "2021"
 license = "Apache-2.0"
@@ -23,7 +23,6 @@ frame-system = { default-features = false, version = "4.0.0-dev", git = "https:/
 frame-benchmarking = { default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.20", optional = true }
 sp-runtime = { default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.20" }
 sp-std = { version = "4.0.0", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.20" }
-support = { version = "1.0.0-dev", default-features = false, path = "../support" }
 
 [dev-dependencies]
 sp-core = { default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.20" }
@@ -42,9 +41,5 @@ std = [
 	"frame-benchmarking/std",
 ]
 
-runtime-benchmarks = [
-	"frame-benchmarking/runtime-benchmarks",
-	"sp-runtime/runtime-benchmarks",
-	"frame-system/runtime-benchmarks",
-]
-try-runtime = ["frame-support/try-runtime"]
+runtime-benchmarks = []
+try-runtime = []

@@ -6,6 +6,12 @@ pub type NonFungibleAssetId = u32;
 /// Type of the non-fungible class of assets ids
 pub type NonFungibleClassId = u32;
 
+/// Type of the fungible asset id
+pub type FungibleAssetId<T> = <<T as pallet::Config>::FungibleAssets as support::FungibleAssets>::AssetId;
+/// The units in which we record balances of the fungible assets
+pub type FungibleAssetBalance<T> = <<T as pallet::Config>::FungibleAssets as support::FungibleAssets>::Balance;
+
+
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 pub struct ClassDetails<AccountId, BoundedString, FungibleAssetId, NonFungibleClasstId, FungibleAssetBalance, BoundedName> {
   pub(super) owner: AccountId,
@@ -94,7 +100,7 @@ pub trait AssetCharacteristic {
 pub struct ClassDetailsBuilder<T: Config> {
   owner: T::AccountId,
   name: ClassNameLimit<T>,
-  bettor: Option<Bettor<T::FungibleAssetId, NonFungibleClassId, T::FungibleAssetBalance, BettorOutcomeName<T>>>,
+  bettor: Option<Bettor<FungibleAssetId<T>, NonFungibleClassId, FungibleAssetBalance<T>, BettorOutcomeName<T>>>,
 }
 impl<T: pallet::Config> ClassDetailsBuilder<T> {
   pub fn new(owner: T::AccountId, name: Vec<u8>) -> ClassDetailsBuilderResult<T> {
@@ -111,7 +117,7 @@ impl<T: pallet::Config> ClassDetailsBuilder<T> {
   }
 
   /// Set the Bettor chracteristic of the NFA
-  pub fn bettor(mut self, bettor: Option<Bettor<T::FungibleAssetId, NonFungibleClassId, T::FungibleAssetBalance, BettorOutcomeName<T>>>) -> ClassDetailsBuilderResult<T> {
+  pub fn bettor(mut self, bettor: Option<Bettor<FungibleAssetId<T>, NonFungibleClassId, FungibleAssetBalance<T>, BettorOutcomeName<T>>>) -> ClassDetailsBuilderResult<T> {
     if let Some(ref inc_bettor) = bettor {
       if !inc_bettor.is_valid() {
         return Err(Error::<T>::WrongBettor.into())
@@ -126,7 +132,7 @@ impl<T: pallet::Config> ClassDetailsBuilder<T> {
     Ok(())
   }
 
-  pub fn build(self) -> Result<ClassDetails<T::AccountId, ClassNameLimit<T>, T::FungibleAssetId, NonFungibleClassId, T::FungibleAssetBalance, BettorOutcomeName<T>>, DispatchError> {
+  pub fn build(self) -> Result<ClassDetails<T::AccountId, ClassNameLimit<T>, FungibleAssetId<T>, NonFungibleClassId, FungibleAssetBalance<T>, BettorOutcomeName<T>>, DispatchError> {
     self.validate()?;
     Ok(ClassDetails {
       owner: self.owner,

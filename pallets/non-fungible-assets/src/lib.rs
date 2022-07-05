@@ -4,6 +4,8 @@ mod types;
 mod functions;
 pub use types::*;
 
+pub use support;
+
 pub use pallet::*;
 
 #[cfg(test)]
@@ -49,24 +51,8 @@ pub trait Config: frame_system::Config {
 		/// The origin which may create or destroy a class and acts as owner or the class.
 		/// Only organization member can crete a class
 		type CreateOrigin: EnsureOriginWithArg<Self::Origin, Self::AccountId>;
-		/// The type of the fungible asset id
-		type FungibleAssetId: Member
-			+ Parameter
-			+ AtLeast32BitUnsigned
-			+ Default
-			+ Copy
-			+ MaybeSerializeDeserialize
-			+ MaxEncodedLen
-			+ TypeInfo;
-		/// The units in which we record balances of the fungible assets.
-		type FungibleAssetBalance: Member
-			+ Parameter
-			+ AtLeast32BitUnsigned
-			+ Default
-			+ Copy
-			+ MaybeSerializeDeserialize
-			+ MaxEncodedLen
-			+ TypeInfo;
+		/// Connector to fungible assets instances
+		type FungibleAssets: support::FungibleAssets;
 		/// Lenght limit of the name for the bettor ouncome
 		#[pallet::constant]
 		type BettorOutcomeNameLimit: Get<u32>;
@@ -82,7 +68,7 @@ pub trait Config: frame_system::Config {
 		_,
 		Blake2_128Concat,
 		NonFungibleClassId,
-		ClassDetails<T::AccountId, ClassNameLimit<T>, T::FungibleAssetId, NonFungibleClassId, T::FungibleAssetBalance, BettorOutcomeName<T>>
+		ClassDetails<T::AccountId, ClassNameLimit<T>, FungibleAssetId<T>, NonFungibleClassId, FungibleAssetBalance<T>, BettorOutcomeName<T>>
 	>;
 
 	#[pallet::storage]

@@ -53,6 +53,7 @@ pallet-template = { version = "1.0.0-dev", default-features = false, path = "../
 pallet-organization-identity = { version = "1.0.0-dev", default-features = false, path = "../pallets/organization-identity" }
 pallet-fungible-assets = { version = "1.0.0-dev", default-features = false, path = "../pallets/fungible-assets" }
 pallet-non-fungible-assets = { version = "1.0.0-dev", default-features = false, path = "../pallets/non-fungible-assets" }
+support = { version = "1.0.0-dev", default-features = false, path = "../pallets/support" }
 
 [build-dependencies]
 substrate-wasm-builder = { version = "5.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.20" }
