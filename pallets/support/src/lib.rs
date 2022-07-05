@@ -3,14 +3,11 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use frame_support::pallet_prelude::*;
-use frame_system::pallet_prelude::*;
+// use frame_system::pallet_prelude::*;
 use sp_runtime::{
 	traits:: {
-		One, Zero,
-		StaticLookup,
 		AtLeast32BitUnsigned,
 	},
-	DispatchError,
 };
 
 #[cfg(test)]
