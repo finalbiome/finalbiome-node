@@ -1,6 +1,6 @@
 use super::*;
 
-/// Type of the non-fungible asset ids
+/// Type of the non-fungible asset instance ids
 pub type NonFungibleAssetId = u32;
 
 /// Type of the non-fungible class of assets ids

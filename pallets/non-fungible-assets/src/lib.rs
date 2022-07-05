@@ -2,6 +2,7 @@
 
 mod types;
 mod functions;
+mod impl_non_fubgible_assets;
 pub use types::*;
 
 pub use support;
@@ -21,7 +22,6 @@ use sp_runtime::{
 	traits:: {
 		One, Zero,
 		StaticLookup,
-		AtLeast32BitUnsigned,
 	},
 	DispatchError,
 };

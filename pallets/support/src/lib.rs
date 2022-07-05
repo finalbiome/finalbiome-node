@@ -61,3 +61,11 @@ pub trait FungibleAssets {
   /// The units in which records balances of FA.
   type Balance: Balance;
 }
+
+/// Trait for providing an interface to a non-fungible assets instances.
+pub trait NonFungibleAssets {
+  /// Type of the NFA class id
+  type ClassId: AssetId;
+  /// Type of the NFA instance id
+  type AssetId: AssetId;
+}
