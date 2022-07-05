@@ -53,6 +53,9 @@ impl pallet_non_fungible_assets::Config for Test {
 	type Event = Event;
 	type ClassNameLimit = ConstU32<8>;
 	type CreateOrigin = AsEnsureOriginWithArg<frame_system::EnsureSigned<u64>>;
+	type BettorOutcomeNameLimit = ConstU32<8>;
+	type FungibleAssetBalance = u64;
+	type FungibleAssetId = u32;
 }
 
 // Build genesis storage according to the mock runtime.

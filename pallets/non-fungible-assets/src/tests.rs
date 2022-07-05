@@ -47,6 +47,7 @@ fn class_details_builder() {
 		assert_eq!(d.name.to_vec(), br"n2345678".to_vec());
 		assert_eq!(d.owner, 1);
 		assert_eq!(d.instances, 0);
+		assert_eq!(d.bettor, None);
 	});
 }
 
@@ -180,5 +181,130 @@ fn destroy_class_not_org() {
 		));
 		System::reset_events();
 		assert_noop!(NonFungibleAssets::destroy(Origin::none(), org, nfa_id), sp_runtime::traits::BadOrigin);
+	});
+}
+
+#[test]
+fn bettor_empty() {
+	new_test_ext().execute_with(|| {
+		let b:Bettor<u32, u32, u32, ConstU32<8>> = Bettor {
+			outcomes: vec![].try_into().expect("Outcomes vec too big"),
+			winnings: vec![].try_into().expect("Winnings vec too big"),
+			rounds: 1,
+			draw_outcome: DrawOutcomeResult::Keep,
+		};
+		assert_eq!(b.is_valid(), false)
+	});
+}
+
+#[test]
+fn bettor_prob_more_100() {
+	new_test_ext().execute_with(|| {
+		let b:Bettor<
+			<Test as pallet::Config>::FungibleAssetId,
+			u32, <Test as pallet::Config>::FungibleAssetBalance,
+			BoundedVec<u8,<Test as pallet::Config>::BettorOutcomeNameLimit>> = Bettor {
+			outcomes: vec![
+				BettorOutcome {
+					name: br"out0".to_vec().try_into().expect("too long"),
+					probability: 233,
+				}
+			].try_into().expect("Outcomes vec too big"),
+			winnings: vec![
+				BettorWinning::FA(1, 33),
+			].try_into().expect("Winnings vec too big"),
+			rounds: 1,
+			draw_outcome: DrawOutcomeResult::Keep,
+		};
+		assert_eq!(b.is_valid(), false)
+	});
+}
+
+#[test]
+fn bettor_probs_less_100() {
+	new_test_ext().execute_with(|| {
+		let b:Bettor<
+			<Test as pallet::Config>::FungibleAssetId,
+			u32, <Test as pallet::Config>::FungibleAssetBalance,
+			BoundedVec<u8,<Test as pallet::Config>::BettorOutcomeNameLimit>> = Bettor {
+			outcomes: vec![
+				BettorOutcome {
+					name: br"out0".to_vec().try_into().expect("too long"),
+					probability: 5,
+				}
+			].try_into().expect("Outcomes vec too big"),
+			winnings: vec![
+				BettorWinning::FA(1, 33),
+			].try_into().expect("Winnings vec too big"),
+			rounds: 1,
+			draw_outcome: DrawOutcomeResult::Keep,
+		};
+		assert_eq!(b.is_valid(), false);
+
+		let b:Bettor<
+			<Test as pallet::Config>::FungibleAssetId,
+			u32, <Test as pallet::Config>::FungibleAssetBalance,
+			BoundedVec<u8,<Test as pallet::Config>::BettorOutcomeNameLimit>> = Bettor {
+			outcomes: vec![
+				BettorOutcome {
+					name: br"out0".to_vec().try_into().expect("too long"),
+					probability: 100,
+				}
+			].try_into().expect("Outcomes vec too big"),
+			winnings: vec![
+				BettorWinning::FA(1, 33),
+			].try_into().expect("Winnings vec too big"),
+			rounds: 1,
+			draw_outcome: DrawOutcomeResult::Keep,
+		};
+		assert_eq!(b.is_valid(), true);
+	});
+}
+
+#[test]
+fn bettor_wins_empty() {
+	new_test_ext().execute_with(|| {
+		let b:Bettor<
+			<Test as pallet::Config>::FungibleAssetId,
+			u32, <Test as pallet::Config>::FungibleAssetBalance,
+			BoundedVec<u8,<Test as pallet::Config>::BettorOutcomeNameLimit>> = Bettor {
+			outcomes: vec![
+				BettorOutcome {
+					name: br"out0".to_vec().try_into().expect("too long"),
+					probability: 5,
+				},
+				BettorOutcome {
+					name: br"out1".to_vec().try_into().expect("too long"),
+					probability: 95,
+				},
+			].try_into().expect("Outcomes vec too big"),
+			winnings: vec![
+			].try_into().expect("Winnings vec too big"),
+			rounds: 1,
+			draw_outcome: DrawOutcomeResult::Keep,
+		};
+		assert_eq!(b.is_valid(), false);
+
+		let b:Bettor<
+			<Test as pallet::Config>::FungibleAssetId,
+			u32, <Test as pallet::Config>::FungibleAssetBalance,
+			BoundedVec<u8,<Test as pallet::Config>::BettorOutcomeNameLimit>> = Bettor {
+			outcomes: vec![
+				BettorOutcome {
+					name: br"out0".to_vec().try_into().expect("too long"),
+					probability: 5,
+				},
+				BettorOutcome {
+					name: br"out1".to_vec().try_into().expect("too long"),
+					probability: 95,
+				},
+			].try_into().expect("Outcomes vec too big"),
+			winnings: vec![
+				BettorWinning::FA(1, 33),
+			].try_into().expect("Winnings vec too big"),
+			rounds: 1,
+			draw_outcome: DrawOutcomeResult::Keep,
+		};
+		assert_eq!(b.is_valid(), true);
 	});
 }

@@ -19,14 +19,16 @@ use sp_runtime::{
 	traits:: {
 		One, Zero,
 		StaticLookup,
+		AtLeast32BitUnsigned,
 	},
-	DispatchError
+	DispatchError,
 };
 use sp_std::{vec::Vec};
 use frame_support:: {
 	traits:: {
 		EnsureOriginWithArg,
-	}
+	},
+	WeakBoundedVec,
 };
 
 use frame_support::pallet_prelude::*;
@@ -38,7 +40,7 @@ pub mod pallet {
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
-	pub trait Config: frame_system::Config {
+pub trait Config: frame_system::Config {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		/// The maximum length of an class name stored on-chain.
@@ -47,6 +49,27 @@ pub mod pallet {
 		/// The origin which may create or destroy a class and acts as owner or the class.
 		/// Only organization member can crete a class
 		type CreateOrigin: EnsureOriginWithArg<Self::Origin, Self::AccountId>;
+		/// The type of the fungible asset id
+		type FungibleAssetId: Member
+			+ Parameter
+			+ AtLeast32BitUnsigned
+			+ Default
+			+ Copy
+			+ MaybeSerializeDeserialize
+			+ MaxEncodedLen
+			+ TypeInfo;
+		/// The units in which we record balances of the fungible assets.
+		type FungibleAssetBalance: Member
+			+ Parameter
+			+ AtLeast32BitUnsigned
+			+ Default
+			+ Copy
+			+ MaybeSerializeDeserialize
+			+ MaxEncodedLen
+			+ TypeInfo;
+		/// Lenght limit of the name for the bettor ouncome
+		#[pallet::constant]
+		type BettorOutcomeNameLimit: Get<u32>;
 	}
 
 	#[pallet::pallet]
@@ -58,8 +81,8 @@ pub mod pallet {
 	pub(super) type Classes<T: Config> = StorageMap<
 		_,
 		Blake2_128Concat,
-		ClassId,
-		ClassDetails<T::AccountId, BoundedVec<u8, T::ClassNameLimit>>
+		NonFungibleClassId,
+		ClassDetails<T::AccountId, ClassNameLimit<T>, T::FungibleAssetId, NonFungibleClassId, T::FungibleAssetBalance, BettorOutcomeName<T>>
 	>;
 
 	#[pallet::storage]
@@ -69,18 +92,18 @@ pub mod pallet {
 		Blake2_128Concat,
 		T::AccountId,
 		Blake2_128Concat,
-		ClassId,
+		NonFungibleClassId,
 		(),
 		OptionQuery,
 	>;
 
 	#[pallet::storage]
 	/// Storing the next asset id
-	pub type NextAssetId<T: Config> = StorageValue<_, AssetId, ValueQuery>;
+	pub type NextAssetId<T: Config> = StorageValue<_, NonFungibleAssetId, ValueQuery>;
 
 	#[pallet::storage]
 	/// Storing the next class id
-	pub type NextClassId<T: Config> = StorageValue<_, ClassId, ValueQuery>;
+	pub type NextClassId<T: Config> = StorageValue<_, NonFungibleClassId, ValueQuery>;
 
 	// The pallet's runtime storage items.
 	// https://docs.substrate.io/v3/runtime/storage
@@ -96,9 +119,9 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// An asset class has been created.
-		Created { class_id: ClassId, owner: T::AccountId },
+		Created { class_id: NonFungibleClassId, owner: T::AccountId },
 		/// An asset class has been destroyed.
-		Destroyed { class_id: ClassId },
+		Destroyed { class_id: NonFungibleClassId },
 		/// Event documentation should end with an array that provides descriptive names for event
 		/// parameters. [something, who]
 		SomethingStored(u32, T::AccountId),
@@ -121,6 +144,8 @@ pub mod pallet {
 		NoPermission,
 		/// The given asset ID is unknown.
 		UnknownClass,
+		/// The bettor characteristic is wrong.
+		WrongBettor,
 	}
 
 	// Dispatchable functions allows users to interact with the pallet and invoke state changes.
@@ -174,7 +199,7 @@ pub mod pallet {
 		pub fn destroy(
 			origin: OriginFor<T>,
 			organization_id: <T::Lookup as StaticLookup>::Source,
-			#[pallet::compact] class_id: ClassId,
+			#[pallet::compact] class_id: NonFungibleClassId,
 		) -> DispatchResult {
 			// owner of an asset must be an organization
 			let owner = T::Lookup::lookup(organization_id)?;

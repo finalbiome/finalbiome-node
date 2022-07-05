@@ -294,6 +294,9 @@ impl pallet_non_fungible_assets::Config for Runtime {
 	type Event = Event;
 	type ClassNameLimit = ConstU32<32>;
 	type CreateOrigin = pallet_organization_identity::EnsureMemberOfOrganization<Runtime>;
+	type BettorOutcomeNameLimit = ConstU32<32>;
+	type FungibleAssetBalance = Balance;
+	type FungibleAssetId = u32;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
