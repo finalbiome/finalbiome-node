@@ -1506,6 +1506,7 @@ dependencies = [
  "pallet-balances",
  "pallet-fungible-assets",
  "pallet-grandpa",
+ "pallet-mechanics",
  "pallet-non-fungible-assets",
  "pallet-organization-identity",
  "pallet-randomness-collective-flip",
@@ -4108,6 +4109,21 @@ dependencies = [
  "sp-session",
  "sp-staking",
  "sp-std",
+]
+
+[[package]]
+name = "pallet-mechanics"
+version = "1.0.0-dev"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "support",
 ]
 
 [[package]]

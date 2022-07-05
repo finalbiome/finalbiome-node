@@ -48,6 +48,7 @@ pub use pallet_template;
 pub use pallet_organization_identity;
 pub use pallet_fungible_assets;
 pub use pallet_non_fungible_assets;
+pub use pallet_mechanics;
 pub use support;
 
 /// An index to a block.
@@ -299,6 +300,12 @@ impl pallet_non_fungible_assets::Config for Runtime {
 	type FungibleAssets = pallet_fungible_assets::Pallet<Runtime>;
 }
 
+impl pallet_mechanics::Config for Runtime {
+	type Event = Event;
+	type FungibleAssets = pallet_fungible_assets::Pallet<Runtime>;
+	type NonFungibleAssets = pallet_non_fungible_assets::Pallet<Runtime>;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -314,11 +321,11 @@ construct_runtime!(
 		Balances: pallet_balances,
 		TransactionPayment: pallet_transaction_payment,
 		Sudo: pallet_sudo,
-		// Include the custom logic from the pallet-template in the runtime.
 		TemplateModule: pallet_template,
 		OrganizationIdentity: pallet_organization_identity,
 		FungibleAssets: pallet_fungible_assets,
 		NonFungibleAssets: pallet_non_fungible_assets,
+		Mechanics: pallet_mechanics,
 	}
 );
 
@@ -367,6 +374,7 @@ mod benches {
 		[pallet_organization_identity, OrganizationIdentity]
 		[pallet_fungible_assets, FungibleAssets]
 		[pallet_non_fungible_assets, NonFungibleAssets]
+		[pallet_mechanics, Mechanics]
 	);
 }
 

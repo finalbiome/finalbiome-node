@@ -13,6 +13,9 @@ use sp_runtime::{
 	DispatchError,
 };
 
+#[cfg(test)]
+mod tests;
+
 /// Trait to collect together properties for a Fungible AssetsId.
 pub trait AssetId: Member
   + Parameter
