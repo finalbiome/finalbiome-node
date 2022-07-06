@@ -297,13 +297,16 @@ impl pallet_non_fungible_assets::Config for Runtime {
 	type ClassNameLimit = ConstU32<32>;
 	type CreateOrigin = pallet_organization_identity::EnsureMemberOfOrganization<Runtime>;
 	type BettorOutcomeNameLimit = ConstU32<32>;
-	type FungibleAssets = pallet_fungible_assets::Pallet<Runtime>;
+	type FungibleAssets = FungibleAssets;
 }
 
 impl pallet_mechanics::Config for Runtime {
 	type Event = Event;
-	type FungibleAssets = pallet_fungible_assets::Pallet<Runtime>;
-	type NonFungibleAssets = pallet_non_fungible_assets::Pallet<Runtime>;
+	type FungibleAssets = FungibleAssets;
+	type NonFungibleAssets = NonFungibleAssets;
+	type NonceIndex = Index;
+	type AssetsListLimit = ConstU32<64>;
+	type MechanicsLifeTime = ConstU32<60>;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.

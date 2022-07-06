@@ -20,6 +20,12 @@ use support;
 use frame_support::pallet_prelude::*;
 use frame_system::pallet_prelude::*;
 
+use sp_runtime::{
+	traits:: {
+		AtLeast32BitUnsigned,
+	},
+};
+
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
@@ -33,6 +39,22 @@ pub mod pallet {
 		type FungibleAssets: support::FungibleAssets;
 		/// Connector to non-fungible assets instances.
 		type NonFungibleAssets: support::NonFungibleAssets;
+		/// Account index (aka nonce) type. This stores the number of previous transactions
+		/// associated with a sender account.
+		type NonceIndex: From<Self::Index>
+			+ Member
+			+ Parameter
+			+ AtLeast32BitUnsigned
+			+ Default
+			+ Copy
+			+ MaybeSerializeDeserialize
+			+ MaxEncodedLen;
+		/// The maximum list length to pass to mechanics.
+		#[pallet::constant]
+		type AssetsListLimit: Get<u32>;
+		/// Life time of the mechanic in number of block. When `current_block + mechanic_lifetime` occurs, mechanics will be destroyed.
+		#[pallet::constant]
+		type MechanicsLifeTime: Get<Self::BlockNumber>;
 	}
 
 	#[pallet::pallet]
@@ -40,13 +62,37 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	#[pallet::storage]
-	#[pallet::getter(fn something)]
+	/// Store of the Mechanics.
+	pub(super) type Mechanics<T: Config> = StorageDoubleMap<
+		_,
+		Blake2_128Concat,
+		T::AccountId,
+		Blake2_128Concat,
+		T::NonceIndex,
+		(),
+		OptionQuery,
+	>;
+
+	#[pallet::storage]
+	/// Schedule when mechanics time out
+	pub(super) type Timeouts<T: Config> = StorageNMap<
+		_,
+		(
+			NMapKey<Blake2_128Concat, T::BlockNumber>, // when time out will happen
+			NMapKey<Blake2_128Concat, T::AccountId>,
+			NMapKey<Blake2_128Concat, T::NonceIndex>,
+		),
+		(),
+		OptionQuery,
+	>;
+
+	#[pallet::storage]
 	pub type Something<T> = StorageValue<_, u32>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		SomethingStored(u32, T::AccountId),
+		SomethingStored(u32, T::AccountId, T::Index),
 	}
 
 	// Errors inform users that something went wrong.
@@ -72,11 +118,13 @@ pub mod pallet {
 			// https://docs.substrate.io/v3/runtime/origins
 			let who = ensure_signed(origin)?;
 
+			let account_nonce = <frame_system::Pallet<T>>::account_nonce(&who);
+
 			// Update storage.
 			<Something<T>>::put(something);
 
 			// Emit an event.
-			Self::deposit_event(Event::SomethingStored(something, who));
+			Self::deposit_event(Event::SomethingStored(something, who, account_nonce));
 			// Return a successful DispatchResultWithPostInfo
 			Ok(())
 		}

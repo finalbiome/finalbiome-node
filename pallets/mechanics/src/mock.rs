@@ -1,5 +1,5 @@
 use crate as pallet_mechanics;
-use frame_support::traits::{ConstU16, ConstU64};
+use frame_support::traits::{ConstU16, ConstU32, ConstU64};
 use frame_system as system;
 use sp_core::H256;
 use sp_runtime::{
@@ -29,7 +29,7 @@ impl system::Config for Test {
 	type DbWeight = ();
 	type Origin = Origin;
 	type Call = Call;
-	type Index = u64;
+	type Index = u32;
 	type BlockNumber = u64;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
@@ -49,11 +49,37 @@ impl system::Config for Test {
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
+/// Mock of fungible-assets-pallet impl
+pub struct FAPallet {}
+impl support::FungibleAssets for FAPallet {
+	type AssetId = u32;
+	type Balance = u64;
+}
+
+/// Mock of non-fungible-assets-pallet impl
+pub struct NFAPallet {}
+impl support::NonFungibleAssets for NFAPallet {
+	type ClassId = u32;
+	type AssetId = u32;
+}
+
 impl pallet_mechanics::Config for Test {
 	type Event = Event;
+	type FungibleAssets = FAPallet;
+	type NonFungibleAssets = NFAPallet;
+	type NonceIndex = u32;
+	type AssetsListLimit = ConstU32<16>;
+	type MechanicsLifeTime = ConstU64<20>;
 }
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
+	let storage = system::GenesisConfig::default().build_storage::<Test>().unwrap();
+	let mut ext: sp_io::TestExternalities = storage.into();
+	ext.execute_with(|| {
+		System::set_block_number(1);
+		// System::on_initialize(1);
+		// NonFungibleAssets::on_initialize(1);
+	});
+	ext
 }

@@ -1,20 +1,40 @@
-use crate::{mock::*, Error};
+use super::*;
+use crate::{mock::*, Error, Something, Config, Timeouts, MechanicId};
 use frame_support::{assert_noop, assert_ok};
 
 #[test]
-fn it_works_for_default_value() {
+fn template_test() {
 	new_test_ext().execute_with(|| {
-		// Dispatch a signed extrinsic.
-		assert_ok!(MechanicsModule::do_something(Origin::signed(1), 42));
-		// Read pallet storage and assert an expected result.
-		assert_eq!(MechanicsModule::something(), Some(42));
+
 	});
 }
 
 #[test]
-fn correct_error_for_none_value() {
+fn mechanic_id_from_account() {
 	new_test_ext().execute_with(|| {
-		// Ensure the expected error is thrown when no value is present.
-		assert_noop!(MechanicsModule::cause_error(Origin::signed(1)), Error::<Test>::NoneValue);
+		let acc = 222;
+		let n = System::account_nonce(acc);
+		System::inc_account_nonce(acc);
+		let id = MechanicId::<Test>::from_account_id(acc);
+		assert_eq!(acc, id.account_id);
+		assert_eq!(n+1, id.nonce);
+	});
+}
+
+#[test]
+fn init_mechanic_set_timeout() {
+	new_test_ext().execute_with(|| {
+		let acc = 222;
+		System::inc_account_nonce(acc);
+		System::set_block_number(2);
+		let b = System::block_number();
+
+		let id = MechanicsModule::init_mechanic(acc);
+		assert_eq!(Timeouts::<Test>::contains_key(
+			(
+				b+20,
+				id.account_id,
+				id.nonce,
+			)), true);
 	});
 }
