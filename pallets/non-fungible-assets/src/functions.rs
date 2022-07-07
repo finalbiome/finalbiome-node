@@ -36,4 +36,31 @@ impl<T: Config> Pallet<T> {
 		})
 	}
 
+	pub fn do_mint(
+		class_id: NonFungibleClassId,
+		owner: T::AccountId,
+	) -> DispatchResult {
+		Classes::<T>::try_mutate(&class_id, |maybe_class_details| -> DispatchResult {
+			let class_details = maybe_class_details.as_mut().ok_or(Error::<T>::UnknownClass)?;
+			
+			let asset_id = Self::get_next_asset_id()?;
+			
+			// TODO: make check - org or member of org can't mint nfa
+			
+			let instances =
+				class_details.instances.checked_add(1).ok_or(ArithmeticError::Overflow)?;
+			class_details.instances = instances;
+
+			Accounts::<T>::insert((&owner, &class_id, &asset_id), ());
+
+			let asset_details = AssetDetailsBuilder::<T>::new(owner.clone())?
+				.build()?;
+			Assets::<T>::insert(&class_id, &asset_id, asset_details);
+			
+			Self::deposit_event(Event::Issued { class_id, asset_id, owner });
+			Ok(())
+		})?;
+		
+		Ok(())
+	}
 }

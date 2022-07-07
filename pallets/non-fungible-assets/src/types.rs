@@ -23,6 +23,11 @@ pub struct ClassDetails<AccountId, BoundedString, FungibleAssetId, NonFungibleCl
   pub(super) bettor: Option<Bettor<FungibleAssetId, NonFungibleClasstId, FungibleAssetBalance, BoundedName>>,
 }
 
+#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
+pub struct AssetDetails<AccountId> {
+  /// The owner of this asset.
+  pub(super) owner: AccountId,
+}
 /// Parameters of the Bettor Characteristic
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 pub struct Bettor<FungibleAssetId, NonFungibleClasstId, FungibleAssetBalance, BoundedName> {
@@ -143,7 +148,24 @@ impl<T: pallet::Config> ClassDetailsBuilder<T> {
   }
 }
 
+pub struct AssetDetailsBuilder<T: Config> {
+  owner: T::AccountId,
+}
+impl<T: pallet::Config> AssetDetailsBuilder<T> {
+  pub fn new(owner: T::AccountId) -> AssetDetailsBuilderResult<T> {
+    Ok(AssetDetailsBuilder {
+      owner
+    })
+  }
+  pub fn build(self) -> Result<AssetDetails<T::AccountId>, DispatchError> {
+    Ok(AssetDetails {
+      owner: self.owner,
+    })
+  }
+}
+
 pub type ClassNameLimit<T> = BoundedVec<u8, <T as pallet::Config>::ClassNameLimit>;
 type ClassDetailsBuilderResult<T> = Result<ClassDetailsBuilder<T>, DispatchError>;
+type AssetDetailsBuilderResult<T> = Result<AssetDetailsBuilder<T>, DispatchError>;
 pub type BettorOutcomeNameLimit<T> = BoundedVec<u8, <T as pallet::Config>::BettorOutcomeNameLimit>;
 pub type BettorOutcomeName<T> = BoundedVec<u8,<T as pallet::Config>::BettorOutcomeNameLimit>;

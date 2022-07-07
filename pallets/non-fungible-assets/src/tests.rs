@@ -12,6 +12,10 @@ fn get_next_class_id() -> u32 {
 	NextClassId::<Test>::get()
 }
 
+fn get_next_asset_id() -> u32 {
+	NextAssetId::<Test>::get()
+}
+
 #[test]
 fn template_test() {
 	new_test_ext().execute_with(|| {
@@ -55,6 +59,15 @@ fn class_details_builder() {
 fn class_details_builder_name_len_exceed() {
 	new_test_ext().execute_with(|| {
 		assert_noop!(ClassDetailsBuilder::<Test>::new(1, br"n234567810".to_vec()), Error::<Test>::ClassNameTooLong); // max 8 symbols
+	});
+}
+
+#[test]
+fn asset_details_builder() {
+	new_test_ext().execute_with(|| {
+		let b = AssetDetailsBuilder::<Test>::new(1).unwrap();
+		let d = b.build().unwrap();
+		assert_eq!(d.owner, 1);
 	});
 }
 
@@ -306,5 +319,48 @@ fn bettor_wins_empty() {
 			draw_outcome: DrawOutcomeResult::Keep,
 		};
 		assert_eq!(b.is_valid(), true);
+	});
+}
+
+#[test]
+fn do_mint_class_unknown_class() {
+	new_test_ext().execute_with(|| {
+		assert_noop!(NonFungibleAssets::do_mint(888, 999), Error::<Test>::UnknownClass);
+	});
+}
+
+#[test]
+fn do_mint_worked() {
+	new_test_ext().execute_with(|| {
+		// create test class
+		let nfa_id = get_next_class_id();
+		let name = br"nfa name".to_vec();
+		let id = get_next_asset_id();
+		let org = 2;
+		let acc = 1;
+		assert_ok!(NonFungibleAssets::create(
+			Origin::signed(1),
+			org,
+			name.clone()
+		));
+		System::reset_events();
+		assert_ok!(NonFungibleAssets::do_mint(nfa_id, acc));
+		assert_eq!(Assets::<Test>::contains_key(&nfa_id, &id), true);
+		assert_eq!(Accounts::<Test>::contains_key((&acc, &nfa_id, &id)), true);
+		assert_eq!(Classes::<Test>::get(nfa_id).unwrap().instances, 1);
+		
+		let minted = Assets::<Test>::get(&nfa_id, &id).unwrap();
+		assert_eq!(minted.owner, acc);
+
+		assert_eq!(
+			System::events(),
+			vec![
+				EventRecord {
+					phase: Phase::Initialization,
+					event: NfaEvent::Issued { class_id: nfa_id, asset_id: id, owner: acc }.into(),
+					topics: vec![],
+				},
+			]
+		);
 	});
 }

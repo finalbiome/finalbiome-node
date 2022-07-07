@@ -23,7 +23,7 @@ use sp_runtime::{
 		One, Zero,
 		StaticLookup,
 	},
-	DispatchError,
+	DispatchError, ArithmeticError,
 };
 use sp_std::{vec::Vec};
 use frame_support:: {
@@ -63,7 +63,7 @@ pub trait Config: frame_system::Config {
 	pub struct Pallet<T>(_);
 
 	#[pallet::storage]
-	/// Details of assets.
+	/// Details of asset classes.
 	pub(super) type Classes<T: Config> = StorageMap<
 		_,
 		Blake2_128Concat,
@@ -80,6 +80,31 @@ pub trait Config: frame_system::Config {
 		Blake2_128Concat,
 		NonFungibleClassId,
 		(),
+		OptionQuery,
+	>;
+
+	#[pallet::storage]
+	/// The assets held by any given account.
+	pub(super) type Accounts<T: Config> = StorageNMap<
+		_,
+		(
+			NMapKey<Blake2_128Concat, T::AccountId>,
+			NMapKey<Blake2_128Concat, NonFungibleClassId>,
+			NMapKey<Blake2_128Concat, NonFungibleAssetId>,
+		),
+		(),
+		OptionQuery,
+	>;
+
+	#[pallet::storage]
+	/// Details of assets.
+	pub(super) type Assets<T: Config> = StorageDoubleMap<
+		_,
+		Blake2_128Concat,
+		NonFungibleClassId,
+		Blake2_128Concat,
+		NonFungibleAssetId,
+		AssetDetails<T::AccountId>,
 		OptionQuery,
 	>;
 
@@ -108,6 +133,8 @@ pub trait Config: frame_system::Config {
 		Created { class_id: NonFungibleClassId, owner: T::AccountId },
 		/// An asset class has been destroyed.
 		Destroyed { class_id: NonFungibleClassId },
+		/// An asset `instance` has been issued.
+		Issued { class_id: NonFungibleClassId, asset_id: NonFungibleAssetId, owner: T::AccountId },
 		/// Event documentation should end with an array that provides descriptive names for event
 		/// parameters. [something, who]
 		SomethingStored(u32, T::AccountId),
@@ -157,7 +184,7 @@ pub trait Config: frame_system::Config {
 		) -> DispatchResult {
 			// owner of a class must be an orgnization
 			let owner = T::Lookup::lookup(organization_id)?;
-			// Only organization can create an asset
+			// Only organization can create an asset class
 			T::CreateOrigin::ensure_origin(origin, &owner)?;
 			let class_details = ClassDetailsBuilder::<T>::new(owner.clone(), name)?
 				.build()?;
