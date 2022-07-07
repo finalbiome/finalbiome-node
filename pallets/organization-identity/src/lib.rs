@@ -45,22 +45,23 @@ pub mod pallet {
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
-	// The pallet's runtime storage items.
-	// https://docs.substrate.io/v3/runtime/storage
 	#[pallet::storage]
-	#[pallet::getter(fn something)]
-	// Learn more about declaring storage items:
-	// https://docs.substrate.io/v3/runtime/storage#declaring-storage-items
-	pub type Something<T> = StorageValue<_, u32>;
-
-	#[pallet::storage]
-	#[pallet::getter(fn organizations)]
 	/// Details of an organization.
 	pub(super) type Organizations<T: Config> = StorageMap<
 		_,
 		Blake2_128Concat,
 		OrganizationIdOf<T>, // account_id of the organization
 		OrganizationDetails<BoundedVec<u8, T::StringLimit>>,
+	>;
+
+	#[pallet::storage]
+	/// Details of an members.
+	/// ATTENTION: The store also includes organizations.
+	pub(super) type Members<T: Config> = StorageMap<
+		_,
+		Blake2_128Concat,
+		T::AccountId, // account id of the member
+		(),
 	>;
 
 	#[pallet::storage]
@@ -109,9 +110,10 @@ pub mod pallet {
 			for (org_id, name) in &self.organizations {
 				assert!(!Organizations::<T>::contains_key(&org_id), "Organization id already in use");
 				Organizations::<T>::insert(
-					org_id,
+					&org_id,
 					OrganizationDetails::new(name.clone().try_into().expect(Error::<T>::OrganizationNameTooLong.into())),
 				);
+				Members::<T>::insert(&org_id, ());
 			}
 			let members_limit = T::MaxMembers::get();
 			for (org_id, member_id) in &self.members_of {
@@ -119,6 +121,7 @@ pub mod pallet {
 				assert!(!MembersOf::<T>::contains_key(&org_id, &member_id), "Member id already in organization");
 				let member_count = MemberCount::<T>::get(&org_id);
 				assert!(member_count < members_limit, "The maximum members per organization exceeded");
+				Members::<T>::insert(&member_id, ());
 				MembersOf::<T>::insert(
 					&org_id,
 					&member_id,
@@ -171,24 +174,6 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-
-		#[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
-		pub fn do_something(origin: OriginFor<T>, something: u32) -> DispatchResult {
-			// Check that the extrinsic was signed and get the signer.
-			// This function will return an error if the extrinsic is not signed.
-			// https://docs.substrate.io/v3/runtime/origins
-			let who = ensure_signed(origin)?;
-
-			// Update storage.
-			<Something<T>>::put(something);
-
-			// Emit an event.
-			Self::deposit_event(Event::SomethingStored(something, who));
-			// Return a successful DispatchResultWithPostInfo
-			Ok(())
-		}
-
-
 		/// Create an organization.
 		/// Will return an OrganizationExists error if the organization has already
 		/// been created. Will emit a CreatedOrganization event on success.
@@ -216,6 +201,9 @@ pub mod pallet {
 			};
 			let new_org_details = OrganizationDetails::new(bounded_name);
 			Organizations::<T>::insert(&new_organization, new_org_details);
+			// Add created organization as a member, for performance reasons
+			Members::<T>::insert(&new_organization, ());
+			
 			// Asset::<T, I>::try_mutate(id, |maybe_asset| {
 			// 	let mut asset = maybe_asset.take().ok_or(Error::<T, I>::Unknown)?;
 			// 	asset.owner = T::Lookup::lookup(owner)?;
@@ -275,6 +263,7 @@ pub mod pallet {
 				Error::<T>::AlreadyMember
 			);
 
+			Members::<T>::insert(&who, ());
 			MembersOf::<T>::insert(&org, &who, ());
 			MemberCount::<T>::insert(&org, member_count + 1); // overflow check not necessary because of maximum
 			
@@ -306,31 +295,13 @@ pub mod pallet {
 				Error::<T>::NotMember
 			);
 
+			Members::<T>::remove(&who);
 			MembersOf::<T>::remove(&org, &who);
 			MemberCount::<T>::mutate(&org, |c| *c -= 1);
 
 			Self::deposit_event(Event::MemberRemoved(org, who));
 
 			Ok(().into())
-		}
-
-		/// An example dispatchable that may throw a custom error.
-		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
-		pub fn cause_error(origin: OriginFor<T>) -> DispatchResult {
-			let _who = ensure_signed(origin)?;
-
-			// Read a value from storage.
-			match <Something<T>>::get() {
-				// Return an error if the value has not been set.
-				None => Err(Error::<T>::NoneValue.into()),
-				Some(old) => {
-					// Increment the value read from storage; will error in the event of overflow.
-					let new = old.checked_add(1).ok_or(Error::<T>::StorageOverflow)?;
-					// Update the value in storage with the incremented result.
-					<Something<T>>::put(new);
-					Ok(())
-				},
-			}
 		}
 	}
 }
@@ -339,6 +310,10 @@ impl<T: Config> Pallet<T> {
 	/// Returns true if account is an organization
 	fn is_organization(account: &T::AccountId) -> bool {
 		Organizations::<T>::contains_key(&account)
+	}
+	/// Returns true if account is a member of any organization or organization
+	fn is_member_or_organization(account: &T::AccountId) -> bool {
+		Members::<T>::contains_key(&account)
 	}
 }
 
@@ -377,6 +352,25 @@ impl<T: Config> EnsureOriginWithArg<T::Origin, OrganizationIdOf<T>> for EnsureMe
 	fn successful_origin(_: &OrganizationIdOf<T>) -> T::Origin {
 		T::Origin::from(RawOrigin::Signed(Default::default()))
 	}
-
 }
+
+/// Ensures that neither the organization nor any member is invoking a dispatch.
+pub struct EnsureUser<T: Config>(sp_std::marker::PhantomData<T>);
+impl<T: Config> EnsureOrigin<T::Origin> for EnsureUser<T> {
+	type Success = T::AccountId;
+
+	fn try_origin(o: T::Origin) -> Result<Self::Success, T::Origin> {
+		o.into().and_then(|o| match o {
+			RawOrigin::Signed(ref who)
+				if  !<Pallet<T>>::is_member_or_organization(&who) => Ok(who.clone()),
+				r => Err(T::Origin::from(r)),
+		})
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn successful_origin() -> T::Origin {
+		T::Origin::from(RawOrigin::Signed(Default::default()))
+	}
+}
+
 

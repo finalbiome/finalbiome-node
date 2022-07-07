@@ -1,24 +1,6 @@
-use crate::{mock::*, Error};
+use crate::{mock::*, Error, Organizations, Members};
 use frame_support::{assert_noop, assert_ok};
 use frame_system::{ensure_signed};
-
-#[test]
-fn it_works_for_default_value() {
-	new_test_ext().execute_with(|| {
-		// Dispatch a signed extrinsic.
-		assert_ok!(OrganizationIdentity::do_something(Origin::signed(1), 42));
-		// Read pallet storage and assert an expected result.
-		assert_eq!(OrganizationIdentity::something(), Some(42));
-	});
-}
-
-#[test]
-fn correct_error_for_none_value() {
-	new_test_ext().execute_with(|| {
-		// Ensure the expected error is thrown when no value is present.
-		assert_noop!(OrganizationIdentity::cause_error(Origin::signed(1)), Error::<Test>::NoneValue);
-	});
-}
 
 #[test]
 fn create_organization_works() {
@@ -29,9 +11,10 @@ fn create_organization_works() {
 		// Read pallet storage and assert an expected result.
 		let org = ensure_signed(Origin::signed(1)).unwrap();
 		
+		let stored_org = Organizations::<Test>::get(&org).unwrap();
+		assert_eq!(stored_org.name.to_vec(), name);
 
-		let stored_org = OrganizationIdentity::organizations(org);
-		assert_eq!(stored_org.unwrap().name.to_vec(), name);
+		assert_eq!(Members::<Test>::contains_key(&org), true);
 
 		// TODO: test the events.
 		//			 Impl bellow doesn't work
@@ -72,16 +55,19 @@ fn add_member_works() {
 		assert_ok!(OrganizationIdentity::create_organization(Origin::signed(1), br"some name".to_vec()));
 		// add member with id 2
 		assert_ok!(OrganizationIdentity::add_member(Origin::signed(1), 2));
+		assert_eq!(Members::<Test>::contains_key(&2), true);
 		assert_eq!(OrganizationIdentity::member_count(1), 1u8);
 		assert_eq!(OrganizationIdentity::member_count(0), 0u8);
 		// add member with id 3
 		assert_ok!(OrganizationIdentity::add_member(Origin::signed(1), 3));
+		assert_eq!(Members::<Test>::contains_key(&3), true);
 		assert_eq!(OrganizationIdentity::member_count(1), 2u8);
 		// add member with id 2 second time
 		assert_noop!(OrganizationIdentity::add_member(Origin::signed(1), 2), Error::<Test>::AlreadyMember);
 		assert_eq!(OrganizationIdentity::member_count(1), 2u8);
 		// add member with id 4
 		assert_ok!(OrganizationIdentity::add_member(Origin::signed(1), 4));
+		assert_eq!(Members::<Test>::contains_key(&4), true);
 		assert_eq!(OrganizationIdentity::member_count(1), 3u8);
 		// add member with id 5 should return an error
 		assert_noop!(OrganizationIdentity::add_member(Origin::signed(1), 5), Error::<Test>::MembershipLimitReached);
@@ -125,6 +111,7 @@ fn remove_member_works() {
 		assert_eq!(OrganizationIdentity::member_count(1), 2u8);
 		// remove member 2
 		assert_ok!(OrganizationIdentity::remove_member(Origin::signed(1), 2));
+		assert_eq!(Members::<Test>::contains_key(&2), false);
 		assert_eq!(OrganizationIdentity::member_count(1), 1u8);
 		// remove member 4
 		assert_noop!(OrganizationIdentity::remove_member(Origin::signed(1), 4), Error::<Test>::NotMember);
