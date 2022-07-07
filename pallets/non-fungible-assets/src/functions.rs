@@ -7,7 +7,7 @@ impl<T: Config> Pallet<T> {
    pub fn get_next_class_id() -> Result<NonFungibleClassId, DispatchError> {
 		NextClassId::<T>::try_mutate(|id| -> Result<NonFungibleClassId, DispatchError> {
 			let current_id = *id;
-			*id = id.checked_add(One::one()).ok_or(Error::<T>::NoAvailableClassId)?;
+			*id = id.checked_add(NonFungibleClassId::one()).ok_or(Error::<T>::NoAvailableClassId)?;
 			Ok(current_id)
 		})
 	}
@@ -15,7 +15,7 @@ impl<T: Config> Pallet<T> {
    pub fn get_next_asset_id() -> Result<NonFungibleAssetId, DispatchError> {
 		NextAssetId::<T>::try_mutate(|id| -> Result<NonFungibleAssetId, DispatchError> {
 			let current_id = *id;
-			*id = id.checked_add(One::one()).ok_or(Error::<T>::NoAvailableAssetId)?;
+			*id = id.checked_add(NonFungibleClassId::one()).ok_or(Error::<T>::NoAvailableAssetId)?;
 			Ok(current_id)
 		})
 	}
