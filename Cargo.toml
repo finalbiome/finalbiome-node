@@ -11,3 +11,6 @@ members = [
 ]
 [profile.release]
 panic = "unwind"
+incremental = true
+debug = 1
+lto = "off"
