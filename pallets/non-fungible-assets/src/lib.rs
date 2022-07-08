@@ -3,6 +3,8 @@
 mod types;
 mod functions;
 mod impl_non_fubgible_assets;
+mod characteristics;
+
 pub use types::*;
 
 pub use support;

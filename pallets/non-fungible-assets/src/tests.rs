@@ -3,7 +3,9 @@ use super::*;
 use crate::{
 	mock::*, Error,
 	ClassDetailsBuilder,
-	Event as NfaEvent
+	Event as NfaEvent,
+	characteristics::bettor::*,
+	characteristics::*,
 };
 use frame_support::{assert_noop, assert_ok};
 use frame_system::{EventRecord, Phase};
