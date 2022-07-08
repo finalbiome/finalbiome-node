@@ -1,8 +1,8 @@
-use super::*;
+// use super::*;
 
-use frame_support::{assert_noop, assert_ok};
+// use frame_support::{assert_noop, assert_ok};
 
 #[test]
 fn template_test() {
-  assert_ok!(Ok(()))
+  assert_eq!(true, true);
 }
