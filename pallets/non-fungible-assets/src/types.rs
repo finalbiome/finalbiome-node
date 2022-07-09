@@ -1,5 +1,4 @@
 use super::*;
-
 use characteristics::*;
 use characteristics::bettor::*;
 
@@ -28,6 +27,79 @@ pub struct AssetDetails<AccountId> {
   /// The owner of this asset.
   pub(super) owner: AccountId,
 }
+
+// region: Attributes
+
+/// An attribute data of the asset. \
+/// Can be Number or String.
+#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
+pub enum AttributeDetails<T> {
+  Number(NumberAttribute),
+  String(T)
+}
+
+#[derive(RuntimeDebug, PartialEq)]
+pub struct AttributeDetailsBuilder<T: Config> {
+  attr_type: AttributeDetails<StringAttribute<T>>,
+}
+impl<T: Config> AttributeDetailsBuilder<T> {
+  pub fn new(value: AttributeTypeRaw) -> AttributeDetailsBuilderResult<T> {
+    match value {
+      AttributeTypeRaw::Number(value) => {
+        if let Some(max_val) = value.number_max {
+          if value.number_value > max_val {
+            return Err(Error::<T>::NumberAttributeValueExceedsMaximum.into())
+          }
+        }
+        return Ok(AttributeDetailsBuilder {
+          attr_type: AttributeDetails::Number(NumberAttribute {
+            number_value: value.number_value,
+            number_max: value.number_max,
+          })
+        })
+      },
+      AttributeTypeRaw::String(value) => {
+        match value.try_into() {
+          Ok(value) => return Ok(AttributeDetailsBuilder {
+            attr_type: AttributeDetails::String(value),
+          }),
+          Err(_) => return Err(Error::<T>::StringAttributeLengthLimitExceeded.into()),
+        }
+      },
+    };
+  }
+
+  /// Validation of the attribute.
+  fn validate(&self) -> DispatchResult {
+    Ok(())
+  }
+
+  pub fn build(self) -> Result<AttributeDetails<StringAttribute<T>>, DispatchError> {
+    self.validate()?;
+    Ok(self.attr_type)
+  }
+}
+
+pub enum AttributeTypeRaw {
+  Number(NumberAttributeRaw),
+  String(StringAttributeRaw),
+}
+
+#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
+pub struct NumberAttribute {
+  pub number_value: u32,
+  pub number_max: Option<u32>,
+}
+
+pub struct NumberAttributeRaw {
+  pub number_value: u32,
+  pub number_max: Option<u32>,
+}
+
+type StringAttributeRaw = Vec<u8>;
+pub type StringAttribute<T> = BoundedVec<u8, <T as pallet::Config>::AttributeValueLimit>;
+
+// endregion: Attributes
 
 // region: Builders
 #[derive(RuntimeDebug, PartialEq)]
@@ -98,5 +170,6 @@ impl<T: pallet::Config> AssetDetailsBuilder<T> {
 pub type ClassNameLimit<T> = BoundedVec<u8, <T as pallet::Config>::ClassNameLimit>;
 type ClassDetailsBuilderResult<T> = Result<ClassDetailsBuilder<T>, DispatchError>;
 type AssetDetailsBuilderResult<T> = Result<AssetDetailsBuilder<T>, DispatchError>;
+type AttributeDetailsBuilderResult<T> = Result<AttributeDetailsBuilder<T>, DispatchError>;
 pub type BettorOutcomeNameLimit<T> = BoundedVec<u8, <T as pallet::Config>::BettorOutcomeNameLimit>;
 pub type BettorOutcomeName<T> = BoundedVec<u8,<T as pallet::Config>::BettorOutcomeNameLimit>;

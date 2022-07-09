@@ -58,6 +58,12 @@ pub trait Config: frame_system::Config {
 		/// Lenght limit of the name for the bettor ouncome
 		#[pallet::constant]
 		type BettorOutcomeNameLimit: Get<u32>;
+		/// Lenght limit of the string attribute value
+		#[pallet::constant]
+		type AttributeValueLimit: Get<u32>;
+		/// The maximum length of an attribute key.
+		#[pallet::constant]
+		type AttributeKeyLimit: Get<u32>;
 	}
 
 	#[pallet::pallet]
@@ -107,6 +113,19 @@ pub trait Config: frame_system::Config {
 		Blake2_128Concat,
 		NonFungibleAssetId,
 		AssetDetails<T::AccountId>,
+		OptionQuery,
+	>;
+
+	#[pallet::storage]
+	/// Attributes of an asset class.
+	pub(super) type Attributes<T: Config> = StorageNMap<
+		_,
+		(
+			NMapKey<Blake2_128Concat, NonFungibleClassId>,
+			NMapKey<Blake2_128Concat, Option<NonFungibleAssetId>>,
+			NMapKey<Blake2_128Concat, BoundedVec<u8, T::AttributeKeyLimit>>,
+		),
+		AttributeDetails<StringAttribute<T>>,
 		OptionQuery,
 	>;
 
@@ -161,6 +180,12 @@ pub trait Config: frame_system::Config {
 		UnknownClass,
 		/// The bettor characteristic is wrong.
 		WrongBettor,
+		/// Attribute value not supported
+		AttributeConversionError,
+		/// Attribute numeric value exceeds maximum value
+		NumberAttributeValueExceedsMaximum,
+		/// String attribute length limit exceeded
+		StringAttributeLengthLimitExceeded,
 	}
 
 	// Dispatchable functions allows users to interact with the pallet and invoke state changes.

@@ -366,3 +366,70 @@ fn do_mint_worked() {
 		);
 	});
 }
+
+#[test]
+fn attribute_build_string() {
+	new_test_ext().execute_with(|| {
+		let ar = AttributeTypeRaw::String(br"some_a".to_vec());
+		let a = AttributeDetailsBuilder::<Test>::new(ar).unwrap().build().unwrap();
+		match a {
+			AttributeDetails::String(a) => assert_eq!(a.to_vec(), br"some_a".to_vec()),
+			_ => unreachable!()
+		}
+	});
+}
+
+#[test]
+fn attribute_build_string_limit() {
+	new_test_ext().execute_with(|| {
+		let ar = AttributeTypeRaw::String(br"some_aaaaaaaa".to_vec());
+		assert_noop!(AttributeDetailsBuilder::<Test>::new(ar), Error::<Test>::StringAttributeLengthLimitExceeded);
+	});
+}
+
+#[test]
+fn attribute_build_number_simple() {
+	new_test_ext().execute_with(|| {
+		let ar = AttributeTypeRaw::Number(NumberAttributeRaw {
+			number_value: 10,
+			number_max: None,
+		});
+		let a = AttributeDetailsBuilder::<Test>::new(ar).unwrap().build().unwrap();
+		match a {
+			AttributeDetails::Number(a) => {
+				assert_eq!(a.number_value, 10);
+				assert_eq!(a.number_max, None);
+			}
+			_ => unreachable!()
+		}
+	});
+}
+
+#[test]
+fn attribute_build_number_max() {
+	new_test_ext().execute_with(|| {
+		let ar = AttributeTypeRaw::Number(NumberAttributeRaw {
+			number_value: 10,
+			number_max: Some(100),
+		});
+		let a = AttributeDetailsBuilder::<Test>::new(ar).unwrap().build().unwrap();
+		match a {
+			AttributeDetails::Number(a) => {
+				assert_eq!(a.number_value, 10);
+				assert_eq!(a.number_max, Some(100));
+			}
+			_ => unreachable!()
+		}
+	});
+}
+
+#[test]
+fn attribute_build_number_max_low() {
+	new_test_ext().execute_with(|| {
+		let ar = AttributeTypeRaw::Number(NumberAttributeRaw {
+			number_value: 100,
+			number_max: Some(10),
+		});
+		assert_noop!(AttributeDetailsBuilder::<Test>::new(ar), Error::<Test>::NumberAttributeValueExceedsMaximum);
+	});
+}
