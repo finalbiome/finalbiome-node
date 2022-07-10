@@ -8,10 +8,10 @@
   },
   "scripts": {
     "start": "./target/release/finalbiome-node --dev",
-    "test": "cargo test",
+    "test": "cargo test --locked",
     "build release": "cargo build --release",
     "build & start": "cargo build && ./target/release/finalbiome-node --dev",
-    "check": "cargo check"
+    "check": "cargo clippy --locked -- -D warnings"
   },
   "repository": {
     "type": "git",
