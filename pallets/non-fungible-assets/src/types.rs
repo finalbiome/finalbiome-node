@@ -16,6 +16,8 @@ pub struct ClassDetails<AccountId, BoundedString, FungibleAssetId, NonFungibleCl
   pub(super) owner: AccountId,
   /// The total number of outstanding instances of this asset class
 	pub(super) instances: u32,
+  /// The total number of attributes for this asset class.
+	pub(super) attributes: u32,
   /// Name of the Asset. Limited in length by `ClassNameLimit`
 	pub(super) name: BoundedString,
   /// Characteristic of bets
@@ -144,6 +146,7 @@ impl<T: pallet::Config> ClassDetailsBuilder<T> {
       owner: self.owner,
       name: self.name,
       instances: Zero::zero(),
+      attributes: Zero::zero(),
       bettor: None,
     })
   }

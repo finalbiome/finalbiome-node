@@ -74,16 +74,6 @@ fn asset_details_builder() {
 }
 
 #[test]
-fn it_works_for_default_value() {
-	new_test_ext().execute_with(|| {
-		// Dispatch a signed extrinsic.
-		assert_ok!(NonFungibleAssets::do_something(Origin::signed(1), 42));
-		// Read pallet storage and assert an expected result.
-		assert_eq!(NonFungibleAssets::something(), Some(42));
-	});
-}
-
-#[test]
 fn correct_error_for_none_value() {
 	new_test_ext().execute_with(|| {
 		// Ensure the expected error is thrown when no value is present.
@@ -112,6 +102,7 @@ fn create_class_created() {
 		let nfa = Classes::<Test>::get(nfa_id).unwrap();
 		assert_eq!(nfa.name.to_vec(), name);
 		assert_eq!(nfa.instances, 0);
+		assert_eq!(nfa.attributes, 0);
 		assert_eq!(nfa.owner, org);
 		assert_eq!(ClassAccounts::<Test>::contains_key(org, nfa_id), true);
 		assert_eq!(
@@ -431,5 +422,109 @@ fn attribute_build_number_max_low() {
 			number_max: Some(10),
 		});
 		assert_noop!(AttributeDetailsBuilder::<Test>::new(ar), Error::<Test>::NumberAttributeValueExceedsMaximum);
+	});
+}
+
+#[test]
+fn do_create_attribute_wrong_attr() {
+	new_test_ext().execute_with(|| {
+		let ar = AttributeTypeRaw::Number(NumberAttributeRaw {
+			number_value: 100,
+			number_max: Some(10),
+		});
+		assert_noop!(NonFungibleAssets::do_create_attribute(1, None, br"a_name".to_vec(), ar), Error::<Test>::NumberAttributeValueExceedsMaximum);
+	});
+}
+
+#[test]
+fn do_create_attribute_wrong_attr_name() {
+	new_test_ext().execute_with(|| {
+		let ar = AttributeTypeRaw::Number(NumberAttributeRaw {
+			number_value: 100,
+			number_max: Some(10),
+		});
+		assert_noop!(NonFungibleAssets::do_create_attribute(1, None, br"a_name_looooooooooong__".to_vec(), ar), Error::<Test>::AttributeConversionError);
+	});
+}
+
+#[test]
+fn do_create_attribute_class_not_exists() {
+	new_test_ext().execute_with(|| {
+		let ar = AttributeTypeRaw::Number(NumberAttributeRaw {
+			number_value: 100,
+			number_max: None,
+		});
+		assert_noop!(NonFungibleAssets::do_create_attribute(1000, None, br"a_name".to_vec(), ar), Error::<Test>::UnknownClass);
+	});
+}
+
+#[test]
+fn do_create_attribute_owner_no_permissions() {
+	new_test_ext().execute_with(|| {
+		let ar = AttributeTypeRaw::Number(NumberAttributeRaw {
+			number_value: 100,
+			number_max: None,
+		});
+		// create class
+		let name = br"nfa name".to_vec();
+		let nfa_id = get_next_class_id();
+		let org = 2;
+		assert_ok!(NonFungibleAssets::create(Origin::signed(1), org, name.clone()));
+
+		assert_noop!(NonFungibleAssets::do_create_attribute(nfa_id, Some(1111), br"a_name".to_vec(), ar), Error::<Test>::NoPermission);
+	});
+}
+
+#[test]
+fn do_create_attribute_already_exists() {
+	new_test_ext().execute_with(|| {
+		let ar = AttributeTypeRaw::Number(NumberAttributeRaw {
+			number_value: 100,
+			number_max: None,
+		});
+		// create class
+		let name = br"nfa name".to_vec();
+		let nfa_id = get_next_class_id();
+		let org = 2;
+		assert_ok!(NonFungibleAssets::create(Origin::signed(1), org, name.clone()));
+		// create fake attr w/ same name
+		let eat = AttributeDetails::Number(NumberAttribute {number_value: 10, number_max: None});
+		let attr_name: BoundedVec<u8, ConstU32<6>> = br"a_name".to_vec().try_into().unwrap();
+		Attributes::<Test>::insert((nfa_id, None as Option<NonFungibleAssetId>, attr_name), eat);
+
+		assert_noop!(NonFungibleAssets::do_create_attribute(nfa_id, Some(org), br"a_name".to_vec(), ar), Error::<Test>::AttributeAlreadyExist);
+	});
+}
+
+#[test]
+fn do_create_attribute_already_exists1() {
+	new_test_ext().execute_with(|| {
+		let ar = AttributeTypeRaw::Number(NumberAttributeRaw {
+			number_value: 100,
+			number_max: None,
+		});
+		// create class
+		let name = br"nfa name".to_vec();
+		let nfa_id = get_next_class_id();
+		let org = 2;
+		assert_ok!(NonFungibleAssets::create(Origin::signed(1), org, name.clone()));
+		assert_eq!(Classes::<Test>::get(nfa_id).unwrap().attributes, 0);
+
+		System::reset_events();
+		assert_ok!(NonFungibleAssets::do_create_attribute(nfa_id, Some(org), br"a_name".to_vec(), ar));
+		
+		let attr_name: BoundedVec<u8, ConstU32<6>> = br"a_name".to_vec().try_into().unwrap();
+		assert_eq!(Attributes::<Test>::contains_key((nfa_id, None as Option<NonFungibleAssetId>, &attr_name)), true);
+		assert_eq!(Classes::<Test>::get(nfa_id).unwrap().attributes, 1);
+		assert_eq!(
+			System::events(),
+			vec![
+				EventRecord {
+					phase: Phase::Initialization,
+					event: NfaEvent::AttributeCreated { class_id: nfa_id, key: attr_name, value: AttributeDetails::Number(NumberAttribute {number_value: 100, number_max: None}) }.into(),
+					topics: vec![],
+				},
+			]
+		);
 	});
 }

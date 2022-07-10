@@ -63,4 +63,34 @@ impl<T: Config> Pallet<T> {
 		
 		Ok(())
 	}
+
+	/// Creates attribute for the asset class.  \
+	/// Attributes can be created nly for classes
+	pub fn do_create_attribute(
+		class_id: NonFungibleClassId,
+		maybe_check_owner: Option<T::AccountId>,
+		attribute_name: Vec<u8>,
+		attribute_value: AttributeTypeRaw,
+	) -> DispatchResult {
+		// Checks attribute input
+		let name: BoundedVec<u8, T::AttributeKeyLimit> = attribute_name.try_into().map_err(|_| Error::<T>::AttributeConversionError)?;
+		let value = AttributeDetailsBuilder::<T>::new(attribute_value)?.build()?;
+		// Check class existance
+		let mut details = Classes::<T>::get(class_id).ok_or(Error::<T>::UnknownClass)?;
+		if let Some(check_owner) = maybe_check_owner {
+			ensure!(details.owner == check_owner, Error::<T>::NoPermission);
+		}
+		let asset_id:Option<NonFungibleAssetId> = None;
+		let key = (&class_id, &asset_id, &name);
+		// Attribute must not exits
+		if Attributes::<T>::contains_key(&key) {
+			return Err(Error::<T>::AttributeAlreadyExist.into())
+		}
+
+		Attributes::<T>::insert(&key, &value);
+		details.attributes.saturating_inc();
+		Classes::<T>::insert(&class_id, &details);
+		Self::deposit_event(Event::AttributeCreated { class_id, key: name, value });
+		Ok(())
+	}
 }

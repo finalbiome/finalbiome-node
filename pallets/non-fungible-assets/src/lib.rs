@@ -24,6 +24,7 @@ use sp_runtime::{
 	traits:: {
 		One, Zero,
 		StaticLookup,
+		Saturating,
 	},
 	DispatchError, ArithmeticError,
 };
@@ -156,6 +157,9 @@ pub trait Config: frame_system::Config {
 		Destroyed { class_id: NonFungibleClassId },
 		/// An asset `instance` has been issued.
 		Issued { class_id: NonFungibleClassId, asset_id: NonFungibleAssetId, owner: T::AccountId },
+		/// New attribute metadata has been set for an asset class or instance.
+		AttributeCreated {
+			class_id: NonFungibleClassId, key: BoundedVec<u8, T::AttributeKeyLimit>, value: AttributeDetails<StringAttribute<T>> },
 		/// Event documentation should end with an array that provides descriptive names for event
 		/// parameters. [something, who]
 		SomethingStored(u32, T::AccountId),
@@ -186,6 +190,8 @@ pub trait Config: frame_system::Config {
 		NumberAttributeValueExceedsMaximum,
 		/// String attribute length limit exceeded
 		StringAttributeLengthLimitExceeded,
+		/// An attribute with the specified name already exists
+		AttributeAlreadyExist,
 	}
 
 	// Dispatchable functions allows users to interact with the pallet and invoke state changes.

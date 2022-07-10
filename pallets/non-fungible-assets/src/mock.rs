@@ -71,6 +71,21 @@ impl pallet_non_fungible_assets::Config for Test {
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let storage = system::GenesisConfig::default().build_storage::<Test>().unwrap();
+	// let config: pallet_fungible_assets::GenesisConfig<Test> = pallet_fungible_assets::GenesisConfig {
+	// 	// assets: asset_id, organization_id, name, top_upped_speed, cup_global, cup_local
+	// 	assets: vec![
+	// 		(0, 2, "asset01".into(), None, None, None),
+	// 		(1, 2, "asset02".into(), Some(5), None, Some(20)),
+	// 	],
+	// 	// account_balances: account_id, asset_id, balance
+	// 	accounts: vec![
+	// 		(1, 0, 1_000),
+	// 		(3, 1, 20),
+	// 		(4, 1, 5),
+	// 		(5, 0, 10_000),
+	// 	],
+	// };
+	// config.assimilate_storage(&mut storage).unwrap();
 	let mut ext: sp_io::TestExternalities = storage.into();
 	ext.execute_with(|| {
 		System::set_block_number(1);
