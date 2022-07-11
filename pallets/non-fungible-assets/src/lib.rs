@@ -157,9 +157,11 @@ pub trait Config: frame_system::Config {
 		Destroyed { class_id: NonFungibleClassId },
 		/// An asset `instance` has been issued.
 		Issued { class_id: NonFungibleClassId, asset_id: NonFungibleAssetId, owner: T::AccountId },
-		/// New attribute metadata has been set for an asset class or instance.
+		/// New attribute metadata has been set for the asset class.
 		AttributeCreated {
 			class_id: NonFungibleClassId, key: BoundedVec<u8, T::AttributeKeyLimit>, value: AttributeDetails<StringAttribute<T>> },
+		/// Attribute metadata has been removed for the asset class.
+		AttributeRemoved { class_id: NonFungibleClassId, key: BoundedVec<u8, T::AttributeKeyLimit> },
 		/// Event documentation should end with an array that provides descriptive names for event
 		/// parameters. [something, who]
 		SomethingStored(u32, T::AccountId),
@@ -191,7 +193,7 @@ pub trait Config: frame_system::Config {
 		/// String attribute length limit exceeded
 		StringAttributeLengthLimitExceeded,
 		/// An attribute with the specified name already exists
-		AttributeAlreadyExist,
+		AttributeAlreadyExists,
 	}
 
 	// Dispatchable functions allows users to interact with the pallet and invoke state changes.
