@@ -10,6 +10,8 @@ use sp_runtime::{
 	},
 };
 
+mod types;
+
 #[cfg(test)]
 mod tests;
 
@@ -69,3 +71,5 @@ pub trait NonFungibleAssets {
   /// Type of the NFA instance id
   type AssetId: AssetId;
 }
+
+pub type DispatchResult<T> = sp_std::result::Result<T, sp_runtime::DispatchError>;

@@ -77,7 +77,7 @@ pub trait Config: frame_system::Config {
 		_,
 		Blake2_128Concat,
 		NonFungibleClassId,
-		ClassDetails<T::AccountId, ClassNameLimit<T>, FungibleAssetId<T>, NonFungibleClassId, FungibleAssetBalance<T>, BettorOutcomeName<T>>
+		ClassDetailsOf<T>,
 	>;
 
 	#[pallet::storage]

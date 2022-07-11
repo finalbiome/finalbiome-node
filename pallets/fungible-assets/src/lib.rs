@@ -146,7 +146,7 @@ pub mod pallet {
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
 		/// Genesis assets: asset_id, organization_id, name, top_upped_speed, cup_global, cup_local
-		pub assets: Vec<(AssetId, T::AccountId, Vec<u8>, Option<T::Balance>, Option<T::Balance>, Option<T::Balance>)>,
+		pub assets: GenesisAssetsConfigOf<T>,
 		/// Genesis account_balances: account_id, asset_id, balance
 		pub accounts: Vec<(T::AccountId, AssetId, T::Balance)>,
 	}

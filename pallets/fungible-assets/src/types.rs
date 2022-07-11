@@ -170,14 +170,14 @@ impl<T: pallet::Config> AssetDetailsBuilder<T> {
 
   /// Validation of the all asset details.
   /// Rise the panic if something wrong
-  pub fn validate(&self) -> Result<(), sp_runtime::DispatchError> {
+  pub fn validate(&self) -> Result<(), DispatchError> {
     if self.top_upped.is_some() && self.cup_local.is_none() {
         return Err(Error::<T>::TopUppedWithNoCup.into())
       }
     Ok(())
   }
 
-  pub fn build(self) -> Result<AssetDetails<T::AccountId, T::Balance, NameLimit<T>>, sp_runtime::DispatchError> {
+  pub fn build(self) -> support::DispatchResult<AssetDetails<T::AccountId, T::Balance, NameLimit<T>>> {
     self.validate()?;
     Ok(AssetDetails {
       owner: self.owner,
@@ -197,7 +197,6 @@ pub type AssetId = u32;
 
 pub type NameLimit<T> = BoundedVec<u8, <T as pallet::Config>::NameLimit>;
 
-type AssetDetailsBuilderResult<T> = Result<AssetDetailsBuilder<T>, sp_runtime::DispatchError>;
+type AssetDetailsBuilderResult<T> = Result<AssetDetailsBuilder<T>, DispatchError>;
 
-// pub(super) type DepositBalanceOf<T = ()> =
-// 	<<T as Config>::Currency as Currency<<T as SystemConfig>::AccountId>>::Balance;
+pub type GenesisAssetsConfigOf<T> = Vec<(AssetId, <T as frame_system::Config>::AccountId, Vec<u8>, Option<<T as pallet::Config>::Balance>, Option<<T as pallet::Config>::Balance>, Option<<T as pallet::Config>::Balance>)>;

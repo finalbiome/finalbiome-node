@@ -108,7 +108,7 @@ pub type StringAttribute<T> = BoundedVec<u8, <T as pallet::Config>::AttributeVal
 pub struct ClassDetailsBuilder<T: Config> {
   owner: T::AccountId,
   name: ClassNameLimit<T>,
-  bettor: Option<Bettor<FungibleAssetId<T>, NonFungibleClassId, FungibleAssetBalance<T>, BettorOutcomeName<T>>>,
+  bettor: CharacteristicBettorOf<T>,
 }
 impl<T: pallet::Config> ClassDetailsBuilder<T> {
   pub fn new(owner: T::AccountId, name: Vec<u8>) -> ClassDetailsBuilderResult<T> {
@@ -125,7 +125,7 @@ impl<T: pallet::Config> ClassDetailsBuilder<T> {
   }
 
   /// Set the Bettor chracteristic of the NFA
-  pub fn bettor(mut self, bettor: Option<Bettor<FungibleAssetId<T>, NonFungibleClassId, FungibleAssetBalance<T>, BettorOutcomeName<T>>>) -> ClassDetailsBuilderResult<T> {
+  pub fn bettor(mut self, bettor: CharacteristicBettorOf<T>) -> ClassDetailsBuilderResult<T> {
     if let Some(ref inc_bettor) = bettor {
       if !inc_bettor.is_valid() {
         return Err(Error::<T>::WrongBettor.into())
@@ -140,7 +140,7 @@ impl<T: pallet::Config> ClassDetailsBuilder<T> {
     Ok(())
   }
 
-  pub fn build(self) -> Result<ClassDetails<T::AccountId, ClassNameLimit<T>, FungibleAssetId<T>, NonFungibleClassId, FungibleAssetBalance<T>, BettorOutcomeName<T>>, DispatchError> {
+  pub fn build(self) -> Result<ClassDetailsOf<T>, DispatchError> {
     self.validate()?;
     Ok(ClassDetails {
       owner: self.owner,
@@ -176,3 +176,5 @@ type AssetDetailsBuilderResult<T> = Result<AssetDetailsBuilder<T>, DispatchError
 type AttributeDetailsBuilderResult<T> = Result<AttributeDetailsBuilder<T>, DispatchError>;
 pub type BettorOutcomeNameLimit<T> = BoundedVec<u8, <T as pallet::Config>::BettorOutcomeNameLimit>;
 pub type BettorOutcomeName<T> = BoundedVec<u8,<T as pallet::Config>::BettorOutcomeNameLimit>;
+pub type ClassDetailsOf<T> = ClassDetails<<T as frame_system::Config>::AccountId, ClassNameLimit<T>, FungibleAssetId<T>, NonFungibleClassId, FungibleAssetBalance<T>, BettorOutcomeName<T>>;
+pub type CharacteristicBettorOf<T> = Option<Bettor<FungibleAssetId<T>, NonFungibleClassId, FungibleAssetBalance<T>, BettorOutcomeName<T>>>;

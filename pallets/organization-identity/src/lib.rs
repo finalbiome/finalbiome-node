@@ -111,7 +111,7 @@ pub mod pallet {
 				assert!(!Organizations::<T>::contains_key(&org_id), "Organization id already in use");
 				Organizations::<T>::insert(
 					&org_id,
-					OrganizationDetails::new(name.clone().try_into().expect(Error::<T>::OrganizationNameTooLong.into())),
+					OrganizationDetails::new(name.clone().try_into().map_err(|_| Error::<T>::OrganizationNameTooLong).unwrap()),
 				);
 				Members::<T>::insert(&org_id, ());
 			}
