@@ -626,3 +626,89 @@ fn do_remove_attribute_work() {
 		);
 	});
 }
+
+#[test]
+fn create_attribute_unsigned() {
+	new_test_ext().execute_with(|| {
+		// create class
+		let name = br"nfa name".to_vec();
+		let class_id = get_next_class_id();
+		let org = 2;
+		assert_ok!(NonFungibleAssets::create(Origin::signed(1), org, name.clone()));
+
+		let attribute_value = AttributeTypeRaw::Number(NumberAttributeRaw {
+			number_value: 100,
+			number_max: None,
+		});
+		let attribute_name = br"a_name".to_vec();
+
+		assert_noop!(NonFungibleAssets::create_attribute(Origin::none(), org, class_id, attribute_name, attribute_value), sp_runtime::traits::BadOrigin);
+	});
+}
+
+#[test]
+fn create_attribute_worked() {
+	new_test_ext().execute_with(|| {
+		// create class
+		let name = br"nfa name".to_vec();
+		let class_id = get_next_class_id();
+		let org = 2;
+		assert_ok!(NonFungibleAssets::create(Origin::signed(1), org, name.clone()));
+
+		let attribute_value = AttributeTypeRaw::Number(NumberAttributeRaw {
+			number_value: 100,
+			number_max: None,
+		});
+		let attribute_name = br"a_name".to_vec();
+
+		assert_ok!(NonFungibleAssets::create_attribute(Origin::signed(1), org, class_id, attribute_name, attribute_value));
+		
+		let attr_name: BoundedVec<u8, ConstU32<6>> = br"a_name".to_vec().try_into().unwrap();
+		assert_eq!(Attributes::<Test>::contains_key((class_id, None as Option<NonFungibleAssetId>, &attr_name)), true);
+
+	});
+}
+
+#[test]
+fn remove_attribute_unsigned() {
+	new_test_ext().execute_with(|| {
+		// create class
+		let name = br"nfa name".to_vec();
+		let class_id = get_next_class_id();
+		let org = 2;
+		assert_ok!(NonFungibleAssets::create(Origin::signed(1), org, name.clone()));
+
+		let attribute_name = br"a_name".to_vec();
+
+		assert_noop!(NonFungibleAssets::remove_attribute(Origin::none(), org, class_id, attribute_name), sp_runtime::traits::BadOrigin);
+	});
+}
+
+#[test]
+fn remove_attribute_worked() {
+	new_test_ext().execute_with(|| {
+		// create class
+		let name = br"nfa name".to_vec();
+		let class_id = get_next_class_id();
+		let org = 2;
+		assert_ok!(NonFungibleAssets::create(Origin::signed(1), org, name.clone()));
+
+		let attribute_value = AttributeTypeRaw::Number(NumberAttributeRaw {
+			number_value: 100,
+			number_max: None,
+		});
+		let attribute_name = br"a_name".to_vec();
+
+		assert_ok!(NonFungibleAssets::create_attribute(Origin::signed(1), org, class_id, attribute_name.clone(), attribute_value));
+		
+		let attr_name: BoundedVec<u8, ConstU32<6>> = br"a_name".to_vec().try_into().unwrap();
+		assert_eq!(Attributes::<Test>::contains_key((class_id, None as Option<NonFungibleAssetId>, &attr_name)), true);
+
+		assert_ok!(NonFungibleAssets::remove_attribute(Origin::signed(1), org, class_id, attribute_name));
+		assert_eq!(Attributes::<Test>::contains_key((class_id, None as Option<NonFungibleAssetId>, &attr_name)), false);
+
+
+	});
+}
+
+

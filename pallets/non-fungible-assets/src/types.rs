@@ -82,6 +82,7 @@ impl<T: Config> AttributeDetailsBuilder<T> {
   }
 }
 
+#[derive(RuntimeDebug, Clone, PartialEq, Encode, TypeInfo, Decode)]
 pub enum AttributeTypeRaw {
   Number(NumberAttributeRaw),
   String(StringAttributeRaw),
@@ -93,6 +94,7 @@ pub struct NumberAttribute {
   pub number_max: Option<u32>,
 }
 
+#[derive(RuntimeDebug, Clone, PartialEq, Encode, TypeInfo, Decode)]
 pub struct NumberAttributeRaw {
   pub number_value: u32,
   pub number_max: Option<u32>,

@@ -258,6 +258,48 @@ pub trait Config: frame_system::Config {
 
 			Ok(())
 		}
+
+		/// Creates an attribute for the non fungible asset class.
+		/// The origin must be Signed, be a member of the organization 
+		/// and that organization must be a owner of the asset class.
+		#[pallet::weight(T::DbWeight::get().reads_writes(2, 2))]
+		pub fn create_attribute(
+			origin: OriginFor<T>,
+			organization_id: <T::Lookup as StaticLookup>::Source,
+			#[pallet::compact] class_id: NonFungibleClassId,
+			attribute_name: Vec<u8>,
+			attribute_value: AttributeTypeRaw,
+		) -> DispatchResult {
+			// owner of a class must be an orgnization
+			let owner = T::Lookup::lookup(organization_id)?;
+			// Only organization can manage an asset class
+			T::CreateOrigin::ensure_origin(origin, &owner)?;
+
+			Self::do_create_attribute(class_id, Some(owner), attribute_name, attribute_value)?;
+
+			Ok(())
+		}
+
+		/// Removes an attribute for the non fungible asset class.
+		/// The origin must be Signed, be a member of the organization 
+		/// and that organization must be a owner of the asset class.
+		#[pallet::weight(T::DbWeight::get().reads_writes(2, 2))]
+		pub fn remove_attribute(
+			origin: OriginFor<T>,
+			organization_id: <T::Lookup as StaticLookup>::Source,
+			#[pallet::compact] class_id: NonFungibleClassId,
+			attribute_name: Vec<u8>,
+		) -> DispatchResult {
+			// owner of a class must be an orgnization
+			let owner = T::Lookup::lookup(organization_id)?;
+			// Only organization can manage an asset class
+			T::CreateOrigin::ensure_origin(origin, &owner)?;
+
+			Self::do_remove_attribute(class_id, Some(owner), attribute_name)?;
+			
+			Ok(())
+		}
+
 		/// An example dispatchable that takes a singles value as a parameter, writes the value to
 		/// storage and emits an event. This function must be dispatched by a signed extrinsic.
 		#[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
