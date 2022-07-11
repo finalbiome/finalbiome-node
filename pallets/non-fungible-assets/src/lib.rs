@@ -25,6 +25,7 @@ use sp_runtime::{
 		One, Zero,
 		StaticLookup,
 		Saturating,
+		AtLeast32BitUnsigned,
 	},
 	DispatchError, ArithmeticError,
 };
@@ -124,9 +125,9 @@ pub trait Config: frame_system::Config {
 		(
 			NMapKey<Blake2_128Concat, NonFungibleClassId>,
 			NMapKey<Blake2_128Concat, Option<NonFungibleAssetId>>,
-			NMapKey<Blake2_128Concat, BoundedVec<u8, T::AttributeKeyLimit>>,
+			NMapKey<Blake2_128Concat, AttributeKeyOf<T>>,
 		),
-		AttributeDetails<StringAttribute<T>>,
+		AttributeDetailsOf<T>,
 		OptionQuery,
 	>;
 
@@ -186,6 +187,8 @@ pub trait Config: frame_system::Config {
 		UnknownClass,
 		/// The bettor characteristic is wrong.
 		WrongBettor,
+		/// The purchased characteristic is wrong.
+		WrongPurchased,
 		/// Attribute value not supported
 		AttributeConversionError,
 		/// Attribute numeric value exceeds maximum value

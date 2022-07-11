@@ -4,7 +4,7 @@ use crate::{
 	mock::*, Error,
 	ClassDetailsBuilder,
 	Event as NfaEvent,
-	characteristics::bettor::*,
+	characteristics::{bettor::*, purchased::{Purchased, Offer}},
 	characteristics::*,
 };
 use frame_support::{assert_noop, assert_ok};
@@ -711,4 +711,64 @@ fn remove_attribute_worked() {
 	});
 }
 
+#[test]
+fn purchased_empty() {
+	new_test_ext().execute_with(|| {
+		let b:Purchased<u32, u32, ConstU32<6>, ConstU32<8>> = Purchased {
+			offers: vec![].try_into().unwrap(),
+		};
+		assert_eq!(b.is_valid(), false)
+	});
+}
 
+#[test]
+fn purchased_has_0_price() {
+	new_test_ext().execute_with(|| {
+		let b:Purchased<u32, u32, ConstU32<6>, ConstU32<8>> = Purchased {
+			offers: vec![
+				Offer {
+					fa: 1,
+					price: 10,
+					attributes: vec![].try_into().unwrap(),
+				},
+				Offer {
+					fa: 2,
+					price: 100,
+					attributes: vec![].try_into().unwrap(),
+				},
+				Offer {
+					fa: 3,
+					price: 0,
+					attributes: vec![].try_into().unwrap(),
+				},
+			].try_into().unwrap(),
+		};
+		assert_eq!(b.is_valid(), false)
+	});
+}
+
+#[test]
+fn purchased_has_0_price_2() {
+	new_test_ext().execute_with(|| {
+		let b:Purchased<u32, u32, ConstU32<6>, ConstU32<8>> = Purchased {
+			offers: vec![
+				Offer {
+					fa: 1,
+					price: 10,
+					attributes: vec![].try_into().unwrap(),
+				},
+				Offer {
+					fa: 2,
+					price: 100,
+					attributes: vec![].try_into().unwrap(),
+				},
+				Offer {
+					fa: 3,
+					price: 1000,
+					attributes: vec![].try_into().unwrap(),
+				},
+			].try_into().unwrap(),
+		};
+		assert_eq!(b.is_valid(), true)
+	});
+}

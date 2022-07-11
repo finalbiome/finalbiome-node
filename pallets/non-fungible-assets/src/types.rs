@@ -1,6 +1,7 @@
 use super::*;
 use characteristics::*;
 use characteristics::bettor::*;
+use characteristics::purchased::*;
 
 /// Type of the non-fungible asset instance ids
 pub type NonFungibleAssetId = u32;
@@ -12,7 +13,7 @@ pub type FungibleAssetId<T> = <<T as pallet::Config>::FungibleAssets as support:
 pub type FungibleAssetBalance<T> = <<T as pallet::Config>::FungibleAssets as support::FungibleAssets>::Balance;
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
-pub struct ClassDetails<AccountId, BoundedString, FungibleAssetId, NonFungibleClasstId, FungibleAssetBalance, BoundedName> {
+pub struct ClassDetails<AccountId, BoundedString, FungibleAssetId, NonFungibleClasstId, FungibleAssetBalance, BoundedName, AttrKey, AttrStringType> {
   pub(super) owner: AccountId,
   /// The total number of outstanding instances of this asset class
 	pub(super) instances: u32,
@@ -22,6 +23,8 @@ pub struct ClassDetails<AccountId, BoundedString, FungibleAssetId, NonFungibleCl
 	pub(super) name: BoundedString,
   /// Characteristic of bets
   pub(super) bettor: Option<Bettor<FungibleAssetId, NonFungibleClasstId, FungibleAssetBalance, BoundedName>>,
+  /// Characteristic of purchases
+  pub(super) purchased: Option<Purchased<FungibleAssetId, FungibleAssetBalance, AttrKey, AttrStringType>>,
 }
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
@@ -111,6 +114,7 @@ pub struct ClassDetailsBuilder<T: Config> {
   owner: T::AccountId,
   name: ClassNameLimit<T>,
   bettor: CharacteristicBettorOf<T>,
+  purchased: CharacteristicPurchasedOf<T>,
 }
 impl<T: pallet::Config> ClassDetailsBuilder<T> {
   pub fn new(owner: T::AccountId, name: Vec<u8>) -> ClassDetailsBuilderResult<T> {
@@ -123,6 +127,7 @@ impl<T: pallet::Config> ClassDetailsBuilder<T> {
       owner,
       name,
       bettor: None,
+      purchased: None,
     })
   }
 
@@ -134,6 +139,16 @@ impl<T: pallet::Config> ClassDetailsBuilder<T> {
       }
     }
     self.bettor = bettor;
+    Ok(self)
+  }
+
+  pub fn purchased(mut self, purchased: CharacteristicPurchasedOf<T>) -> ClassDetailsBuilderResult<T> {
+    if let Some(ref inc_purchased) = purchased {
+      if !inc_purchased.is_valid() {
+        return Err(Error::<T>::WrongPurchased.into())
+      }
+    }
+    self.purchased = purchased;
     Ok(self)
   }
 
@@ -150,6 +165,7 @@ impl<T: pallet::Config> ClassDetailsBuilder<T> {
       instances: Zero::zero(),
       attributes: Zero::zero(),
       bettor: None,
+      purchased: None,
     })
   }
 }
@@ -178,5 +194,10 @@ type AssetDetailsBuilderResult<T> = Result<AssetDetailsBuilder<T>, DispatchError
 type AttributeDetailsBuilderResult<T> = Result<AttributeDetailsBuilder<T>, DispatchError>;
 pub type BettorOutcomeNameLimit<T> = BoundedVec<u8, <T as pallet::Config>::BettorOutcomeNameLimit>;
 pub type BettorOutcomeName<T> = BoundedVec<u8,<T as pallet::Config>::BettorOutcomeNameLimit>;
-pub type ClassDetailsOf<T> = ClassDetails<<T as frame_system::Config>::AccountId, ClassNameLimit<T>, FungibleAssetId<T>, NonFungibleClassId, FungibleAssetBalance<T>, BettorOutcomeName<T>>;
+pub type ClassDetailsOf<T> = ClassDetails<<T as frame_system::Config>::AccountId, ClassNameLimit<T>, FungibleAssetId<T>, NonFungibleClassId, FungibleAssetBalance<T>, BettorOutcomeName<T>, AttributeKeyOf<T>, StringAttribute<T>>;
+
 pub type CharacteristicBettorOf<T> = Option<Bettor<FungibleAssetId<T>, NonFungibleClassId, FungibleAssetBalance<T>, BettorOutcomeName<T>>>;
+pub type CharacteristicPurchasedOf<T> = Option<Purchased<FungibleAssetId<T>, FungibleAssetBalance<T>, AttributeKeyOf<T>, AttributeDetailsOf<T>>>;
+
+pub type AttributeKeyOf<T> = BoundedVec<u8, <T as pallet::Config>::AttributeKeyLimit>;
+pub type AttributeDetailsOf<T> = AttributeDetails<StringAttribute<T>>;
