@@ -174,6 +174,36 @@ fn do_destroy_class_worked() {
 }
 
 #[test]
+fn do_destroy_class_removes_attributes() {
+	new_test_ext().execute_with(|| {
+		// create test class
+		let name = br"nfa name".to_vec();
+		let class_id = get_next_class_id();
+		let org = 2;
+		assert_ok!(NonFungibleAssets::create(
+			Origin::signed(1),
+			org,
+			name.clone()
+		));
+		// create attribute
+		let ar = AttributeTypeRaw::Number(NumberAttributeRaw {
+			number_value: 100,
+			number_max: None,
+		});
+		assert_ok!(NonFungibleAssets::do_create_attribute(class_id, Some(org), br"a_name".to_vec(), ar));
+		let key: BoundedVec<u8, ConstU32<6>> = br"a_name".to_vec().try_into().unwrap();
+		assert_eq!(Attributes::<Test>::contains_key((&class_id, None as Option<NonFungibleAssetId>, &key)), true);
+		assert_eq!(Classes::<Test>::get(&class_id).unwrap().attributes, 1);
+
+		assert_ok!(NonFungibleAssets::do_destroy_class(class_id, Some(org)));
+		assert_eq!(Classes::<Test>::contains_key(&class_id), false);
+		assert_eq!(ClassAccounts::<Test>::contains_key(&org, &class_id), false);
+		assert_eq!(Attributes::<Test>::contains_key((&class_id, None as Option<NonFungibleAssetId>, &key)), false);
+
+	});
+}
+
+#[test]
 fn destroy_class_not_org() {
 	new_test_ext().execute_with(|| {
 		// create test asset

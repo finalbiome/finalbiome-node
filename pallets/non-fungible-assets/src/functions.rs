@@ -31,6 +31,8 @@ impl<T: Config> Pallet<T> {
 				ensure!(class_details.owner == check_owner, Error::<T>::NoPermission);
 			}
 			ClassAccounts::<T>::remove(&class_details.owner, &class_id);
+			// Remove attributes for class and for all instances
+			Attributes::<T>::remove_prefix((&class_id,), None);
 			Self::deposit_event(Event::Destroyed { class_id });
 			Ok(())
 		})
