@@ -8,9 +8,9 @@ pub type NonFungibleAssetId = u32;
 /// Type of the non-fungible class of assets ids
 pub type NonFungibleClassId = u32;
 /// Type of the fungible asset id
-pub type FungibleAssetId<T> = <<T as pallet::Config>::FungibleAssets as support::FungibleAssets>::AssetId;
+pub type FungibleAssetId<T> = <<T as pallet::Config>::FungibleAssets as support::FungibleAssets<AccountIdOf<T>>>::AssetId;
 /// The units in which we record balances of the fungible assets
-pub type FungibleAssetBalance<T> = <<T as pallet::Config>::FungibleAssets as support::FungibleAssets>::Balance;
+pub type FungibleAssetBalance<T> = <<T as pallet::Config>::FungibleAssets as support::FungibleAssets<AccountIdOf<T>>>::Balance;
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 pub struct ClassDetails<AccountId, BoundedString, FungibleAssetId, NonFungibleClasstId, FungibleAssetBalance, BoundedName, AttrKey, AttrStringType> {
@@ -194,7 +194,7 @@ type AssetDetailsBuilderResult<T> = Result<AssetDetailsBuilder<T>, DispatchError
 type AttributeDetailsBuilderResult<T> = Result<AttributeDetailsBuilder<T>, DispatchError>;
 pub type BettorOutcomeNameLimit<T> = BoundedVec<u8, <T as pallet::Config>::BettorOutcomeNameLimit>;
 pub type BettorOutcomeName<T> = BoundedVec<u8,<T as pallet::Config>::BettorOutcomeNameLimit>;
-pub type ClassDetailsOf<T> = ClassDetails<<T as frame_system::Config>::AccountId, ClassNameLimit<T>, FungibleAssetId<T>, NonFungibleClassId, FungibleAssetBalance<T>, BettorOutcomeName<T>, AttributeKeyOf<T>, StringAttribute<T>>;
+pub type ClassDetailsOf<T> = ClassDetails<AccountIdOf<T>, ClassNameLimit<T>, FungibleAssetId<T>, NonFungibleClassId, FungibleAssetBalance<T>, BettorOutcomeName<T>, AttributeKeyOf<T>, StringAttribute<T>>;
 
 pub type CharacteristicBettorOf<T> = Option<Bettor<FungibleAssetId<T>, NonFungibleClassId, FungibleAssetBalance<T>, BettorOutcomeName<T>>>;
 pub type CharacteristicPurchasedOf<T> = Option<Purchased<FungibleAssetId<T>, FungibleAssetBalance<T>, AttributeKeyOf<T>, AttributeDetailsOf<T>>>;

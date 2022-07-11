@@ -15,6 +15,7 @@ mod types;
 mod functions;
 
 pub use types::*;
+pub use support::AccountIdOf;
 
 use frame_support::pallet_prelude::*;
 use frame_system::pallet_prelude::*;
@@ -35,7 +36,7 @@ pub mod pallet {
 		/// The runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		/// Connector to fungible assets instances.
-		type FungibleAssets: support::FungibleAssets;
+		type FungibleAssets: support::FungibleAssets<Self::AccountId>;
 		/// Connector to non-fungible assets instances.
 		type NonFungibleAssets: support::NonFungibleAssets;
 		/// Account index (aka nonce) type. This stores the number of previous transactions

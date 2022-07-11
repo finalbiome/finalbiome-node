@@ -17,11 +17,13 @@ impl<T: Config> Pallet<T> {
     ), ());
     id
   }
-  /// Starting Mechanic `CreateNFA`
-  pub fn do_create_nfa(
-    target: NonFungibleClassId<T>,
-    assets: NonFungibleAssetIds<T>,
+  /// Execute Mechanic `BuyNFA`
+  pub fn do_buy_nfa(
+    _target: NonFungibleClassId<T>,
   ) {
-    
+    // check fa balances
+    // mint nfa
+    // set attributes
+    // withdraw
   }
 }

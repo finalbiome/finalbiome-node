@@ -155,7 +155,7 @@ impl<T: Config> Pallet<T> {
 		target: &T::AccountId,
 		amount: T::Balance,
     max_allowed: bool,
-  ) -> Result<T::Balance, DispatchError> {
+  ) -> support::DispatchResult<T::Balance> {
     if amount.is_zero() {
 			return Ok(amount)
 		}

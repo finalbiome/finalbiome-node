@@ -18,6 +18,7 @@ mod functions;
 mod impl_fungible_assets;
 
 pub use types::*;
+use support::AccountIdOf;
 
 
 use sp_runtime::{
@@ -38,6 +39,8 @@ use frame_support::{
 };
 use frame_support::pallet_prelude::*;
 use frame_system::pallet_prelude::*;
+use frame_system::Config as SystemConfig;
+
 
 #[frame_support::pallet]
 pub mod pallet {

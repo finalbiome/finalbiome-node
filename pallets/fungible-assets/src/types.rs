@@ -199,4 +199,4 @@ pub type NameLimit<T> = BoundedVec<u8, <T as pallet::Config>::NameLimit>;
 
 type AssetDetailsBuilderResult<T> = Result<AssetDetailsBuilder<T>, DispatchError>;
 
-pub type GenesisAssetsConfigOf<T> = Vec<(AssetId, <T as frame_system::Config>::AccountId, Vec<u8>, Option<<T as pallet::Config>::Balance>, Option<<T as pallet::Config>::Balance>, Option<<T as pallet::Config>::Balance>)>;
+pub type GenesisAssetsConfigOf<T> = Vec<(AssetId, AccountIdOf<T>, Vec<u8>, Option<<T as pallet::Config>::Balance>, Option<<T as pallet::Config>::Balance>, Option<<T as pallet::Config>::Balance>)>;
