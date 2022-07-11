@@ -4,16 +4,16 @@ use super::*;
 
 impl<T: Config> Pallet<T> {
    /// Generate next id for new class
-   pub fn get_next_class_id() -> Result<NonFungibleClassId, DispatchError> {
-		NextClassId::<T>::try_mutate(|id| -> Result<NonFungibleClassId, DispatchError> {
+   pub fn get_next_class_id() -> DispatchResultAs<NonFungibleClassId> {
+		NextClassId::<T>::try_mutate(|id| -> DispatchResultAs<NonFungibleClassId> {
 			let current_id = *id;
 			*id = id.checked_add(NonFungibleClassId::one()).ok_or(Error::<T>::NoAvailableClassId)?;
 			Ok(current_id)
 		})
 	}
    /// Generate next id for new asset
-   pub fn get_next_asset_id() -> Result<NonFungibleAssetId, DispatchError> {
-		NextAssetId::<T>::try_mutate(|id| -> Result<NonFungibleAssetId, DispatchError> {
+   pub fn get_next_asset_id() -> DispatchResultAs<NonFungibleAssetId> {
+		NextAssetId::<T>::try_mutate(|id| -> DispatchResultAs<NonFungibleAssetId> {
 			let current_id = *id;
 			*id = id.checked_add(NonFungibleClassId::one()).ok_or(Error::<T>::NoAvailableAssetId)?;
 			Ok(current_id)

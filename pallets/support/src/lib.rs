@@ -80,7 +80,7 @@ pub trait FungibleAssets<AccountId> {
     asset: Self::AssetId, 
     who: &AccountId, 
     amount: Self::Balance
-) -> DispatchResult<Self::Balance>;
+) -> DispatchResultAs<Self::Balance>;
 }
 
 /// Trait for providing an interface to a non-fungible assets instances.
@@ -91,7 +91,7 @@ pub trait NonFungibleAssets {
   type AssetId: AssetId;
 }
 
-pub type DispatchResult<T> = sp_std::result::Result<T, sp_runtime::DispatchError>;
+pub type DispatchResultAs<T> = sp_std::result::Result<T, sp_runtime::DispatchError>;
 /// Type alias for `frame_system`'s account id. \
 /// The user account identifier type for the runtime.
 pub type AccountIdOf<T> = <T as frame_system::Config>::AccountId;

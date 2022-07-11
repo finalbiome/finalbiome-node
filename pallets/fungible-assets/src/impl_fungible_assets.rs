@@ -16,7 +16,7 @@ fn burn_from(
     asset: Self::AssetId,
     who: &<T as SystemConfig>::AccountId,
     amount: Self::Balance
-  ) -> support::DispatchResult<Self::Balance> {
+  ) -> DispatchResultAs<Self::Balance> {
     Self::decrease_balance(asset, who, amount, false)
   }
 

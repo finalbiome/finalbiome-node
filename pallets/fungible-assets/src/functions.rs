@@ -5,8 +5,8 @@ use super::*;
 impl<T: Config> Pallet<T> {
 
  /// Generate next id for new asset
-  pub(super) fn get_next_asset_id() -> Result<AssetId, DispatchError> {
-		NextAssetId::<T>::try_mutate(|id| -> Result<AssetId, DispatchError> {
+  pub(super) fn get_next_asset_id() -> DispatchResultAs<AssetId> {
+		NextAssetId::<T>::try_mutate(|id| -> DispatchResultAs<AssetId> {
 			let current_id = *id;
 			*id = id.checked_add(One::one()).ok_or(Error::<T>::NoAvailableAssetId)?;
 			Ok(current_id)
@@ -18,7 +18,7 @@ impl<T: Config> Pallet<T> {
     who: &T::AccountId,
     asset_details: &mut AssetDetails<T::AccountId, T::Balance, NameLimit<T>>,
     maybe_deposit: Option<T::Balance>,
-  ) -> Result<ExistenceReason<T::Balance>, DispatchError> {
+  ) -> DispatchResultAs<ExistenceReason<T::Balance>> {
     let accounts = asset_details.accounts.checked_add(1).ok_or(ArithmeticError::Overflow)?;
     let result = if let Some(deposit) = maybe_deposit {
       ExistenceReason::DepositHeld(deposit)
@@ -92,7 +92,7 @@ impl<T: Config> Pallet<T> {
 		target: &T::AccountId,
 		amount: T::Balance,
     max_allowed: bool,
-  ) -> Result<T::Balance, DispatchError> {
+  ) -> DispatchResultAs<T::Balance> {
     let _ = Assets::<T>::get(id).ok_or(TokenError::UnknownAsset)?;
     let account = Accounts::<T>::get(target, id ).ok_or(Error::<T>::NoAccount)?;
     let actual = if max_allowed {
@@ -155,7 +155,7 @@ impl<T: Config> Pallet<T> {
 		target: &T::AccountId,
 		amount: T::Balance,
     max_allowed: bool,
-  ) -> support::DispatchResult<T::Balance> {
+  ) -> DispatchResultAs<T::Balance> {
     if amount.is_zero() {
 			return Ok(amount)
 		}

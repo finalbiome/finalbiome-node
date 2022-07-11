@@ -18,7 +18,10 @@ mod functions;
 mod impl_fungible_assets;
 
 pub use types::*;
-use support::AccountIdOf;
+use support::{
+	AccountIdOf,
+	DispatchResultAs,
+};
 
 
 use sp_runtime::{
@@ -26,7 +29,7 @@ use sp_runtime::{
 		AtLeast32BitUnsigned, CheckedAdd, CheckedSub, Saturating, StaticLookup, Zero,
 		MaybeDisplay, One,
 	},
-	ArithmeticError, TokenError, DispatchError,
+	ArithmeticError, TokenError,
 };
 use sp_std::{fmt::Debug, vec::Vec};
 use frame_support::{

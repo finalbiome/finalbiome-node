@@ -8,7 +8,10 @@ mod characteristics;
 pub use types::*;
 
 pub use support;
-pub use support::AccountIdOf;
+pub use support::{ 
+	AccountIdOf,
+	DispatchResultAs,
+};
 
 pub use pallet::*;
 
@@ -28,7 +31,7 @@ use sp_runtime::{
 		Saturating,
 		AtLeast32BitUnsigned,
 	},
-	DispatchError, ArithmeticError,
+	ArithmeticError,
 };
 use sp_std::{vec::Vec};
 use frame_support:: {

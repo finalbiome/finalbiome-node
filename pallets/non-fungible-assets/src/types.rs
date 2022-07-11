@@ -79,7 +79,7 @@ impl<T: Config> AttributeDetailsBuilder<T> {
     Ok(())
   }
 
-  pub fn build(self) -> Result<AttributeDetails<StringAttribute<T>>, DispatchError> {
+  pub fn build(self) -> DispatchResultAs<AttributeDetails<StringAttribute<T>>> {
     self.validate()?;
     Ok(self.attr_type)
   }
@@ -157,7 +157,7 @@ impl<T: pallet::Config> ClassDetailsBuilder<T> {
     Ok(())
   }
 
-  pub fn build(self) -> Result<ClassDetailsOf<T>, DispatchError> {
+  pub fn build(self) -> DispatchResultAs<ClassDetailsOf<T>> {
     self.validate()?;
     Ok(ClassDetails {
       owner: self.owner,
@@ -179,7 +179,7 @@ impl<T: pallet::Config> AssetDetailsBuilder<T> {
       owner
     })
   }
-  pub fn build(self) -> Result<AssetDetails<T::AccountId>, DispatchError> {
+  pub fn build(self) -> DispatchResultAs<AssetDetails<T::AccountId>> {
     Ok(AssetDetails {
       owner: self.owner,
     })
@@ -189,9 +189,9 @@ impl<T: pallet::Config> AssetDetailsBuilder<T> {
 // endregion: Builders
 
 pub type ClassNameLimit<T> = BoundedVec<u8, <T as pallet::Config>::ClassNameLimit>;
-type ClassDetailsBuilderResult<T> = Result<ClassDetailsBuilder<T>, DispatchError>;
-type AssetDetailsBuilderResult<T> = Result<AssetDetailsBuilder<T>, DispatchError>;
-type AttributeDetailsBuilderResult<T> = Result<AttributeDetailsBuilder<T>, DispatchError>;
+type ClassDetailsBuilderResult<T> = DispatchResultAs<ClassDetailsBuilder<T>>;
+type AssetDetailsBuilderResult<T> = DispatchResultAs<AssetDetailsBuilder<T>>;
+type AttributeDetailsBuilderResult<T> = DispatchResultAs<AttributeDetailsBuilder<T>>;
 pub type BettorOutcomeNameLimit<T> = BoundedVec<u8, <T as pallet::Config>::BettorOutcomeNameLimit>;
 pub type BettorOutcomeName<T> = BoundedVec<u8,<T as pallet::Config>::BettorOutcomeNameLimit>;
 pub type ClassDetailsOf<T> = ClassDetails<AccountIdOf<T>, ClassNameLimit<T>, FungibleAssetId<T>, NonFungibleClassId, FungibleAssetBalance<T>, BettorOutcomeName<T>, AttributeKeyOf<T>, StringAttribute<T>>;

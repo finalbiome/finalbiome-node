@@ -170,14 +170,14 @@ impl<T: pallet::Config> AssetDetailsBuilder<T> {
 
   /// Validation of the all asset details.
   /// Rise the panic if something wrong
-  pub fn validate(&self) -> Result<(), DispatchError> {
+  pub fn validate(&self) -> DispatchResult {
     if self.top_upped.is_some() && self.cup_local.is_none() {
         return Err(Error::<T>::TopUppedWithNoCup.into())
       }
     Ok(())
   }
 
-  pub fn build(self) -> support::DispatchResult<AssetDetails<T::AccountId, T::Balance, NameLimit<T>>> {
+  pub fn build(self) -> DispatchResultAs<AssetDetails<T::AccountId, T::Balance, NameLimit<T>>> {
     self.validate()?;
     Ok(AssetDetails {
       owner: self.owner,
@@ -197,6 +197,6 @@ pub type AssetId = u32;
 
 pub type NameLimit<T> = BoundedVec<u8, <T as pallet::Config>::NameLimit>;
 
-type AssetDetailsBuilderResult<T> = Result<AssetDetailsBuilder<T>, DispatchError>;
+type AssetDetailsBuilderResult<T> = DispatchResultAs<AssetDetailsBuilder<T>>;
 
 pub type GenesisAssetsConfigOf<T> = Vec<(AssetId, AccountIdOf<T>, Vec<u8>, Option<<T as pallet::Config>::Balance>, Option<<T as pallet::Config>::Balance>, Option<<T as pallet::Config>::Balance>)>;
