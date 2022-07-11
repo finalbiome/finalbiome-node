@@ -217,7 +217,7 @@ fn bettor_prob_more_100() {
 				}
 			].try_into().expect("Outcomes vec too big"),
 			winnings: vec![
-				BettorWinning::FA(1, 33),
+				BettorWinning::Fa(1, 33),
 			].try_into().expect("Winnings vec too big"),
 			rounds: 1,
 			draw_outcome: DrawOutcomeResult::Keep,
@@ -240,7 +240,7 @@ fn bettor_probs_less_100() {
 				}
 			].try_into().expect("Outcomes vec too big"),
 			winnings: vec![
-				BettorWinning::FA(1, 33),
+				BettorWinning::Fa(1, 33),
 			].try_into().expect("Winnings vec too big"),
 			rounds: 1,
 			draw_outcome: DrawOutcomeResult::Keep,
@@ -258,7 +258,7 @@ fn bettor_probs_less_100() {
 				}
 			].try_into().expect("Outcomes vec too big"),
 			winnings: vec![
-				BettorWinning::FA(1, 33),
+				BettorWinning::Fa(1, 33),
 			].try_into().expect("Winnings vec too big"),
 			rounds: 1,
 			draw_outcome: DrawOutcomeResult::Keep,
@@ -306,7 +306,7 @@ fn bettor_wins_empty() {
 				},
 			].try_into().expect("Outcomes vec too big"),
 			winnings: vec![
-				BettorWinning::FA(1, 33),
+				BettorWinning::Fa(1, 33),
 			].try_into().expect("Winnings vec too big"),
 			rounds: 1,
 			draw_outcome: DrawOutcomeResult::Keep,

@@ -15,7 +15,6 @@ mod types;
 mod functions;
 
 pub use types::*;
-use support;
 
 use frame_support::pallet_prelude::*;
 use frame_system::pallet_prelude::*;

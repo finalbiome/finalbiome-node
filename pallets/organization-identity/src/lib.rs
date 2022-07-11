@@ -325,7 +325,7 @@ impl<T: Config> EnsureOrigin<T::Origin> for EnsureOrganization<T> {
 	fn try_origin(o: T::Origin) -> Result<Self::Success, T::Origin> {
 		o.into().and_then(|o| match o {
 			RawOrigin::Signed(ref who)
-				if  <Pallet<T>>::is_organization(&who) => Ok(who.clone()),
+				if  <Pallet<T>>::is_organization(who) => Ok(who.clone()),
 				r => Err(T::Origin::from(r)),
 		})
 	}
@@ -362,7 +362,7 @@ impl<T: Config> EnsureOrigin<T::Origin> for EnsureUser<T> {
 	fn try_origin(o: T::Origin) -> Result<Self::Success, T::Origin> {
 		o.into().and_then(|o| match o {
 			RawOrigin::Signed(ref who)
-				if  !<Pallet<T>>::is_member_or_organization(&who) => Ok(who.clone()),
+				if  !<Pallet<T>>::is_member_or_organization(who) => Ok(who.clone()),
 				r => Err(T::Origin::from(r)),
 		})
 	}

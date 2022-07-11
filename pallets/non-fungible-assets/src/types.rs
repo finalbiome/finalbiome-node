@@ -53,7 +53,7 @@ impl<T: Config> AttributeDetailsBuilder<T> {
             return Err(Error::<T>::NumberAttributeValueExceedsMaximum.into())
           }
         }
-        return Ok(AttributeDetailsBuilder {
+        Ok(AttributeDetailsBuilder {
           attr_type: AttributeDetails::Number(NumberAttribute {
             number_value: value.number_value,
             number_max: value.number_max,
@@ -62,13 +62,13 @@ impl<T: Config> AttributeDetailsBuilder<T> {
       },
       AttributeTypeRaw::String(value) => {
         match value.try_into() {
-          Ok(value) => return Ok(AttributeDetailsBuilder {
+          Ok(value) => Ok(AttributeDetailsBuilder {
             attr_type: AttributeDetails::String(value),
           }),
-          Err(_) => return Err(Error::<T>::StringAttributeLengthLimitExceeded.into()),
+          Err(_) => Err(Error::<T>::StringAttributeLengthLimitExceeded.into()),
         }
       },
-    };
+    }
   }
 
   /// Validation of the attribute.

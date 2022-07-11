@@ -58,10 +58,10 @@ pub struct BettorOutcome<BoundedName> {
 pub enum BettorWinning<FungibleAssetId, NonFungibleClasstId, FungibleAssetBalance> {
   /// Fungible asset \
   /// Represented as (FA id, amount)
-  FA(FungibleAssetId, FungibleAssetBalance),
+  Fa(FungibleAssetId, FungibleAssetBalance),
   /// Non-fungible asset \
   /// Represented as (NFA id)
-  NFA(NonFungibleClasstId),
+  Nfa(NonFungibleClasstId),
 }
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, MaxEncodedLen, TypeInfo)]

@@ -19,24 +19,19 @@ mod impl_fungible_assets;
 
 pub use types::*;
 
-use support;
-
-use codec::HasCompact;
 
 use sp_runtime::{
 	traits::{
-		AtLeast32BitUnsigned, Bounded, CheckedAdd, CheckedSub, Saturating, StaticLookup, Zero,
+		AtLeast32BitUnsigned, CheckedAdd, CheckedSub, Saturating, StaticLookup, Zero,
 		MaybeDisplay, One,
 	},
 	ArithmeticError, TokenError, DispatchError,
 };
-use sp_std::{fmt::Debug, marker::PhantomData, prelude::*, vec::Vec};
+use sp_std::{fmt::Debug, vec::Vec};
 use frame_support::{
 	traits::{
-		tokens::{fungibles, DepositConsequence, WithdrawConsequence},
+		tokens::{DepositConsequence, WithdrawConsequence},
 		EnsureOriginWithArg,
-		ReservableCurrency,
-		Currency,
 	},
 		WeakBoundedVec,
 		BoundedVec, log,
@@ -172,25 +167,16 @@ pub mod pallet {
 			// filling assets
 			for (asset_id, organization_id, name, top_upped, cup_global, cup_local) in &self.assets {
 				assert!(!Assets::<T>::contains_key(&asset_id), "Asset id already in use");
-				let top_upped = match top_upped {
-					None => None,
-					Some(speed) => Some(TopUppedFA {
+				let top_upped = top_upped.as_ref().map(|speed| TopUppedFA {
 						speed: *speed,
-					})
-				};
-				let cup_global = match cup_global {
-					None => None,
-					Some(amount) => Some(CupFA {
+					});
+				let cup_global = cup_global.as_ref().map(|amount| CupFA {
 						amount: *amount,
-					})
-				};
-				let cup_local = match cup_local {
-					None => None,
-					Some(amount) => Some(CupFA {
+					});
+				let cup_local = cup_local.as_ref().map(|amount| CupFA {
 						amount: *amount,
-					})
-				};
-				let ad = AssetDetailsBuilder::<T>::new(organization_id.clone(), (&name).to_vec()).unwrap()
+					});
+				let ad = AssetDetailsBuilder::<T>::new(organization_id.clone(), name.to_vec()).unwrap()
 					.top_upped(top_upped).unwrap()
 					.cup_global(cup_global).unwrap()
 					.cup_local(cup_local).unwrap()
@@ -333,7 +319,7 @@ pub mod pallet {
 			let asset_id = Self::get_next_asset_id()?;
 
 			Assets::<T>::insert(
-				asset_id.clone(),
+				asset_id,
 				new_asset_details
 			);
 			// let mut asset_ids = Vec::<AssetId>::new();

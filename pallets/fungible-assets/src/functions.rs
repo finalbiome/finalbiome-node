@@ -76,12 +76,12 @@ impl<T: Config> Pallet<T> {
 		}
     if let Some(balance) = Self::maybe_balance(id, who) {
       if balance.checked_sub(&amount).is_none() {
-        return NoFunds
+        NoFunds
       } else {
-        return Success
+        Success
       }
     } else {
-      return NoFunds
+      NoFunds
     }
   }
 
@@ -205,7 +205,7 @@ impl<T: Config> Pallet<T> {
     };
     // let mut tu = current_topupped.into_inner();
     if let Err(index) = current_topupped.binary_search(id) {
-      match current_topupped.try_insert(index, id.clone()) {
+      match current_topupped.try_insert(index, *id) {
         Ok(_) => <TopUppedAssets<T>>::put(current_topupped),
         Err(_) => return Err(Error::<T>::MaxTopUppedAssetsReached.into())
       };
