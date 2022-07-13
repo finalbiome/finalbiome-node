@@ -10,8 +10,7 @@
     "start": "./target/release/finalbiome-node --dev",
     "test": "cargo test --locked",
     "build release": "cargo build --release",
-    "build & start": "cargo build && ./target/release/finalbiome-node --dev",
-    "check": "cargo clippy --locked -- -D warnings"
+    "check": "cargo clippy --locked -p \"pallet-*\" -- -D warnings"
   },
   "repository": {
     "type": "git",
