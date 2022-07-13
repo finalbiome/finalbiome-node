@@ -70,6 +70,21 @@ Open the Terminal application and execute the following commands:
 brew update
 brew install openssl
 ```
+For speed up
+```bash
+brew install llvm
+```
+And add to workspace root `.cargo/config.toml` next 
+```
+[target.x86_64-unknown-linux-gnu]
+rustflags = [
+    "-C", "link-arg=-fuse-ld=lld",
+]
+[target.x86_64-apple-darwin]
+rustflags = [
+    "-C", "link-arg=-fuse-ld=/usr/local/opt/llvm/bin/ld64.lld",
+]
+```
 
 ### Windows
 
