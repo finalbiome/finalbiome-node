@@ -49,7 +49,7 @@ pub use pallet_organization_identity;
 pub use pallet_fungible_assets;
 pub use pallet_non_fungible_assets;
 pub use pallet_mechanics;
-pub use support;
+pub use pallet_support;
 
 /// An index to a block.
 pub type BlockNumber = u32;

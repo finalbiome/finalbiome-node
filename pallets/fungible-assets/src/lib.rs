@@ -18,7 +18,7 @@ mod functions;
 mod impl_fungible_assets;
 
 pub use types::*;
-use support::{
+use pallet_support::{
 	AccountIdOf,
 	DispatchResultAs,
 	FungibleAssetBalance,

@@ -1511,6 +1511,7 @@ dependencies = [
  "pallet-organization-identity",
  "pallet-randomness-collective-flip",
  "pallet-sudo",
+ "pallet-support",
  "pallet-template",
  "pallet-timestamp",
  "pallet-transaction-payment",
@@ -1529,7 +1530,6 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "substrate-wasm-builder",
- "support",
 ]
 
 [[package]]
@@ -4079,13 +4079,13 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "pallet-support",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
  "sp-io",
  "sp-runtime",
  "sp-std",
- "support",
 ]
 
 [[package]]
@@ -4118,12 +4118,12 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "pallet-support",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
  "sp-io",
  "sp-runtime",
- "support",
 ]
 
 [[package]]
@@ -4133,13 +4133,13 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "pallet-support",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
  "sp-io",
  "sp-runtime",
  "sp-std",
- "support",
 ]
 
 [[package]]
@@ -4207,7 +4207,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-template"
+name = "pallet-support"
 version = "1.0.0-dev"
 dependencies = [
  "frame-benchmarking",
@@ -4218,7 +4218,22 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "support",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-template"
+version = "1.0.0-dev"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-support",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
 ]
 
 [[package]]
@@ -7352,21 +7367,6 @@ name = "subtle"
 version = "2.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6bdef32e8150c2a081110b42772ffe7d7c9032b606bc226c8260fd97e0976601"
-
-[[package]]
-name = "support"
-version = "1.0.0-dev"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "scale-info",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
 
 [[package]]
 name = "syn"

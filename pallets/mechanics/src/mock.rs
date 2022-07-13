@@ -51,7 +51,7 @@ impl system::Config for Test {
 
 /// Mock of fungible-assets-pallet impl
 pub struct FAPallet {}
-impl support::FungibleAssets<u64> for FAPallet {
+impl pallet_support::FungibleAssets<u64> for FAPallet {
 fn can_withdraw(
 		asset: u32,
 		who: &u64,
@@ -64,14 +64,14 @@ fn burn_from(
     asset: u32, 
     who: &u64, 
     amount: u128,
-  ) -> support::DispatchResultAs<u128> {
+  ) -> pallet_support::DispatchResultAs<u128> {
         todo!()
     }
 }
 
 /// Mock of non-fungible-assets-pallet impl
 pub struct NFAPallet {}
-impl support::NonFungibleAssets<u64> for NFAPallet {
+impl pallet_support::NonFungibleAssets<u64> for NFAPallet {
 
 fn mint_into(
     class_id: &u32,
@@ -81,9 +81,9 @@ fn mint_into(
     }
 
 fn get_offer(
-    class_id: &support::NonFungibleClassId,
+    class_id: &pallet_support::NonFungibleClassId,
     offer_id: &u32,
-  ) -> support::DispatchResultAs<(support::FungibleAssetId, support::FungibleAssetBalance)> {
+  ) -> pallet_support::DispatchResultAs<(pallet_support::FungibleAssetId, pallet_support::FungibleAssetBalance)> {
         todo!()
     }
 }

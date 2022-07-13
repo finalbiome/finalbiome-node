@@ -7,8 +7,8 @@ mod characteristics;
 
 pub use types::*;
 
-pub use support;
-pub use support::{ 
+pub use pallet_support;
+pub use pallet_support::{ 
 	AccountIdOf,
 	DispatchResultAs,
 };
@@ -59,7 +59,7 @@ pub trait Config: frame_system::Config {
 		/// Only organization member can crete a class
 		type CreateOrigin: EnsureOriginWithArg<Self::Origin, Self::AccountId>;
 		/// Connector to fungible assets instances
-		type FungibleAssets: support::FungibleAssets<Self::AccountId>;
+		type FungibleAssets: pallet_support::FungibleAssets<Self::AccountId>;
 		/// Lenght limit of the name for the bettor ouncome
 		#[pallet::constant]
 		type BettorOutcomeNameLimit: Get<u32>;

@@ -7,7 +7,7 @@ use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
 };
 
-use support;
+use pallet_support;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -53,20 +53,20 @@ impl system::Config for Test {
 
 /// Mock of fungible-assets-pallet impl
 pub struct FAPallet {}
-impl support::FungibleAssets<u64> for FAPallet {
+impl pallet_support::FungibleAssets<u64> for FAPallet {
     fn can_withdraw(
-		asset: support::FungibleAssetId,
+		asset: pallet_support::FungibleAssetId,
 		who: &u64,
-		amount: support::FungibleAssetBalance,
-	) -> frame_support::traits::tokens::WithdrawConsequence<support::FungibleAssetBalance> {
+		amount: pallet_support::FungibleAssetBalance,
+	) -> frame_support::traits::tokens::WithdrawConsequence<pallet_support::FungibleAssetBalance> {
         todo!()
     }
 
     fn burn_from(
-    asset: support::FungibleAssetId, 
+    asset: pallet_support::FungibleAssetId, 
     who: &u64, 
-    amount: support::FungibleAssetBalance
-  ) -> support::DispatchResultAs<support::FungibleAssetBalance> {
+    amount: pallet_support::FungibleAssetBalance
+  ) -> pallet_support::DispatchResultAs<pallet_support::FungibleAssetBalance> {
         todo!()
     }
 }

@@ -1,6 +1,6 @@
 use super::*;
 
-impl<T: pallet::Config> support::NonFungibleAssets<AccountIdOf<T>> for Pallet<T> {
+impl<T: pallet::Config> pallet_support::NonFungibleAssets<AccountIdOf<T>> for Pallet<T> {
 
 fn mint_into(
     class_id: &NonFungibleAssetId,

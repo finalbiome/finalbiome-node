@@ -1,6 +1,6 @@
 use super::*;
 
-impl<T: Config> support::FungibleAssets<AccountIdOf<T>> for Pallet<T> {
+impl<T: Config> pallet_support::FungibleAssets<AccountIdOf<T>> for Pallet<T> {
 
 fn can_withdraw(
 		asset: AssetId,

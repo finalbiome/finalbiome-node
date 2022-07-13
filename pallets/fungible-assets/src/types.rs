@@ -191,8 +191,8 @@ impl<T: pallet::Config> AssetDetailsBuilder<T> {
 }
 
 /// Type of the fungible asset's ids
-pub type AssetId = support::FungibleAssetId;
-pub type AssetBalance = support::FungibleAssetBalance;
+pub type AssetId = pallet_support::FungibleAssetId;
+pub type AssetBalance = pallet_support::FungibleAssetBalance;
 
 pub type NameLimit<T> = BoundedVec<u8, <T as pallet::Config>::NameLimit>;
 

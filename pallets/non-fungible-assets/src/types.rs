@@ -4,13 +4,13 @@ use characteristics::bettor::*;
 use characteristics::purchased::*;
 
 /// Type of the non-fungible asset instance ids
-pub type NonFungibleAssetId = support::NonFungibleAssetId;
+pub type NonFungibleAssetId = pallet_support::NonFungibleAssetId;
 /// Type of the non-fungible class of assets ids
-pub type NonFungibleClassId = support::NonFungibleClassId;
+pub type NonFungibleClassId = pallet_support::NonFungibleClassId;
 /// Type of the fungible asset id
-pub type FungibleAssetId = support::FungibleAssetId;
+pub type FungibleAssetId = pallet_support::FungibleAssetId;
 /// The units in which we record balances of the fungible assets
-pub type FungibleAssetBalance = support::FungibleAssetBalance;
+pub type FungibleAssetBalance = pallet_support::FungibleAssetBalance;
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 pub struct ClassDetails<AccountId, BoundedString, BoundedName, AttrKey, AttrStringType> {

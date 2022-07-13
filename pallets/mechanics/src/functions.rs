@@ -23,8 +23,8 @@ impl<T: Config> Pallet<T> {
     class_id: &NonFungibleClassId,
     offer_id: &u32,
   ) -> DispatchResult {
-    use support::NonFungibleAssets;
-    use support::FungibleAssets;
+    use pallet_support::NonFungibleAssets;
+    use pallet_support::FungibleAssets;
     // checking availability of that mechanic for the nfa class
     let (fa, price) = T::NonFungibleAssets::get_offer(class_id, offer_id)?;
     // check fa balances

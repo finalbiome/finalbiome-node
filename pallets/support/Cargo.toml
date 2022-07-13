@@ -1,5 +1,5 @@
 [package]
-name = "support"
+name = "pallet-support"
 version = "1.0.0-dev"
 description = "Support code for FinalBiome."
 authors = ["FinalBiome DevHub <https://github.com/FinalBiome>"]
