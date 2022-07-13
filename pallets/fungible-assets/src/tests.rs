@@ -269,7 +269,7 @@ fn create_fa_top_up() {
 #[test]
 fn next_step_topup() {
 	new_test_ext().execute_with(|| {
-		let fa = AssetDetails::<u64, u64, NameLimit<Test>> {
+		let fa = AssetDetails::<u64, NameLimit<Test>> {
 			accounts: 1,
 			cup_global: None,
 			name: br"fa name".to_vec().try_into().unwrap(),
@@ -286,7 +286,7 @@ fn next_step_topup() {
 		assert_eq!(fa.next_step_topup(20), TopUpConsequence::None);
 		assert_eq!(fa.next_step_topup(0), TopUpConsequence::TopUp(5));
 
-		let fa = AssetDetails::<u64, u64, NameLimit<Test>> {
+		let fa = AssetDetails::<u64, NameLimit<Test>> {
 			accounts: 1,
 			cup_global: None,
 			name: br"fa name".to_vec().try_into().unwrap(),
@@ -297,7 +297,7 @@ fn next_step_topup() {
 		};
 		assert_eq!(fa.next_step_topup(10), TopUpConsequence::None);
 
-		let fa = AssetDetails::<u64, u64, NameLimit<Test>> {
+		let fa = AssetDetails::<u64, NameLimit<Test>> {
 			accounts: 1,
 			cup_global: None,
 			name: br"fa name".to_vec().try_into().unwrap(),

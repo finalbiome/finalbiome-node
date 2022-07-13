@@ -1,22 +1,20 @@
 use super::*;
 
 impl<T: Config> support::FungibleAssets<AccountIdOf<T>> for Pallet<T> {
-  type AssetId = AssetId;
-  type Balance = T::Balance;
 
 fn can_withdraw(
-		asset: Self::AssetId,
+		asset: AssetId,
 		who: &AccountIdOf<T>,
-		amount: Self::Balance,
-	) -> WithdrawConsequence<Self::Balance> {
+		amount: AssetBalance,
+	) -> WithdrawConsequence<AssetBalance> {
     Pallet::<T>::can_decrease(asset, who, amount)
   }
 
 fn burn_from(
-    asset: Self::AssetId,
+    asset: AssetId,
     who: &<T as SystemConfig>::AccountId,
-    amount: Self::Balance
-  ) -> DispatchResultAs<Self::Balance> {
+    amount: AssetBalance
+  ) -> DispatchResultAs<AssetBalance> {
     Self::decrease_balance(asset, who, amount, false)
   }
 

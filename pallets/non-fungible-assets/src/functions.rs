@@ -115,4 +115,12 @@ impl<T: Config> Pallet<T> {
 		}
 		Ok(())
 	}
+
+	/// Returns class details by class id
+	/// Can return UnknownClass Error
+	pub fn get_class_details(
+		class_id: &NonFungibleClassId,
+	) -> DispatchResultAs<ClassDetailsOf<T>> {
+		Classes::<T>::get(class_id).ok_or_else(|| Error::<T>::UnknownClass.into())
+	}
 }

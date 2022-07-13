@@ -15,7 +15,9 @@ mod types;
 mod functions;
 
 pub use types::*;
-pub use support::AccountIdOf;
+pub use support::{
+	AccountIdOf,
+};
 
 use frame_support::pallet_prelude::*;
 use frame_system::pallet_prelude::*;
@@ -38,7 +40,7 @@ pub mod pallet {
 		/// Connector to fungible assets instances.
 		type FungibleAssets: support::FungibleAssets<Self::AccountId>;
 		/// Connector to non-fungible assets instances.
-		type NonFungibleAssets: support::NonFungibleAssets;
+		type NonFungibleAssets: support::NonFungibleAssets<Self::AccountId>;
 		/// Account index (aka nonce) type. This stores the number of previous transactions
 		/// associated with a sender account.
 		type NonceIndex: From<Self::Index>

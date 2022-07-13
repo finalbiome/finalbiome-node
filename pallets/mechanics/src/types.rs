@@ -1,15 +1,16 @@
 use super::*;
 
+/// Type of the non-fungible asset instance ids
+pub type NonFungibleAssetId = support::NonFungibleAssetId;
+/// Type of the non-fungible class of assets ids
+pub type NonFungibleClassId = support::NonFungibleClassId;
 /// Type of the fungible asset id
-pub type FungibleAssetId<T> = <<T as pallet::Config>::FungibleAssets as support::FungibleAssets<AccountIdOf<T>>>::AssetId;
+pub type FungibleAssetId = support::FungibleAssetId;
 /// The units in which we record balances of the fungible assets
-pub type FungibleAssetBalance<T> = <<T as pallet::Config>::FungibleAssets as support::FungibleAssets<AccountIdOf<T>>>::Balance;
-/// Type of the non-fungible asset id
-pub type NonFungibleClassId<T> = <<T as pallet::Config>::NonFungibleAssets as support::NonFungibleAssets>::ClassId;
-/// The units in which we record balances of the fungible assets
-pub type NonFungibleAssetId<T> = <<T as pallet::Config>::NonFungibleAssets as support::NonFungibleAssets>::AssetId;
+pub type FungibleAssetBalance = support::FungibleAssetBalance;
+
 /// Bounded vector of NFA ids
-pub type NonFungibleAssetIds<T> = BoundedVec<NonFungibleAssetId<T>, <T as Config>::AssetsListLimit>;
+pub type NonFungibleAssetIds<T> = BoundedVec<NonFungibleAssetId, <T as Config>::AssetsListLimit>;
 /// Describes types of mechanics
 pub enum MechanicType {
     /// Creating an NFA

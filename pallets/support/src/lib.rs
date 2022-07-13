@@ -57,18 +57,23 @@ impl<T: Member
   + TypeInfo> Balance
 for T {}
 
+/// Type of the fungible asset id
+pub type FungibleAssetId = u32;
+/// The units in which we record balances of the fungible assets
+pub type FungibleAssetBalance = u128;
+/// Type of the non-fungible asset id
+pub type NonFungibleClassId = u32;
+/// The units in which we record balances of the fungible assets
+pub type NonFungibleAssetId = u32;
+
 /// Trait for providing an interface to a fungible assets instances.
 pub trait FungibleAssets<AccountId> {
-  /// Type of the FA id
-  type AssetId: AssetId;
-  /// The units in which records balances of FA.
-  type Balance: Balance;
   /// Returns `Failed` if the asset `balance` of `who` may not be decreased by `amount`, otherwise the consequence.
   fn can_withdraw(
-		asset: Self::AssetId,
+		asset: FungibleAssetId,
 		who: &AccountId,
-		amount: Self::Balance,
-	) -> WithdrawConsequence<Self::Balance>;
+		amount: FungibleAssetBalance,
+	) -> WithdrawConsequence<FungibleAssetBalance>;
   /// Attempt to reduce the asset balance of who by amount.  \
   /// If not possible then don’t do anything. Possible reasons for failure include: \
   /// * Less funds in the account than amount
@@ -77,18 +82,25 @@ pub trait FungibleAssets<AccountId> {
   /// 
   /// If successful it will reduce the overall supply of the underlying token.
   fn burn_from(
-    asset: Self::AssetId, 
+    asset: FungibleAssetId, 
     who: &AccountId, 
-    amount: Self::Balance
-) -> DispatchResultAs<Self::Balance>;
+    amount: FungibleAssetBalance
+  ) -> DispatchResultAs<FungibleAssetBalance>;
 }
 
 /// Trait for providing an interface to a non-fungible assets instances.
-pub trait NonFungibleAssets {
-  /// Type of the NFA class id
-  type ClassId: AssetId;
-  /// Type of the NFA instance id
-  type AssetId: AssetId;
+pub trait NonFungibleAssets<AccountId> {
+
+  fn mint_into(
+    class_id: &NonFungibleClassId,
+    who: &AccountId
+  ) -> DispatchResult;
+
+  /// Returns offer by given id
+  fn get_offer(
+    class_id: &NonFungibleClassId,
+    offer_id: &u32,
+  ) -> DispatchResultAs<(FungibleAssetId, FungibleAssetBalance)>;
 }
 
 pub type DispatchResultAs<T> = sp_std::result::Result<T, sp_runtime::DispatchError>;

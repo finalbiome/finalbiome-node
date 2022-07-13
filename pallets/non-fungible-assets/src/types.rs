@@ -4,27 +4,27 @@ use characteristics::bettor::*;
 use characteristics::purchased::*;
 
 /// Type of the non-fungible asset instance ids
-pub type NonFungibleAssetId = u32;
+pub type NonFungibleAssetId = support::NonFungibleAssetId;
 /// Type of the non-fungible class of assets ids
-pub type NonFungibleClassId = u32;
+pub type NonFungibleClassId = support::NonFungibleClassId;
 /// Type of the fungible asset id
-pub type FungibleAssetId<T> = <<T as pallet::Config>::FungibleAssets as support::FungibleAssets<AccountIdOf<T>>>::AssetId;
+pub type FungibleAssetId = support::FungibleAssetId;
 /// The units in which we record balances of the fungible assets
-pub type FungibleAssetBalance<T> = <<T as pallet::Config>::FungibleAssets as support::FungibleAssets<AccountIdOf<T>>>::Balance;
+pub type FungibleAssetBalance = support::FungibleAssetBalance;
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
-pub struct ClassDetails<AccountId, BoundedString, FungibleAssetId, NonFungibleClasstId, FungibleAssetBalance, BoundedName, AttrKey, AttrStringType> {
-  pub(super) owner: AccountId,
+pub struct ClassDetails<AccountId, BoundedString, BoundedName, AttrKey, AttrStringType> {
+  pub owner: AccountId,
   /// The total number of outstanding instances of this asset class
-	pub(super) instances: u32,
+	pub instances: u32,
   /// The total number of attributes for this asset class.
-	pub(super) attributes: u32,
+	pub attributes: u32,
   /// Name of the Asset. Limited in length by `ClassNameLimit`
-	pub(super) name: BoundedString,
+	pub name: BoundedString,
   /// Characteristic of bets
-  pub(super) bettor: Option<Bettor<FungibleAssetId, NonFungibleClasstId, FungibleAssetBalance, BoundedName>>,
+  pub bettor: Option<Bettor<BoundedName>>,
   /// Characteristic of purchases
-  pub(super) purchased: Option<Purchased<FungibleAssetId, FungibleAssetBalance, AttrKey, AttrStringType>>,
+  pub purchased: Option<Purchased<AttrKey, AttrStringType>>,
 }
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
@@ -194,10 +194,10 @@ type AssetDetailsBuilderResult<T> = DispatchResultAs<AssetDetailsBuilder<T>>;
 type AttributeDetailsBuilderResult<T> = DispatchResultAs<AttributeDetailsBuilder<T>>;
 pub type BettorOutcomeNameLimit<T> = BoundedVec<u8, <T as pallet::Config>::BettorOutcomeNameLimit>;
 pub type BettorOutcomeName<T> = BoundedVec<u8,<T as pallet::Config>::BettorOutcomeNameLimit>;
-pub type ClassDetailsOf<T> = ClassDetails<AccountIdOf<T>, ClassNameLimit<T>, FungibleAssetId<T>, NonFungibleClassId, FungibleAssetBalance<T>, BettorOutcomeName<T>, AttributeKeyOf<T>, StringAttribute<T>>;
+pub type ClassDetailsOf<T> = ClassDetails<AccountIdOf<T>, ClassNameLimit<T>, BettorOutcomeName<T>, AttributeKeyOf<T>, StringAttribute<T>>;
 
-pub type CharacteristicBettorOf<T> = Option<Bettor<FungibleAssetId<T>, NonFungibleClassId, FungibleAssetBalance<T>, BettorOutcomeName<T>>>;
-pub type CharacteristicPurchasedOf<T> = Option<Purchased<FungibleAssetId<T>, FungibleAssetBalance<T>, AttributeKeyOf<T>, AttributeDetailsOf<T>>>;
+pub type CharacteristicBettorOf<T> = Option<Bettor<BettorOutcomeName<T>>>;
+pub type CharacteristicPurchasedOf<T> = Option<Purchased<AttributeKeyOf<T>, AttributeDetailsOf<T>>>;
 
 pub type AttributeKeyOf<T> = BoundedVec<u8, <T as pallet::Config>::AttributeKeyLimit>;
 pub type AttributeDetailsOf<T> = AttributeDetails<StringAttribute<T>>;

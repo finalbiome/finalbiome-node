@@ -223,7 +223,7 @@ fn destroy_class_not_org() {
 #[test]
 fn bettor_empty() {
 	new_test_ext().execute_with(|| {
-		let b:Bettor<u32, u32, u32, ConstU32<8>> = Bettor {
+		let b:Bettor<ConstU32<8>> = Bettor {
 			outcomes: vec![].try_into().expect("Outcomes vec too big"),
 			winnings: vec![].try_into().expect("Winnings vec too big"),
 			rounds: 1,
@@ -236,10 +236,7 @@ fn bettor_empty() {
 #[test]
 fn bettor_prob_more_100() {
 	new_test_ext().execute_with(|| {
-		let b:Bettor<
-			<<Test as pallet::Config>::FungibleAssets as support::FungibleAssets>::AssetId,
-			u32, <<Test as pallet::Config>::FungibleAssets as support::FungibleAssets>::Balance,
-			BoundedVec<u8,<Test as pallet::Config>::BettorOutcomeNameLimit>> = Bettor {
+		let b:Bettor<BoundedVec<u8,<Test as pallet::Config>::BettorOutcomeNameLimit>> = Bettor {
 			outcomes: vec![
 				BettorOutcome {
 					name: br"out0".to_vec().try_into().expect("too long"),
@@ -259,10 +256,7 @@ fn bettor_prob_more_100() {
 #[test]
 fn bettor_probs_less_100() {
 	new_test_ext().execute_with(|| {
-		let b:Bettor<
-			<<Test as pallet::Config>::FungibleAssets as support::FungibleAssets>::AssetId,
-			u32, <<Test as pallet::Config>::FungibleAssets as support::FungibleAssets>::Balance,
-			BoundedVec<u8,<Test as pallet::Config>::BettorOutcomeNameLimit>> = Bettor {
+		let b:Bettor<BoundedVec<u8,<Test as pallet::Config>::BettorOutcomeNameLimit>> = Bettor {
 			outcomes: vec![
 				BettorOutcome {
 					name: br"out0".to_vec().try_into().expect("too long"),
@@ -277,10 +271,7 @@ fn bettor_probs_less_100() {
 		};
 		assert_eq!(b.is_valid(), false);
 
-		let b:Bettor<
-			<<Test as pallet::Config>::FungibleAssets as support::FungibleAssets>::AssetId,
-			u32, <<Test as pallet::Config>::FungibleAssets as support::FungibleAssets>::Balance,
-			BoundedVec<u8,<Test as pallet::Config>::BettorOutcomeNameLimit>> = Bettor {
+		let b:Bettor<BoundedVec<u8,<Test as pallet::Config>::BettorOutcomeNameLimit>> = Bettor {
 			outcomes: vec![
 				BettorOutcome {
 					name: br"out0".to_vec().try_into().expect("too long"),
@@ -300,10 +291,7 @@ fn bettor_probs_less_100() {
 #[test]
 fn bettor_wins_empty() {
 	new_test_ext().execute_with(|| {
-		let b:Bettor<
-			<<Test as pallet::Config>::FungibleAssets as support::FungibleAssets>::AssetId,
-			u32, <<Test as pallet::Config>::FungibleAssets as support::FungibleAssets>::Balance,
-			BoundedVec<u8,<Test as pallet::Config>::BettorOutcomeNameLimit>> = Bettor {
+		let b:Bettor<BoundedVec<u8,<Test as pallet::Config>::BettorOutcomeNameLimit>> = Bettor {
 			outcomes: vec![
 				BettorOutcome {
 					name: br"out0".to_vec().try_into().expect("too long"),
@@ -321,10 +309,7 @@ fn bettor_wins_empty() {
 		};
 		assert_eq!(b.is_valid(), false);
 
-		let b:Bettor<
-			<<Test as pallet::Config>::FungibleAssets as support::FungibleAssets>::AssetId,
-			u32, <<Test as pallet::Config>::FungibleAssets as support::FungibleAssets>::Balance,
-			BoundedVec<u8,<Test as pallet::Config>::BettorOutcomeNameLimit>> = Bettor {
+		let b:Bettor<BoundedVec<u8,<Test as pallet::Config>::BettorOutcomeNameLimit>> = Bettor {
 			outcomes: vec![
 				BettorOutcome {
 					name: br"out0".to_vec().try_into().expect("too long"),
@@ -714,7 +699,7 @@ fn remove_attribute_worked() {
 #[test]
 fn purchased_empty() {
 	new_test_ext().execute_with(|| {
-		let b:Purchased<u32, u32, ConstU32<6>, ConstU32<8>> = Purchased {
+		let b:Purchased<ConstU32<6>, ConstU32<8>> = Purchased {
 			offers: vec![].try_into().unwrap(),
 		};
 		assert_eq!(b.is_valid(), false)
@@ -724,7 +709,7 @@ fn purchased_empty() {
 #[test]
 fn purchased_has_0_price() {
 	new_test_ext().execute_with(|| {
-		let b:Purchased<u32, u32, ConstU32<6>, ConstU32<8>> = Purchased {
+		let b:Purchased<ConstU32<6>, ConstU32<8>> = Purchased {
 			offers: vec![
 				Offer {
 					fa: 1,
@@ -750,7 +735,7 @@ fn purchased_has_0_price() {
 #[test]
 fn purchased_has_0_price_2() {
 	new_test_ext().execute_with(|| {
-		let b:Purchased<u32, u32, ConstU32<6>, ConstU32<8>> = Purchased {
+		let b:Purchased<ConstU32<6>, ConstU32<8>> = Purchased {
 			offers: vec![
 				Offer {
 					fa: 1,

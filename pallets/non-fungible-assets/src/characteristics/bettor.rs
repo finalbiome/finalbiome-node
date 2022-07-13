@@ -4,14 +4,14 @@ use super::*;
 
 /// Parameters of the Bettor Characteristic
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
-pub struct Bettor<FungibleAssetId, NonFungibleClasstId, FungibleAssetBalance, BoundedName> {
+pub struct Bettor<BoundedName> {
   pub outcomes: WeakBoundedVec<BettorOutcome<BoundedName>, ConstU32<{ u8::MAX as u32 }>>,
-  pub winnings: WeakBoundedVec<BettorWinning<FungibleAssetId, NonFungibleClasstId, FungibleAssetBalance>, ConstU32<{ u8::MAX as u32 }>>,
+  pub winnings: WeakBoundedVec<BettorWinning, ConstU32<{ u8::MAX as u32 }>>,
   pub rounds: u8,
   pub draw_outcome: DrawOutcomeResult,
 }
 
-impl<FungibleAssetId, NonFungibleClasstId, FungibleAssetBalance, BoundedName> AssetCharacteristic for Bettor<FungibleAssetId, NonFungibleClasstId, FungibleAssetBalance, BoundedName> {
+impl<BoundedName> AssetCharacteristic for Bettor<BoundedName> {
   fn is_valid(&self) -> bool {
       // count of outcomes must be more than 0
       if self.outcomes.len() == 0 {
@@ -55,13 +55,13 @@ pub struct BettorOutcome<BoundedName> {
 
 /// A type of the asset with given params of winning results
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
-pub enum BettorWinning<FungibleAssetId, NonFungibleClasstId, FungibleAssetBalance> {
+pub enum BettorWinning {
   /// Fungible asset \
   /// Represented as (FA id, amount)
   Fa(FungibleAssetId, FungibleAssetBalance),
   /// Non-fungible asset \
   /// Represented as (NFA id)
-  Nfa(NonFungibleClasstId),
+  Nfa(NonFungibleClassId),
 }
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, MaxEncodedLen, TypeInfo)]

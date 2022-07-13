@@ -29,7 +29,6 @@ use sp_runtime::{
 		One, Zero,
 		StaticLookup,
 		Saturating,
-		AtLeast32BitUnsigned,
 	},
 	ArithmeticError,
 };
@@ -201,6 +200,10 @@ pub trait Config: frame_system::Config {
 		StringAttributeLengthLimitExceeded,
 		/// An attribute with the specified name already exists
 		AttributeAlreadyExists,
+		/// General error if any parameter is invalid
+		WrongParameter,
+		/// This characteristic is not supported by this asset
+		UnsupportedCharacreristic,
 	}
 
 	// Dispatchable functions allows users to interact with the pallet and invoke state changes.

@@ -18,58 +18,56 @@ use super::*;
 #[must_use]
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 /// Consequence of a decrease in the amount of assets
-pub enum TopUpConsequence<Balance> {
+pub enum TopUpConsequence {
   /// The amount to top up which need add in the next block but not final (does not reach the cup)
-  TopUp(Balance),
+  TopUp(FungibleAssetBalance),
   /// The amount to top up which need add in the next block and reach the cup
-  TopUpFinal(Balance),
+  TopUpFinal(FungibleAssetBalance),
   None,
 }
 
-pub(super) type AssetAccountOf<T> = AssetAccount<<T as Config>::Balance>;
-
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
-pub struct AssetAccount<Balance> {
+pub struct AssetAccount {
 	/// The balance
-	pub(super) balance: Balance,
+	pub(super) balance: FungibleAssetBalance,
   /// The reason for the existence of the account.
-	pub(super) reason: ExistenceReason<Balance>,
+	pub(super) reason: ExistenceReason,
 }
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
-pub enum ExistenceReason<Balance> {
+pub enum ExistenceReason {
 	#[codec(index = 0)]
 	Consumer,
 	#[codec(index = 1)]
 	Sufficient,
 	#[codec(index = 2)]
-	DepositHeld(Balance),
+	DepositHeld(FungibleAssetBalance),
 	#[codec(index = 3)]
 	DepositRefunded,
 }
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
-pub struct AssetDetails<AccountId, Balance, BoundedString> {
+pub struct AssetDetails<AccountId, BoundedString> {
   pub(super) owner: AccountId,
   /// The total supply across all accounts.
-	pub(super) supply: Balance,
+	pub(super) supply: FungibleAssetBalance,
   /// The total number of accounts.
 	pub(super) accounts: u32,
   /// Name of the Asset. Limited in length by `NameLimit`.
 	pub(super) name: BoundedString,
   /// Characteristic of auto generation
-  pub(super) top_upped: Option<TopUppedFA<Balance>>,
+  pub(super) top_upped: Option<TopUppedFA>,
   /// Characteristic of global limit of the FA
-  pub(super) cup_global: Option<CupFA<Balance>>,
+  pub(super) cup_global: Option<CupFA>,
   /// Characteristic of an account limit of the FA
-  pub(super) cup_local: Option<CupFA<Balance>>,
+  pub(super) cup_local: Option<CupFA>,
 }
 
-impl<AccountId, Balance: Member + AtLeast32BitUnsigned + Copy, BoundedString> AssetDetails<AccountId, Balance, BoundedString> {
+impl<AccountId, BoundedString> AssetDetails<AccountId, BoundedString> {
     /// Returns the amount to top up in the next block \
     /// If None - no top up needed \
     /// `current_balance` - current balance of given account
-    pub fn next_step_topup(&self, current_balance: Balance) -> TopUpConsequence<Balance> {
+    pub fn next_step_topup(&self, current_balance: FungibleAssetBalance) -> TopUpConsequence {
       use TopUpConsequence::*;
       if let Some(topup) = &self.top_upped {
         if topup.speed > Zero::zero() {
@@ -90,23 +88,23 @@ impl<AccountId, Balance: Member + AtLeast32BitUnsigned + Copy, BoundedString> As
 }
 
 #[derive(Clone, Copy, Encode, Decode, Eq, PartialEq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
-pub struct TopUppedFA<Balance> {
+pub struct TopUppedFA {
   /// Speed of top upped (recovery speed) as `N` per block
-  pub speed: Balance,
+  pub speed: FungibleAssetBalance,
 }
 
-impl<Balance: AtLeast32BitUnsigned> AssetCharacteristic for TopUppedFA<Balance> {
+impl AssetCharacteristic for TopUppedFA {
   fn is_valid(&self) -> bool {
       self.speed > Zero::zero()
   }
 }
 
 #[derive(Clone, Copy, Encode, Decode, Eq, PartialEq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
-pub struct CupFA<Balance> {
+pub struct CupFA {
   /// The limit of the FA
-  pub amount: Balance
+  pub amount: FungibleAssetBalance
 }
-impl<Balance: AtLeast32BitUnsigned> AssetCharacteristic for CupFA<Balance> {
+impl AssetCharacteristic for CupFA {
     fn is_valid(&self) -> bool {
         self.amount > Zero::zero()
     }
@@ -120,9 +118,9 @@ pub trait AssetCharacteristic {
 pub(super) struct AssetDetailsBuilder<T: Config> {
     owner: T::AccountId,
     name: NameLimit<T>,
-    top_upped: Option<TopUppedFA<T::Balance>>,
-    cup_global: Option<CupFA<T::Balance>>,
-    cup_local: Option<CupFA<T::Balance>>,
+    top_upped: Option<TopUppedFA>,
+    cup_global: Option<CupFA>,
+    cup_local: Option<CupFA>,
 }
 
 impl<T: pallet::Config> AssetDetailsBuilder<T> {
@@ -142,7 +140,7 @@ impl<T: pallet::Config> AssetDetailsBuilder<T> {
   }
 
   /// Set the top upped characteristic of the FA
-  pub fn top_upped(mut self, top_upped: Option<TopUppedFA<T::Balance>>) -> AssetDetailsBuilderResult<T> {
+  pub fn top_upped(mut self, top_upped: Option<TopUppedFA>) -> AssetDetailsBuilderResult<T> {
     if top_upped.is_some() && !top_upped.as_ref().unwrap().is_valid() {
       return Err(Error::<T>::ZeroTopUpped.into())
     }
@@ -151,7 +149,7 @@ impl<T: pallet::Config> AssetDetailsBuilder<T> {
   }
 
   /// Set the global cup characteristic
-  pub fn cup_global(mut self, cup: Option<CupFA<T::Balance>>) -> AssetDetailsBuilderResult<T> {
+  pub fn cup_global(mut self, cup: Option<CupFA>) -> AssetDetailsBuilderResult<T> {
     if cup.is_some() && !cup.as_ref().unwrap().is_valid() {
       return Err(Error::<T>::ZeroGlobalCup.into())
     }
@@ -160,7 +158,7 @@ impl<T: pallet::Config> AssetDetailsBuilder<T> {
   }
 
   /// Set the local cup characteristic
-  pub fn cup_local(mut self, cup: Option<CupFA<T::Balance>>) -> AssetDetailsBuilderResult<T> {
+  pub fn cup_local(mut self, cup: Option<CupFA>) -> AssetDetailsBuilderResult<T> {
     if cup.is_some() && !cup.as_ref().unwrap().is_valid() {
       return Err(Error::<T>::ZeroLocalCup.into())
     }
@@ -177,7 +175,7 @@ impl<T: pallet::Config> AssetDetailsBuilder<T> {
     Ok(())
   }
 
-  pub fn build(self) -> DispatchResultAs<AssetDetails<T::AccountId, T::Balance, NameLimit<T>>> {
+  pub fn build(self) -> DispatchResultAs<AssetDetails<T::AccountId, NameLimit<T>>> {
     self.validate()?;
     Ok(AssetDetails {
       owner: self.owner,
@@ -193,10 +191,11 @@ impl<T: pallet::Config> AssetDetailsBuilder<T> {
 }
 
 /// Type of the fungible asset's ids
-pub type AssetId = u32;
+pub type AssetId = support::FungibleAssetId;
+pub type AssetBalance = support::FungibleAssetBalance;
 
 pub type NameLimit<T> = BoundedVec<u8, <T as pallet::Config>::NameLimit>;
 
 type AssetDetailsBuilderResult<T> = DispatchResultAs<AssetDetailsBuilder<T>>;
 
-pub type GenesisAssetsConfigOf<T> = Vec<(AssetId, AccountIdOf<T>, Vec<u8>, Option<<T as pallet::Config>::Balance>, Option<<T as pallet::Config>::Balance>, Option<<T as pallet::Config>::Balance>)>;
+pub type GenesisAssetsConfigOf<T> = Vec<(AssetId, AccountIdOf<T>, Vec<u8>, Option<FungibleAssetBalance>, Option<FungibleAssetBalance>, Option<FungibleAssetBalance>)>;

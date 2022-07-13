@@ -21,12 +21,13 @@ pub use types::*;
 use support::{
 	AccountIdOf,
 	DispatchResultAs,
+	FungibleAssetBalance,
 };
 
 
 use sp_runtime::{
 	traits::{
-		AtLeast32BitUnsigned, CheckedAdd, CheckedSub, Saturating, StaticLookup, Zero,
+		Saturating, StaticLookup, Zero,
 		MaybeDisplay, One,
 	},
 	ArithmeticError, TokenError,
@@ -54,9 +55,6 @@ pub mod pallet {
 	pub trait Config: frame_system::Config {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-
-		/// The units in which we record balances.
-		type Balance: support::Balance;
 		
 		/// The origin which may create or destroy an asset and acts as owner or the asset.
 		/// Only organization member can crete an asset
@@ -96,7 +94,7 @@ pub mod pallet {
 		_,
 		Blake2_128Concat,
 		AssetId,
-		AssetDetails<T::AccountId, T::Balance, BoundedVec<u8, T::NameLimit>>
+		AssetDetails<T::AccountId, BoundedVec<u8, T::NameLimit>>
 	>;
 
 	#[pallet::storage]
@@ -118,7 +116,7 @@ pub mod pallet {
 		T::AccountId,
 		Blake2_128Concat,
 		AssetId,
-		AssetAccountOf<T>,
+		AssetAccount,
 		// OptionQuery,
 		// GetDefault,
 		// ConstU32<300_000>,
@@ -142,7 +140,7 @@ pub mod pallet {
 		AssetId,
 		Blake2_128Concat,
 		T::AccountId,
-		TopUpConsequence<T::Balance>,
+		TopUpConsequence,
 	>;
 
 	
@@ -154,7 +152,7 @@ pub mod pallet {
 		/// Genesis assets: asset_id, organization_id, name, top_upped_speed, cup_global, cup_local
 		pub assets: GenesisAssetsConfigOf<T>,
 		/// Genesis account_balances: account_id, asset_id, balance
-		pub accounts: Vec<(T::AccountId, AssetId, T::Balance)>,
+		pub accounts: Vec<(T::AccountId, AssetId, FungibleAssetBalance)>,
 	}
 
 	#[cfg(feature = "std")]
@@ -234,9 +232,9 @@ pub mod pallet {
 		/// The asset has been created.
 		Created { asset_id: AssetId, owner: T::AccountId },
 		/// Some assets were issued.
-		Issued { asset_id: AssetId, owner: T::AccountId, total_supply: T::Balance },
+		Issued { asset_id: AssetId, owner: T::AccountId, total_supply: FungibleAssetBalance },
 		/// Some assets were destroyed.
-		Burned { asset_id: AssetId, owner: T::AccountId, balance: T::Balance },
+		Burned { asset_id: AssetId, owner: T::AccountId, balance: FungibleAssetBalance },
 		/// Event documentation should end with an array that provides descriptive names for event
 		/// parameters. [something, who]
 		SomethingStored(u32, T::AccountId),
@@ -306,9 +304,9 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			organization_id: <T::Lookup as StaticLookup>::Source,
 			name: Vec<u8>,
-			top_upped: Option<TopUppedFA<T::Balance>>,
-			cup_global: Option<CupFA<T::Balance>>,
-			cup_local: Option<CupFA<T::Balance>>,
+			top_upped: Option<TopUppedFA>,
+			cup_global: Option<CupFA>,
+			cup_local: Option<CupFA>,
 		) -> DispatchResult {
 
 			// owner of an asset wiil be orgnization

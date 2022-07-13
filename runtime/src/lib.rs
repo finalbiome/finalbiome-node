@@ -283,7 +283,6 @@ impl pallet_organization_identity::Config for Runtime {
 
 impl pallet_fungible_assets::Config for Runtime {
 	type Event = Event;
-	type Balance = Balance;
 	// type CreateOrigin = pallet_organization_identity::EnsureOrganization<Runtime>;
 	type CreateOrigin = pallet_organization_identity::EnsureMemberOfOrganization<Runtime>;
 	type OrganizationId = AccountId;

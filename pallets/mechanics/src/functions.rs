@@ -19,11 +19,20 @@ impl<T: Config> Pallet<T> {
   }
   /// Execute Mechanic `BuyNFA`
   pub fn do_buy_nfa(
-    _target: NonFungibleClassId<T>,
-  ) {
+    who: &T::AccountId,
+    class_id: &NonFungibleClassId,
+    offer_id: &u32,
+  ) -> DispatchResult {
+    use support::NonFungibleAssets;
+    use support::FungibleAssets;
+    // checking availability of that mechanic for the nfa class
+    let (fa, price) = T::NonFungibleAssets::get_offer(class_id, offer_id)?;
     // check fa balances
+    let _conseq = T::FungibleAssets::can_withdraw(fa, who, price);
+
     // mint nfa
     // set attributes
     // withdraw
+    Ok(())
   }
 }

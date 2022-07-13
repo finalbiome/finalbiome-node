@@ -51,16 +51,41 @@ impl system::Config for Test {
 
 /// Mock of fungible-assets-pallet impl
 pub struct FAPallet {}
-impl support::FungibleAssets for FAPallet {
-	type AssetId = u32;
-	type Balance = u64;
+impl support::FungibleAssets<u64> for FAPallet {
+fn can_withdraw(
+		asset: u32,
+		who: &u64,
+		amount: u128,
+	) -> frame_support::traits::tokens::WithdrawConsequence<u128> {
+        todo!()
+    }
+
+fn burn_from(
+    asset: u32, 
+    who: &u64, 
+    amount: u128,
+  ) -> support::DispatchResultAs<u128> {
+        todo!()
+    }
 }
 
 /// Mock of non-fungible-assets-pallet impl
 pub struct NFAPallet {}
-impl support::NonFungibleAssets for NFAPallet {
-	type ClassId = u32;
-	type AssetId = u32;
+impl support::NonFungibleAssets<u64> for NFAPallet {
+
+fn mint_into(
+    class_id: &u32,
+    who: &u64
+  ) -> frame_support::dispatch::DispatchResult {
+        todo!()
+    }
+
+fn get_offer(
+    class_id: &support::NonFungibleClassId,
+    offer_id: &u32,
+  ) -> support::DispatchResultAs<(support::FungibleAssetId, support::FungibleAssetBalance)> {
+        todo!()
+    }
 }
 
 impl pallet_mechanics::Config for Test {
