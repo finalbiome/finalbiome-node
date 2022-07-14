@@ -1,6 +1,6 @@
 use super::*;
 use crate::{mock::*, Error, Something, Config, Timeouts, MechanicId};
-use frame_support::{assert_noop, assert_ok};
+use frame_support::{assert_noop, assert_ok, };
 
 #[test]
 fn template_test() {
@@ -36,5 +36,45 @@ fn init_mechanic_set_timeout() {
 				id.account_id,
 				id.nonce,
 			)), true);
+	});
+}
+
+#[test]
+fn do_buy_nfa_unknown_asset() {
+	new_test_ext().execute_with(|| {
+		// can_withdraw
+		// FA 333 - UnknownAsset
+		// price 99999 - NoFunds
+		// get_offer
+		// class_id == 1 && offer_id == 2 - FA=333, price=500
+		assert_noop!(MechanicsModule::do_buy_nfa(&1, &1, &2), sp_runtime::TokenError::UnknownAsset);
+	});
+}
+
+#[test]
+fn do_buy_nfa_no_funds() {
+	new_test_ext().execute_with(|| {
+		// can_withdraw
+		// FA 333 - UnknownAsset
+		// price 99999 - NoFunds
+		// get_offer
+		// class_id == 1 && offer_id == 2 - FA=333, price=500
+		// class_id == 1 && offer_id == 3 - FA=1, price=10000
+		// else - FA=5, price=100
+		assert_noop!(MechanicsModule::do_buy_nfa(&1, &1, &3), sp_runtime::TokenError::NoFunds);
+	});
+}
+
+#[test]
+fn do_buy_nfa_worked() {
+	new_test_ext().execute_with(|| {
+		// can_withdraw
+		// FA 333 - UnknownAsset
+		// price 99999 - NoFunds
+		// get_offer
+		// class_id == 1 && offer_id == 2 - FA=333, price=500
+		// class_id == 1 && offer_id == 3 - FA=1, price=10000
+		// else - FA=5, price=100
+		assert_ok!(MechanicsModule::do_buy_nfa(&1, &1, &1));
 	});
 }

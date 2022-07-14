@@ -13,7 +13,7 @@ pub type FungibleAssetId = pallet_support::FungibleAssetId;
 pub type FungibleAssetBalance = pallet_support::FungibleAssetBalance;
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
-pub struct ClassDetails<AccountId, BoundedString, BoundedName, AttrKey, AttrStringType> {
+pub struct ClassDetails<AccountId, BoundedString, BoundedName> {
   pub owner: AccountId,
   /// The total number of outstanding instances of this asset class
 	pub instances: u32,
@@ -24,7 +24,7 @@ pub struct ClassDetails<AccountId, BoundedString, BoundedName, AttrKey, AttrStri
   /// Characteristic of bets
   pub bettor: Option<Bettor<BoundedName>>,
   /// Characteristic of purchases
-  pub purchased: Option<Purchased<AttrKey, AttrStringType>>,
+  pub purchased: Option<Purchased>,
 }
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
@@ -35,17 +35,11 @@ pub struct AssetDetails<AccountId> {
 
 // region: Attributes
 
-/// An attribute data of the asset. \
-/// Can be Number or String.
-#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
-pub enum AttributeDetails<T> {
-  Number(NumberAttribute),
-  String(T)
-}
 
 #[derive(RuntimeDebug, PartialEq)]
 pub struct AttributeDetailsBuilder<T: Config> {
-  attr_type: AttributeDetails<StringAttribute<T>>,
+  attr_type: AttributeDetails,
+  marker: PhantomData<T>,
 }
 impl<T: Config> AttributeDetailsBuilder<T> {
   pub fn new(value: AttributeTypeRaw) -> AttributeDetailsBuilderResult<T> {
@@ -60,13 +54,15 @@ impl<T: Config> AttributeDetailsBuilder<T> {
           attr_type: AttributeDetails::Number(NumberAttribute {
             number_value: value.number_value,
             number_max: value.number_max,
-          })
+          }),
+          marker: PhantomData,
         })
       },
       AttributeTypeRaw::String(value) => {
         match value.try_into() {
           Ok(value) => Ok(AttributeDetailsBuilder {
             attr_type: AttributeDetails::String(value),
+            marker: PhantomData,
           }),
           Err(_) => Err(Error::<T>::StringAttributeLengthLimitExceeded.into()),
         }
@@ -79,7 +75,7 @@ impl<T: Config> AttributeDetailsBuilder<T> {
     Ok(())
   }
 
-  pub fn build(self) -> DispatchResultAs<AttributeDetails<StringAttribute<T>>> {
+  pub fn build(self) -> DispatchResultAs<AttributeDetails> {
     self.validate()?;
     Ok(self.attr_type)
   }
@@ -89,12 +85,6 @@ impl<T: Config> AttributeDetailsBuilder<T> {
 pub enum AttributeTypeRaw {
   Number(NumberAttributeRaw),
   String(StringAttributeRaw),
-}
-
-#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
-pub struct NumberAttribute {
-  pub number_value: u32,
-  pub number_max: Option<u32>,
 }
 
 #[derive(RuntimeDebug, Clone, PartialEq, Encode, TypeInfo, Decode)]
@@ -114,7 +104,7 @@ pub struct ClassDetailsBuilder<T: Config> {
   owner: T::AccountId,
   name: ClassNameLimit<T>,
   bettor: CharacteristicBettorOf<T>,
-  purchased: CharacteristicPurchasedOf<T>,
+  purchased: CharacteristicPurchased,
 }
 impl<T: pallet::Config> ClassDetailsBuilder<T> {
   pub fn new(owner: T::AccountId, name: Vec<u8>) -> ClassDetailsBuilderResult<T> {
@@ -142,7 +132,7 @@ impl<T: pallet::Config> ClassDetailsBuilder<T> {
     Ok(self)
   }
 
-  pub fn purchased(mut self, purchased: CharacteristicPurchasedOf<T>) -> ClassDetailsBuilderResult<T> {
+  pub fn purchased(mut self, purchased: CharacteristicPurchased) -> ClassDetailsBuilderResult<T> {
     if let Some(ref inc_purchased) = purchased {
       if !inc_purchased.is_valid() {
         return Err(Error::<T>::WrongPurchased.into())
@@ -194,10 +184,8 @@ type AssetDetailsBuilderResult<T> = DispatchResultAs<AssetDetailsBuilder<T>>;
 type AttributeDetailsBuilderResult<T> = DispatchResultAs<AttributeDetailsBuilder<T>>;
 pub type BettorOutcomeNameLimit<T> = BoundedVec<u8, <T as pallet::Config>::BettorOutcomeNameLimit>;
 pub type BettorOutcomeName<T> = BoundedVec<u8,<T as pallet::Config>::BettorOutcomeNameLimit>;
-pub type ClassDetailsOf<T> = ClassDetails<AccountIdOf<T>, ClassNameLimit<T>, BettorOutcomeName<T>, AttributeKeyOf<T>, StringAttribute<T>>;
+pub type ClassDetailsOf<T> = ClassDetails<AccountIdOf<T>, ClassNameLimit<T>, BettorOutcomeName<T>>;
 
 pub type CharacteristicBettorOf<T> = Option<Bettor<BettorOutcomeName<T>>>;
-pub type CharacteristicPurchasedOf<T> = Option<Purchased<AttributeKeyOf<T>, AttributeDetailsOf<T>>>;
+pub type CharacteristicPurchased = Option<Purchased>;
 
-pub type AttributeKeyOf<T> = BoundedVec<u8, <T as pallet::Config>::AttributeKeyLimit>;
-pub type AttributeDetailsOf<T> = AttributeDetails<StringAttribute<T>>;

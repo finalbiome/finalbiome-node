@@ -191,7 +191,7 @@ fn do_destroy_class_removes_attributes() {
 			number_max: None,
 		});
 		assert_ok!(NonFungibleAssets::do_create_attribute(class_id, Some(org), br"a_name".to_vec(), ar));
-		let key: BoundedVec<u8, ConstU32<6>> = br"a_name".to_vec().try_into().unwrap();
+		let key: AttributeKey = br"a_name".to_vec().try_into().unwrap();
 		assert_eq!(Attributes::<Test>::contains_key((&class_id, None as Option<NonFungibleAssetId>, &key)), true);
 		assert_eq!(Classes::<Test>::get(&class_id).unwrap().attributes, 1);
 
@@ -352,7 +352,7 @@ fn do_mint_worked() {
 			name.clone()
 		));
 		System::reset_events();
-		assert_ok!(NonFungibleAssets::do_mint(nfa_id, acc));
+		assert_eq!(NonFungibleAssets::do_mint(nfa_id, acc).unwrap(), id);
 		assert_eq!(Assets::<Test>::contains_key(&nfa_id, &id), true);
 		assert_eq!(Accounts::<Test>::contains_key((&acc, &nfa_id, &id)), true);
 		assert_eq!(Classes::<Test>::get(nfa_id).unwrap().instances, 1);
@@ -388,7 +388,7 @@ fn attribute_build_string() {
 #[test]
 fn attribute_build_string_limit() {
 	new_test_ext().execute_with(|| {
-		let ar = AttributeTypeRaw::String(br"some_aaaaaaaa".to_vec());
+		let ar = AttributeTypeRaw::String(br"some_aaaaaaaasome_aaaaaaaasome_aaaaaaaasome_aaaaaaaasome_aaaaaaaasome_aaaaaaaasome_aaaaaaaasome_aaaaaaaasome_aaaaaaaasome_aaaaaaaa".to_vec());
 		assert_noop!(AttributeDetailsBuilder::<Test>::new(ar), Error::<Test>::StringAttributeLengthLimitExceeded);
 	});
 }
@@ -458,7 +458,7 @@ fn do_create_attribute_wrong_attr_name() {
 			number_value: 100,
 			number_max: Some(10),
 		});
-		assert_noop!(NonFungibleAssets::do_create_attribute(1, None, br"a_name_looooooooooong__".to_vec(), ar), Error::<Test>::AttributeConversionError);
+		assert_noop!(NonFungibleAssets::do_create_attribute(1, None, br"a_name_looooooooooong__a_name_looooooooooong__a_name_looooooooooong__a_name_looooooooooong__a_name_looooooooooong__a_name_looooooooooong__a_name_looooooooooong__a_name_looooooooooong__a_name_looooooooooong__a_name_looooooooooong__a_name_looooooooooong__".to_vec(), ar), Error::<Test>::AttributeConversionError);
 	});
 }
 
@@ -504,7 +504,7 @@ fn do_create_attribute_already_exists() {
 		assert_ok!(NonFungibleAssets::create(Origin::signed(1), org, name.clone()));
 		// create fake attr w/ same name
 		let eat = AttributeDetails::Number(NumberAttribute {number_value: 10, number_max: None});
-		let attr_name: BoundedVec<u8, ConstU32<6>> = br"a_name".to_vec().try_into().unwrap();
+		let attr_name: AttributeKey = br"a_name".to_vec().try_into().unwrap();
 		Attributes::<Test>::insert((nfa_id, None as Option<NonFungibleAssetId>, attr_name), eat);
 
 		assert_noop!(NonFungibleAssets::do_create_attribute(nfa_id, Some(org), br"a_name".to_vec(), ar), Error::<Test>::AttributeAlreadyExists);
@@ -528,7 +528,7 @@ fn do_create_attribute_already_exists1() {
 		System::reset_events();
 		assert_ok!(NonFungibleAssets::do_create_attribute(nfa_id, Some(org), br"a_name".to_vec(), ar));
 		
-		let attr_name: BoundedVec<u8, ConstU32<6>> = br"a_name".to_vec().try_into().unwrap();
+		let attr_name: AttributeKey = br"a_name".to_vec().try_into().unwrap();
 		assert_eq!(Attributes::<Test>::contains_key((nfa_id, None as Option<NonFungibleAssetId>, &attr_name)), true);
 		assert_eq!(Classes::<Test>::get(nfa_id).unwrap().attributes, 1);
 		assert_eq!(
@@ -547,7 +547,7 @@ fn do_create_attribute_already_exists1() {
 #[test]
 fn do_remove_attribute_wrong_attr_name() {
 	new_test_ext().execute_with(|| {
-		assert_noop!(NonFungibleAssets::do_remove_attribute(1, None, br"a_name_looooooooooong__".to_vec()), Error::<Test>::AttributeConversionError);
+		assert_noop!(NonFungibleAssets::do_remove_attribute(1, None, br"a_name_looooooooooong__a_name_looooooooooong__a_name_looooooooooong__a_name_looooooooooong__a_name_looooooooooong__a_name_looooooooooong__a_name_looooooooooong__a_name_looooooooooong__a_name_looooooooooong__a_name_looooooooooong__a_name_looooooooooong__a_name_looooooooooong__a_name_looooooooooong__".to_vec()), Error::<Test>::AttributeConversionError);
 	});
 }
 
@@ -586,7 +586,7 @@ fn do_remove_attribute_work() {
 		});
 		assert_ok!(NonFungibleAssets::do_create_attribute(class_id, Some(org), br"a_name".to_vec(), ar));
 		assert_eq!(Classes::<Test>::get(class_id).unwrap().attributes, 1);
-		let key: BoundedVec<u8, ConstU32<6>> = br"a_name".to_vec().try_into().unwrap();
+		let key: AttributeKey = br"a_name".to_vec().try_into().unwrap();
 		assert_eq!(Attributes::<Test>::get((&class_id, None as Option<NonFungibleAssetId>, &key)).unwrap(), AttributeDetails::Number(NumberAttribute {
 			number_value: 100,
 			number_max: None,
@@ -648,7 +648,7 @@ fn create_attribute_worked() {
 
 		assert_ok!(NonFungibleAssets::create_attribute(Origin::signed(1), org, class_id, attribute_name, attribute_value));
 		
-		let attr_name: BoundedVec<u8, ConstU32<6>> = br"a_name".to_vec().try_into().unwrap();
+		let attr_name: AttributeKey = br"a_name".to_vec().try_into().unwrap();
 		assert_eq!(Attributes::<Test>::contains_key((class_id, None as Option<NonFungibleAssetId>, &attr_name)), true);
 
 	});
@@ -686,7 +686,7 @@ fn remove_attribute_worked() {
 
 		assert_ok!(NonFungibleAssets::create_attribute(Origin::signed(1), org, class_id, attribute_name.clone(), attribute_value));
 		
-		let attr_name: BoundedVec<u8, ConstU32<6>> = br"a_name".to_vec().try_into().unwrap();
+		let attr_name: AttributeKey = br"a_name".to_vec().try_into().unwrap();
 		assert_eq!(Attributes::<Test>::contains_key((class_id, None as Option<NonFungibleAssetId>, &attr_name)), true);
 
 		assert_ok!(NonFungibleAssets::remove_attribute(Origin::signed(1), org, class_id, attribute_name));
@@ -699,7 +699,7 @@ fn remove_attribute_worked() {
 #[test]
 fn purchased_empty() {
 	new_test_ext().execute_with(|| {
-		let b:Purchased<ConstU32<6>, ConstU32<8>> = Purchased {
+		let b:Purchased = Purchased {
 			offers: vec![].try_into().unwrap(),
 		};
 		assert_eq!(b.is_valid(), false)
@@ -709,7 +709,7 @@ fn purchased_empty() {
 #[test]
 fn purchased_has_0_price() {
 	new_test_ext().execute_with(|| {
-		let b:Purchased<ConstU32<6>, ConstU32<8>> = Purchased {
+		let b:Purchased = Purchased {
 			offers: vec![
 				Offer {
 					fa: 1,
@@ -735,7 +735,7 @@ fn purchased_has_0_price() {
 #[test]
 fn purchased_has_0_price_2() {
 	new_test_ext().execute_with(|| {
-		let b:Purchased<ConstU32<6>, ConstU32<8>> = Purchased {
+		let b:Purchased = Purchased {
 			offers: vec![
 				Offer {
 					fa: 1,
@@ -755,5 +755,23 @@ fn purchased_has_0_price_2() {
 			].try_into().unwrap(),
 		};
 		assert_eq!(b.is_valid(), true)
+	});
+}
+
+#[test]
+fn assign_attributes_works() {
+	new_test_ext().execute_with(|| {
+		let a1 = Attribute {
+			key: br"a1".to_vec().try_into().unwrap(),
+			value: AttributeDetails::Number(NumberAttribute { number_max: None, number_value: 1})
+		};
+		let a2 = Attribute {
+			key: br"a2".to_vec().try_into().unwrap(),
+			value: AttributeDetails::String(br"v1".to_vec().try_into().unwrap())
+		};
+		let attributes: AttributeList = vec![a1.clone(), a2.clone()].try_into().unwrap();
+		assert_ok!(NonFungibleAssets::assign_attributes(&10, &20, attributes));
+		assert_eq!(Attributes::<Test>::get((&10, Some(&20), a1.key)), Some(a1.value));
+		assert_eq!(Attributes::<Test>::get((&10, Some(&20), a2.key)), Some(a2.value));
 	});
 }

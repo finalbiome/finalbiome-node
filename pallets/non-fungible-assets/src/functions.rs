@@ -41,11 +41,12 @@ impl<T: Config> Pallet<T> {
 	pub fn do_mint(
 		class_id: NonFungibleClassId,
 		owner: T::AccountId,
-	) -> DispatchResult {
+	) -> DispatchResultAs<NonFungibleAssetId> {
+		let mut asset_id = 0u32;
 		Classes::<T>::try_mutate(&class_id, |maybe_class_details| -> DispatchResult {
 			let class_details = maybe_class_details.as_mut().ok_or(Error::<T>::UnknownClass)?;
 			
-			let asset_id = Self::get_next_asset_id()?;
+			asset_id = Self::get_next_asset_id()?;
 			
 			// TODO: make check - org or member of org can't mint nfa
 			
@@ -63,7 +64,7 @@ impl<T: Config> Pallet<T> {
 			Ok(())
 		})?;
 		
-		Ok(())
+		Ok(asset_id)
 	}
 
 	/// Creates attribute for the asset class.  \
@@ -75,7 +76,7 @@ impl<T: Config> Pallet<T> {
 		attribute_value: AttributeTypeRaw,
 	) -> DispatchResult {
 		// Checks attribute input
-		let name: BoundedVec<u8, T::AttributeKeyLimit> = attribute_name.try_into().map_err(|_| Error::<T>::AttributeConversionError)?;
+		let name: AttributeKey = attribute_name.try_into().map_err(|_| Error::<T>::AttributeConversionError)?;
 		let value = AttributeDetailsBuilder::<T>::new(attribute_value)?.build()?;
 		// Check class existance
 		let mut details = Classes::<T>::get(class_id).ok_or(Error::<T>::UnknownClass)?;
@@ -102,7 +103,7 @@ impl<T: Config> Pallet<T> {
 		maybe_check_owner: Option<T::AccountId>,
 		attribute_name: Vec<u8>,
 	) -> DispatchResult {
-		let key: BoundedVec<u8, T::AttributeKeyLimit> = attribute_name.try_into().map_err(|_| Error::<T>::AttributeConversionError)?;
+		let key: AttributeKey = attribute_name.try_into().map_err(|_| Error::<T>::AttributeConversionError)?;
 		let mut details = Classes::<T>::get(class_id).ok_or(Error::<T>::UnknownClass)?;
 		if let Some(check_owner) = maybe_check_owner {
 			ensure!(details.owner == check_owner, Error::<T>::NoPermission);
@@ -122,5 +123,14 @@ impl<T: Config> Pallet<T> {
 		class_id: &NonFungibleClassId,
 	) -> DispatchResultAs<ClassDetailsOf<T>> {
 		Classes::<T>::get(class_id).ok_or_else(|| Error::<T>::UnknownClass.into())
+	}
+
+	/// Assigns an attributes to asset  \
+	/// The method doesn't check for the existance of either the class or the asset
+	pub fn assign_attributes(class_id: &NonFungibleClassId, asset_id: &NonFungibleAssetId, attributes: AttributeList) -> DispatchResult {
+		for attr in attributes.iter() {
+			Attributes::<T>::insert((class_id, Some(asset_id), &attr.key), attr.value.clone());
+		}
+		Ok(())
 	}
 }

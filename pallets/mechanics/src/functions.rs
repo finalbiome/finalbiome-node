@@ -23,16 +23,18 @@ impl<T: Config> Pallet<T> {
     class_id: &NonFungibleClassId,
     offer_id: &u32,
   ) -> DispatchResult {
-    use pallet_support::NonFungibleAssets;
-    use pallet_support::FungibleAssets;
+    use pallet_support::traits::NonFungibleAssets;
+    use pallet_support::traits::FungibleAssets;
     // checking availability of that mechanic for the nfa class
-    let (fa, price) = T::NonFungibleAssets::get_offer(class_id, offer_id)?;
+    let (fa, price, attributes) = T::NonFungibleAssets::get_offer(class_id, offer_id)?;
     // check fa balances
-    let _conseq = T::FungibleAssets::can_withdraw(fa, who, price);
-
+    T::FungibleAssets::can_withdraw(fa, who, price).into_result()?;
     // mint nfa
+    let asset_id = T::NonFungibleAssets::mint_into(class_id, who)?;
     // set attributes
+    T::NonFungibleAssets::set_attributes(class_id, &asset_id, attributes)?;
     // withdraw
+    T::FungibleAssets::burn_from(fa, who, price)?;
     Ok(())
   }
 }

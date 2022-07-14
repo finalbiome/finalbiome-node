@@ -11,6 +11,10 @@ pub use pallet_support;
 pub use pallet_support::{ 
 	AccountIdOf,
 	DispatchResultAs,
+	AttributeDetails,
+	NumberAttribute,
+	Attribute,
+	AttributeKey, AttributeList,
 };
 
 pub use pallet::*;
@@ -59,7 +63,7 @@ pub trait Config: frame_system::Config {
 		/// Only organization member can crete a class
 		type CreateOrigin: EnsureOriginWithArg<Self::Origin, Self::AccountId>;
 		/// Connector to fungible assets instances
-		type FungibleAssets: pallet_support::FungibleAssets<Self::AccountId>;
+		type FungibleAssets: pallet_support::traits::FungibleAssets<Self::AccountId>;
 		/// Lenght limit of the name for the bettor ouncome
 		#[pallet::constant]
 		type BettorOutcomeNameLimit: Get<u32>;
@@ -128,9 +132,9 @@ pub trait Config: frame_system::Config {
 		(
 			NMapKey<Blake2_128Concat, NonFungibleClassId>,
 			NMapKey<Blake2_128Concat, Option<NonFungibleAssetId>>,
-			NMapKey<Blake2_128Concat, AttributeKeyOf<T>>,
+			NMapKey<Blake2_128Concat, AttributeKey>,
 		),
-		AttributeDetailsOf<T>,
+		AttributeDetails,
 		OptionQuery,
 	>;
 
@@ -163,9 +167,9 @@ pub trait Config: frame_system::Config {
 		Issued { class_id: NonFungibleClassId, asset_id: NonFungibleAssetId, owner: T::AccountId },
 		/// New attribute metadata has been set for the asset class.
 		AttributeCreated {
-			class_id: NonFungibleClassId, key: BoundedVec<u8, T::AttributeKeyLimit>, value: AttributeDetails<StringAttribute<T>> },
+			class_id: NonFungibleClassId, key: AttributeKey, value: AttributeDetails },
 		/// Attribute metadata has been removed for the asset class.
-		AttributeRemoved { class_id: NonFungibleClassId, key: BoundedVec<u8, T::AttributeKeyLimit> },
+		AttributeRemoved { class_id: NonFungibleClassId, key: AttributeKey },
 		/// Event documentation should end with an array that provides descriptive names for event
 		/// parameters. [something, who]
 		SomethingStored(u32, T::AccountId),

@@ -1,6 +1,7 @@
 use crate as pallet_mechanics;
 use frame_support::traits::{ConstU16, ConstU32, ConstU64};
 use frame_system as system;
+use pallet_support::*;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
@@ -51,41 +52,79 @@ impl system::Config for Test {
 
 /// Mock of fungible-assets-pallet impl
 pub struct FAPallet {}
-impl pallet_support::FungibleAssets<u64> for FAPallet {
+impl pallet_support::traits::FungibleAssets<u64> for FAPallet {
 fn can_withdraw(
 		asset: u32,
-		who: &u64,
+		_who: &u64,
 		amount: u128,
 	) -> frame_support::traits::tokens::WithdrawConsequence<u128> {
-        todo!()
-    }
+    if amount > 9999 {
+			return frame_support::traits::tokens::WithdrawConsequence::NoFunds
+		}
+		if asset == 333 {
+			return frame_support::traits::tokens::WithdrawConsequence::UnknownAsset
+		}
+		frame_support::traits::tokens::WithdrawConsequence::Success
+  }
 
 fn burn_from(
-    asset: u32, 
-    who: &u64, 
-    amount: u128,
+	asset_id: u32, 
+    _who: &u64, 
+    _amount: u128,
   ) -> pallet_support::DispatchResultAs<u128> {
-        todo!()
-    }
+		if asset_id == 5u32 {
+			return Ok(10000u128);
+		}
+		todo!()
+	}
 }
 
 /// Mock of non-fungible-assets-pallet impl
 pub struct NFAPallet {}
-impl pallet_support::NonFungibleAssets<u64> for NFAPallet {
+impl pallet_support::traits::NonFungibleAssets<u64> for NFAPallet {
 
 fn mint_into(
     class_id: &u32,
-    who: &u64
-  ) -> frame_support::dispatch::DispatchResult {
-        todo!()
+    _who: &u64
+  ) -> DispatchResultAs<u32> {
+			if class_id == &1u32 {
+				return Ok(10u32);
+			}
+      todo!()
     }
 
 fn get_offer(
     class_id: &pallet_support::NonFungibleClassId,
     offer_id: &u32,
-  ) -> pallet_support::DispatchResultAs<(pallet_support::FungibleAssetId, pallet_support::FungibleAssetBalance)> {
-        todo!()
-    }
+  ) -> pallet_support::DispatchResultAs<(pallet_support::FungibleAssetId, pallet_support::FungibleAssetBalance, pallet_support::AttributeList)> {
+		let a1 = Attribute {
+			key: br"a1".to_vec().try_into().unwrap(),
+			value: AttributeDetails::Number(NumberAttribute { number_max: None, number_value: 1})
+		};
+		let a2 = Attribute {
+			key: br"a2".to_vec().try_into().unwrap(),
+			value: AttributeDetails::String(br"v1".to_vec().try_into().unwrap())
+		};
+		let attributes: AttributeList = vec![a1.clone(), a2.clone()].try_into().unwrap();	
+		if class_id == &1u32 && offer_id == &2u32 {
+			return Ok((333, 500, attributes))
+		}
+		if class_id == &1u32 && offer_id == &3u32 {
+			return Ok((1, 10000, attributes))
+		}
+		Ok((5, 100, attributes))
+	}
+
+fn set_attributes(
+    class_id: &pallet_support::NonFungibleClassId,
+    _asset_id: &pallet_support::NonFungibleAssetId,
+    _attributes: pallet_support::AttributeList,
+  ) -> frame_support::dispatch::DispatchResult {
+		if class_id == &1u32 {
+			return Ok(());
+		}
+		todo!()
+	}
 }
 
 impl pallet_mechanics::Config for Test {

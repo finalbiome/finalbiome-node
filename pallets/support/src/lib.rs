@@ -9,9 +9,11 @@ use sp_runtime::{
 		AtLeast32BitUnsigned,
 	},
 };
-use frame_support::traits::tokens::WithdrawConsequence;
 
 mod types;
+mod constants;
+use constants::*;
+pub mod traits;
 
 #[cfg(test)]
 mod tests;
@@ -66,44 +68,32 @@ pub type NonFungibleClassId = u32;
 /// The units in which we record balances of the fungible assets
 pub type NonFungibleAssetId = u32;
 
-/// Trait for providing an interface to a fungible assets instances.
-pub trait FungibleAssets<AccountId> {
-  /// Returns `Failed` if the asset `balance` of `who` may not be decreased by `amount`, otherwise the consequence.
-  fn can_withdraw(
-		asset: FungibleAssetId,
-		who: &AccountId,
-		amount: FungibleAssetBalance,
-	) -> WithdrawConsequence<FungibleAssetBalance>;
-  /// Attempt to reduce the asset balance of who by amount.  \
-  /// If not possible then don’t do anything. Possible reasons for failure include: \
-  /// * Less funds in the account than amount
-  /// * Liquidity requirements (locks, reservations) prevent the funds from being removed
-  /// * Operation would require destroying the account and it is required to stay alive (e.g. because it’s providing a needed provider reference).
-  /// 
-  /// If successful it will reduce the overall supply of the underlying token.
-  fn burn_from(
-    asset: FungibleAssetId, 
-    who: &AccountId, 
-    amount: FungibleAssetBalance
-  ) -> DispatchResultAs<FungibleAssetBalance>;
-}
-
-/// Trait for providing an interface to a non-fungible assets instances.
-pub trait NonFungibleAssets<AccountId> {
-
-  fn mint_into(
-    class_id: &NonFungibleClassId,
-    who: &AccountId
-  ) -> DispatchResult;
-
-  /// Returns offer by given id
-  fn get_offer(
-    class_id: &NonFungibleClassId,
-    offer_id: &u32,
-  ) -> DispatchResultAs<(FungibleAssetId, FungibleAssetBalance)>;
-}
-
 pub type DispatchResultAs<T> = sp_std::result::Result<T, sp_runtime::DispatchError>;
 /// Type alias for `frame_system`'s account id. \
 /// The user account identifier type for the runtime.
 pub type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
+
+#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
+/// Represent a single attribute of NFA as a key and value
+pub struct Attribute {
+  pub key: AttributeKey,
+  pub value: AttributeDetails,
+}
+
+/// An attribute data of the asset. \
+/// Can be Number or String.
+#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
+pub enum AttributeDetails {
+  Number(NumberAttribute),
+  String(BoundedVec<u8, AttributeValueStringLimit>)
+}
+#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
+pub struct NumberAttribute {
+  pub number_value: u32,
+  pub number_max: Option<u32>,
+}
+
+/// Type of the attribute key for NFA
+pub type AttributeKey = BoundedVec<u8, AttributeKeyStringLimit>;
+/// Represent a list of the attributes
+pub type AttributeList = BoundedVec<Attribute, AttributeListLengthLimit>;

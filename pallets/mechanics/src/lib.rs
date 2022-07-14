@@ -38,9 +38,9 @@ pub mod pallet {
 		/// The runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		/// Connector to fungible assets instances.
-		type FungibleAssets: pallet_support::FungibleAssets<Self::AccountId>;
+		type FungibleAssets: pallet_support::traits::FungibleAssets<Self::AccountId>;
 		/// Connector to non-fungible assets instances.
-		type NonFungibleAssets: pallet_support::NonFungibleAssets<Self::AccountId>;
+		type NonFungibleAssets: pallet_support::traits::NonFungibleAssets<Self::AccountId>;
 		/// Account index (aka nonce) type. This stores the number of previous transactions
 		/// associated with a sender account.
 		type NonceIndex: From<Self::Index>

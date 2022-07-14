@@ -53,19 +53,19 @@ impl system::Config for Test {
 
 /// Mock of fungible-assets-pallet impl
 pub struct FAPallet {}
-impl pallet_support::FungibleAssets<u64> for FAPallet {
+impl pallet_support::traits::FungibleAssets<u64> for FAPallet {
     fn can_withdraw(
-		asset: pallet_support::FungibleAssetId,
-		who: &u64,
-		amount: pallet_support::FungibleAssetBalance,
+		_asset: pallet_support::FungibleAssetId,
+		_who: &u64,
+		_amount: pallet_support::FungibleAssetBalance,
 	) -> frame_support::traits::tokens::WithdrawConsequence<pallet_support::FungibleAssetBalance> {
         todo!()
     }
 
     fn burn_from(
-    asset: pallet_support::FungibleAssetId, 
-    who: &u64, 
-    amount: pallet_support::FungibleAssetBalance
+    _asset: pallet_support::FungibleAssetId, 
+    _who: &u64, 
+    _amount: pallet_support::FungibleAssetBalance
   ) -> pallet_support::DispatchResultAs<pallet_support::FungibleAssetBalance> {
         todo!()
     }
