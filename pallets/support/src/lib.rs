@@ -77,13 +77,13 @@ pub type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 /// Represent a single attribute of NFA as a key and value
 pub struct Attribute {
   pub key: AttributeKey,
-  pub value: AttributeDetails,
+  pub value: AttributeValue,
 }
 
 /// An attribute data of the asset. \
 /// Can be Number or String.
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
-pub enum AttributeDetails {
+pub enum AttributeValue {
   Number(NumberAttribute),
   String(BoundedVec<u8, AttributeValueStringLimit>)
 }
@@ -91,6 +91,53 @@ pub enum AttributeDetails {
 pub struct NumberAttribute {
   pub number_value: u32,
   pub number_max: Option<u32>,
+}
+
+impl TryFrom<u32> for AttributeValue {
+    type Error = &'static str;
+
+    fn try_from(value: u32) -> Result<Self, Self::Error> {
+      Ok(AttributeValue::Number(NumberAttribute {
+        number_value: value,
+        number_max: None,
+      }))
+    }
+}
+impl TryFrom<(u32, u32)> for AttributeValue {
+    type Error = &'static str;
+
+    fn try_from(value: (u32, u32)) -> Result<Self, Self::Error> {
+      if value.0 > value.1 {
+        Err("Attribute numeric value exceeds the maximum value")
+      } else {
+        Ok(AttributeValue::Number(NumberAttribute {
+          number_value: value.0,
+          number_max: Some(value.1),
+        }))
+      }
+    }
+}
+impl TryFrom<&str> for AttributeValue {
+    type Error = &'static str;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+      match value.as_bytes().to_vec().try_into() {
+        Ok(val) => Ok(AttributeValue::String(val)),
+        Err(_) => Err("String attribute length out of bound")
+      }
+      
+    }
+}
+impl TryFrom<Vec<u8>> for AttributeValue {
+    type Error = &'static str;
+
+    fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
+      match value.try_into() {
+        Ok(val) => Ok(AttributeValue::String(val)),
+        Err(_) => Err("String attribute length out of bound")
+      }
+      
+    }
 }
 
 /// Type of the attribute key for NFA

@@ -11,7 +11,7 @@ pub use pallet_support;
 pub use pallet_support::{ 
 	AccountIdOf,
 	DispatchResultAs,
-	AttributeDetails,
+	AttributeValue,
 	NumberAttribute,
 	Attribute,
 	AttributeKey, AttributeList,
@@ -134,7 +134,7 @@ pub trait Config: frame_system::Config {
 			NMapKey<Blake2_128Concat, Option<NonFungibleAssetId>>,
 			NMapKey<Blake2_128Concat, AttributeKey>,
 		),
-		AttributeDetails,
+		AttributeValue,
 		OptionQuery,
 	>;
 
@@ -167,7 +167,7 @@ pub trait Config: frame_system::Config {
 		Issued { class_id: NonFungibleClassId, asset_id: NonFungibleAssetId, owner: T::AccountId },
 		/// New attribute metadata has been set for the asset class.
 		AttributeCreated {
-			class_id: NonFungibleClassId, key: AttributeKey, value: AttributeDetails },
+			class_id: NonFungibleClassId, key: AttributeKey, value: AttributeValue },
 		/// Attribute metadata has been removed for the asset class.
 		AttributeRemoved { class_id: NonFungibleClassId, key: AttributeKey },
 		/// Event documentation should end with an array that provides descriptive names for event

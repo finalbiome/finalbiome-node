@@ -1,4 +1,3 @@
-use super::*;
 use crate::{mock::*, Error, Something, Config, Timeouts, MechanicId};
 use frame_support::{assert_noop, assert_ok, };
 

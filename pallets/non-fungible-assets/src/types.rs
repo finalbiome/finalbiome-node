@@ -38,7 +38,7 @@ pub struct AssetDetails<AccountId> {
 
 #[derive(RuntimeDebug, PartialEq)]
 pub struct AttributeDetailsBuilder<T: Config> {
-  attr_type: AttributeDetails,
+  attr_type: AttributeValue,
   marker: PhantomData<T>,
 }
 impl<T: Config> AttributeDetailsBuilder<T> {
@@ -51,7 +51,7 @@ impl<T: Config> AttributeDetailsBuilder<T> {
           }
         }
         Ok(AttributeDetailsBuilder {
-          attr_type: AttributeDetails::Number(NumberAttribute {
+          attr_type: AttributeValue::Number(NumberAttribute {
             number_value: value.number_value,
             number_max: value.number_max,
           }),
@@ -61,7 +61,7 @@ impl<T: Config> AttributeDetailsBuilder<T> {
       AttributeTypeRaw::String(value) => {
         match value.try_into() {
           Ok(value) => Ok(AttributeDetailsBuilder {
-            attr_type: AttributeDetails::String(value),
+            attr_type: AttributeValue::String(value),
             marker: PhantomData,
           }),
           Err(_) => Err(Error::<T>::StringAttributeLengthLimitExceeded.into()),
@@ -75,7 +75,7 @@ impl<T: Config> AttributeDetailsBuilder<T> {
     Ok(())
   }
 
-  pub fn build(self) -> DispatchResultAs<AttributeDetails> {
+  pub fn build(self) -> DispatchResultAs<AttributeValue> {
     self.validate()?;
     Ok(self.attr_type)
   }

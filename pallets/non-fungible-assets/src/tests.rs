@@ -379,7 +379,7 @@ fn attribute_build_string() {
 		let ar = AttributeTypeRaw::String(br"some_a".to_vec());
 		let a = AttributeDetailsBuilder::<Test>::new(ar).unwrap().build().unwrap();
 		match a {
-			AttributeDetails::String(a) => assert_eq!(a.to_vec(), br"some_a".to_vec()),
+			AttributeValue::String(a) => assert_eq!(a.to_vec(), br"some_a".to_vec()),
 			_ => unreachable!()
 		}
 	});
@@ -402,7 +402,7 @@ fn attribute_build_number_simple() {
 		});
 		let a = AttributeDetailsBuilder::<Test>::new(ar).unwrap().build().unwrap();
 		match a {
-			AttributeDetails::Number(a) => {
+			AttributeValue::Number(a) => {
 				assert_eq!(a.number_value, 10);
 				assert_eq!(a.number_max, None);
 			}
@@ -420,7 +420,7 @@ fn attribute_build_number_max() {
 		});
 		let a = AttributeDetailsBuilder::<Test>::new(ar).unwrap().build().unwrap();
 		match a {
-			AttributeDetails::Number(a) => {
+			AttributeValue::Number(a) => {
 				assert_eq!(a.number_value, 10);
 				assert_eq!(a.number_max, Some(100));
 			}
@@ -503,7 +503,7 @@ fn do_create_attribute_already_exists() {
 		let org = 2;
 		assert_ok!(NonFungibleAssets::create(Origin::signed(1), org, name.clone()));
 		// create fake attr w/ same name
-		let eat = AttributeDetails::Number(NumberAttribute {number_value: 10, number_max: None});
+		let eat = AttributeValue::Number(NumberAttribute {number_value: 10, number_max: None});
 		let attr_name: AttributeKey = br"a_name".to_vec().try_into().unwrap();
 		Attributes::<Test>::insert((nfa_id, None as Option<NonFungibleAssetId>, attr_name), eat);
 
@@ -536,7 +536,7 @@ fn do_create_attribute_already_exists1() {
 			vec![
 				EventRecord {
 					phase: Phase::Initialization,
-					event: NfaEvent::AttributeCreated { class_id: nfa_id, key: attr_name, value: AttributeDetails::Number(NumberAttribute {number_value: 100, number_max: None}) }.into(),
+					event: NfaEvent::AttributeCreated { class_id: nfa_id, key: attr_name, value: AttributeValue::Number(NumberAttribute {number_value: 100, number_max: None}) }.into(),
 					topics: vec![],
 				},
 			]
@@ -587,7 +587,7 @@ fn do_remove_attribute_work() {
 		assert_ok!(NonFungibleAssets::do_create_attribute(class_id, Some(org), br"a_name".to_vec(), ar));
 		assert_eq!(Classes::<Test>::get(class_id).unwrap().attributes, 1);
 		let key: AttributeKey = br"a_name".to_vec().try_into().unwrap();
-		assert_eq!(Attributes::<Test>::get((&class_id, None as Option<NonFungibleAssetId>, &key)).unwrap(), AttributeDetails::Number(NumberAttribute {
+		assert_eq!(Attributes::<Test>::get((&class_id, None as Option<NonFungibleAssetId>, &key)).unwrap(), AttributeValue::Number(NumberAttribute {
 			number_value: 100,
 			number_max: None,
 		}));
@@ -763,11 +763,11 @@ fn assign_attributes_works() {
 	new_test_ext().execute_with(|| {
 		let a1 = Attribute {
 			key: br"a1".to_vec().try_into().unwrap(),
-			value: AttributeDetails::Number(NumberAttribute { number_max: None, number_value: 1})
+			value: AttributeValue::Number(NumberAttribute { number_max: None, number_value: 1})
 		};
 		let a2 = Attribute {
 			key: br"a2".to_vec().try_into().unwrap(),
-			value: AttributeDetails::String(br"v1".to_vec().try_into().unwrap())
+			value: AttributeValue::String(br"v1".to_vec().try_into().unwrap())
 		};
 		let attributes: AttributeList = vec![a1.clone(), a2.clone()].try_into().unwrap();
 		assert_ok!(NonFungibleAssets::assign_attributes(&10, &20, attributes));

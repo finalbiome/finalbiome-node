@@ -99,11 +99,11 @@ fn get_offer(
   ) -> pallet_support::DispatchResultAs<(pallet_support::FungibleAssetId, pallet_support::FungibleAssetBalance, pallet_support::AttributeList)> {
 		let a1 = Attribute {
 			key: br"a1".to_vec().try_into().unwrap(),
-			value: AttributeDetails::Number(NumberAttribute { number_max: None, number_value: 1})
+			value: AttributeValue::Number(NumberAttribute { number_max: None, number_value: 1})
 		};
 		let a2 = Attribute {
 			key: br"a2".to_vec().try_into().unwrap(),
-			value: AttributeDetails::String(br"v1".to_vec().try_into().unwrap())
+			value: AttributeValue::String(br"v1".to_vec().try_into().unwrap())
 		};
 		let attributes: AttributeList = vec![a1.clone(), a2.clone()].try_into().unwrap();	
 		if class_id == &1u32 && offer_id == &2u32 {
