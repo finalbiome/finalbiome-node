@@ -1,6 +1,6 @@
-use crate::{mock::*, Error, Something, Config, Timeouts, MechanicId};
+use crate::{mock::*, Timeouts, MechanicId};
 use frame_support::{assert_noop, assert_ok, };
-
+ 
 #[test]
 fn template_test() {
 	new_test_ext().execute_with(|| {
@@ -14,7 +14,7 @@ fn mechanic_id_from_account() {
 		let acc = 222;
 		let n = System::account_nonce(acc);
 		System::inc_account_nonce(acc);
-		let id = MechanicId::<Test>::from_account_id(acc);
+		let id = MechanicId::<Test>::from_account_id(&acc);
 		assert_eq!(acc, id.account_id);
 		assert_eq!(n+1, id.nonce);
 	});
@@ -28,7 +28,7 @@ fn init_mechanic_set_timeout() {
 		System::set_block_number(2);
 		let b = System::block_number();
 
-		let id = MechanicsModule::init_mechanic(acc);
+		let id = MechanicsModule::init_mechanic(&acc);
 		assert_eq!(Timeouts::<Test>::contains_key(
 			(
 				b+20,

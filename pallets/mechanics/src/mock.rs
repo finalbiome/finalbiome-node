@@ -134,6 +134,7 @@ impl pallet_mechanics::Config for Test {
 	type NonceIndex = u32;
 	type AssetsListLimit = ConstU32<16>;
 	type MechanicsLifeTime = ConstU64<20>;
+	type ExecuteOrigin = frame_system::EnsureSigned<u64>;
 }
 
 // Build genesis storage according to the mock runtime.

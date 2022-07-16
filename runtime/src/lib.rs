@@ -309,6 +309,7 @@ impl pallet_mechanics::Config for Runtime {
 	type NonceIndex = Index;
 	type AssetsListLimit = ConstU32<64>;
 	type MechanicsLifeTime = ConstU32<60>;
+	type ExecuteOrigin = pallet_organization_identity::EnsureUser<Runtime>;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.

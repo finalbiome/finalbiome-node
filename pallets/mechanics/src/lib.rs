@@ -25,6 +25,7 @@ use frame_system::pallet_prelude::*;
 use sp_runtime::{
 	traits:: {
 		AtLeast32BitUnsigned,
+		Saturating,
 	},
 };
 
@@ -51,6 +52,10 @@ pub mod pallet {
 			+ Copy
 			+ MaybeSerializeDeserialize
 			+ MaxEncodedLen;
+		/// The origin which may execute mechanics.
+		/// 
+		/// Mechanics can only be executed by a regular user, neither the organization nor any of its members can execute mechanics
+		type ExecuteOrigin: frame_support::traits::EnsureOrigin<Self::Origin, Success = Self::AccountId> ;
 		/// The maximum list length to pass to mechanics.
 		#[pallet::constant]
 		type AssetsListLimit: Get<u32>;
@@ -94,7 +99,8 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		SomethingStored(u32, T::AccountId, T::Index),
+		/// The mechanics were done.
+		Finished { id: T::NonceIndex, owner: T::AccountId },
 	}
 
 	// Errors inform users that something went wrong.
@@ -111,43 +117,17 @@ pub mod pallet {
 	// Dispatchable functions must be annotated with a weight and must return a DispatchResult.
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// An example dispatchable that takes a singles value as a parameter, writes the value to
-		/// storage and emits an event. This function must be dispatched by a signed extrinsic.
-		#[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
-		pub fn do_something(origin: OriginFor<T>, something: u32) -> DispatchResult {
-			// Check that the extrinsic was signed and get the signer.
-			// This function will return an error if the extrinsic is not signed.
-			// https://docs.substrate.io/v3/runtime/origins
-			let who = ensure_signed(origin)?;
 
-			let account_nonce = <frame_system::Pallet<T>>::account_nonce(&who);
-
-			// Update storage.
-			<Something<T>>::put(something);
-
-			// Emit an event.
-			Self::deposit_event(Event::SomethingStored(something, who, account_nonce));
-			// Return a successful DispatchResultWithPostInfo
+		/// Execute mechanic `Buy NFA`
+		#[pallet::weight(T::DbWeight::get().reads_writes(1,1))]
+		pub fn exec_buy_nfa(origin: OriginFor<T>, class_id: NonFungibleClassId, offer_id: u32) -> DispatchResult {
+			// Only a regular user can execute mechanic
+			let who = T::ExecuteOrigin::ensure_origin(origin)?;
+			// Generate mechanic id
+			let mechanic_id = Self::get_mechanic_id(&who);
+			Self::do_buy_nfa(&who, &class_id, &offer_id)?;
+			Self::deposit_event(Event::Finished { id: mechanic_id.nonce, owner: mechanic_id.account_id });
 			Ok(())
-		}
-
-		/// An example dispatchable that may throw a custom error.
-		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
-		pub fn cause_error(origin: OriginFor<T>) -> DispatchResult {
-			let _who = ensure_signed(origin)?;
-
-			// Read a value from storage.
-			match <Something<T>>::get() {
-				// Return an error if the value has not been set.
-				None => Err(Error::<T>::NoneValue.into()),
-				Some(old) => {
-					// Increment the value read from storage; will error in the event of overflow.
-					let new = old.checked_add(1).ok_or(Error::<T>::StorageOverflow)?;
-					// Update the value in storage with the incremented result.
-					<Something<T>>::put(new);
-					Ok(())
-				},
-			}
 		}
 	}
 }

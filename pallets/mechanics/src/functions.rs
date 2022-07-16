@@ -3,12 +3,16 @@
 use super::*;
 
 impl<T: Config> Pallet<T> {
+  /// Gets the id of the mechanic
+  pub(crate) fn get_mechanic_id(who: &T::AccountId) -> MechanicId<T> {
+    MechanicId::<T>::from_account_id(who)
+  }
   /// Makes initial preparing for creating mechanic.
   /// Gets the id of the mechanic and fixes the timeout, 
-  pub fn init_mechanic(who: T::AccountId) -> MechanicId<T> {
-    let id = MechanicId::<T>::from_account_id(who);
+  pub fn init_mechanic(who: &T::AccountId) -> MechanicId<T> {
+    let id = Self::get_mechanic_id(who);
     let block_number =  <frame_system::Pallet<T>>::block_number();
-    let life_time_block = T::MechanicsLifeTime::get() + block_number;
+    let life_time_block = T::MechanicsLifeTime::get().saturating_add(block_number);
     // set a timeout for mechanic
     Timeouts::<T>::insert((
       &life_time_block,
