@@ -4,6 +4,7 @@ mod types;
 mod functions;
 mod impl_non_fubgible_assets;
 mod characteristics;
+pub use characteristics::*;
 
 pub use types::*;
 
@@ -16,6 +17,9 @@ pub use pallet_support::{
 	Attribute,
 	AttributeKey, AttributeList,
 };
+// use frame_support::{
+// 	log,
+// };
 
 pub use pallet::*;
 
@@ -51,8 +55,8 @@ use frame_system::pallet_prelude::*;
 pub mod pallet {
 	use super::*;
 
-	/// Configure the pallet by specifying the parameters and types on which it depends.
-	#[pallet::config]
+/// Configure the pallet by specifying the parameters and types on which it depends.
+#[pallet::config]
 pub trait Config: frame_system::Config {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
@@ -146,13 +150,30 @@ pub trait Config: frame_system::Config {
 	/// Storing the next class id
 	pub type NextClassId<T: Config> = StorageValue<_, NonFungibleClassId, ValueQuery>;
 
-	// The pallet's runtime storage items.
-	// https://docs.substrate.io/v3/runtime/storage
-	#[pallet::storage]
-	#[pallet::getter(fn something)]
-	// Learn more about declaring storage items:
-	// https://docs.substrate.io/v3/runtime/storage#declaring-storage-items
-	pub type Something<T> = StorageValue<_, u32>;
+	// region: Genesis Config
+
+	#[pallet::genesis_config]
+	pub struct GenesisConfig<T: Config> {
+		/// Genesis assets: class_id, organization_id, name, bettor, purchased
+		pub classes: GenesisClassesConfigOf<T>,
+	}
+
+	#[cfg(feature = "std")]
+	impl<T: Config> Default for GenesisConfig<T> {
+		fn default() -> Self {
+			Self {
+				classes: Default::default(),
+			}
+		}
+	}
+
+	#[pallet::genesis_build]
+	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+		fn build(&self) {
+		}
+	}
+
+	// endregion: Genesis Config
 
 	// Pallets use events to inform users when important changes are made.
 	// https://docs.substrate.io/v3/runtime/events-and-errors
@@ -281,15 +302,14 @@ pub trait Config: frame_system::Config {
 			origin: OriginFor<T>,
 			organization_id: <T::Lookup as StaticLookup>::Source,
 			#[pallet::compact] class_id: NonFungibleClassId,
-			attribute_name: Vec<u8>,
-			attribute_value: AttributeTypeRaw,
+			attribute: Attribute,
 		) -> DispatchResult {
 			// owner of a class must be an orgnization
 			let owner = T::Lookup::lookup(organization_id)?;
 			// Only organization can manage an asset class
 			T::CreateOrigin::ensure_origin(origin, &owner)?;
 
-			Self::do_create_attribute(class_id, Some(owner), attribute_name, attribute_value)?;
+			Self::do_create_attribute(class_id, Some(owner), attribute)?;
 
 			Ok(())
 		}
@@ -302,7 +322,7 @@ pub trait Config: frame_system::Config {
 			origin: OriginFor<T>,
 			organization_id: <T::Lookup as StaticLookup>::Source,
 			#[pallet::compact] class_id: NonFungibleClassId,
-			attribute_name: Vec<u8>,
+			attribute_name: AttributeKey,
 		) -> DispatchResult {
 			// owner of a class must be an orgnization
 			let owner = T::Lookup::lookup(organization_id)?;
@@ -313,42 +333,15 @@ pub trait Config: frame_system::Config {
 			
 			Ok(())
 		}
-
-		/// An example dispatchable that takes a singles value as a parameter, writes the value to
-		/// storage and emits an event. This function must be dispatched by a signed extrinsic.
-		#[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
-		pub fn do_something(origin: OriginFor<T>, something: u32) -> DispatchResult {
-			// Check that the extrinsic was signed and get the signer.
-			// This function will return an error if the extrinsic is not signed.
-			// https://docs.substrate.io/v3/runtime/origins
-			let who = ensure_signed(origin)?;
-
-			// Update storage.
-			<Something<T>>::put(something);
-
-			// Emit an event.
-			Self::deposit_event(Event::SomethingStored(something, who));
-			// Return a successful DispatchResultWithPostInfo
+		
+		#[pallet::weight(T::DbWeight::get().reads_writes(2, 2))]
+		pub fn set_characretistic(
+			_origin: OriginFor<T>,
+			_organization_id: <T::Lookup as StaticLookup>::Source,
+			#[pallet::compact] _class_id: NonFungibleClassId,
+			_characteristic: Characteristic,
+		) -> DispatchResult {
 			Ok(())
-		}
-
-		/// An example dispatchable that may throw a custom error.
-		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
-		pub fn cause_error(origin: OriginFor<T>) -> DispatchResult {
-			let _who = ensure_signed(origin)?;
-
-			// Read a value from storage.
-			match <Something<T>>::get() {
-				// Return an error if the value has not been set.
-				None => Err(Error::<T>::NoneValue.into()),
-				Some(old) => {
-					// Increment the value read from storage; will error in the event of overflow.
-					let new = old.checked_add(1).ok_or(Error::<T>::StorageOverflow)?;
-					// Update the value in storage with the incremented result.
-					<Something<T>>::put(new);
-					Ok(())
-				},
-			}
 		}
 	}
 }

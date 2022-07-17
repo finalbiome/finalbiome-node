@@ -72,28 +72,26 @@ impl<T: Config> Pallet<T> {
 	pub fn do_create_attribute(
 		class_id: NonFungibleClassId,
 		maybe_check_owner: Option<T::AccountId>,
-		attribute_name: Vec<u8>,
-		attribute_value: AttributeTypeRaw,
+		attribute: Attribute,
 	) -> DispatchResult {
 		// Checks attribute input
-		let name: AttributeKey = attribute_name.try_into().map_err(|_| Error::<T>::AttributeConversionError)?;
-		let value = AttributeDetailsBuilder::<T>::new(attribute_value)?.build()?;
+		attribute.validate()?;
 		// Check class existance
 		let mut details = Classes::<T>::get(class_id).ok_or(Error::<T>::UnknownClass)?;
 		if let Some(check_owner) = maybe_check_owner {
 			ensure!(details.owner == check_owner, Error::<T>::NoPermission);
 		}
 		let asset_id:Option<NonFungibleAssetId> = None;
-		let key = (&class_id, &asset_id, &name);
+		let key = (&class_id, &asset_id, &attribute.key);
 		// Attribute must not exits
 		if Attributes::<T>::contains_key(&key) {
 			return Err(Error::<T>::AttributeAlreadyExists.into())
 		}
 
-		Attributes::<T>::insert(&key, &value);
+		Attributes::<T>::insert(&key, &attribute.value);
 		details.attributes.saturating_inc();
 		Classes::<T>::insert(&class_id, &details);
-		Self::deposit_event(Event::AttributeCreated { class_id, key: name, value });
+		Self::deposit_event(Event::AttributeCreated { class_id, key: attribute.key, value:attribute.value });
 		Ok(())
 	}
 
@@ -101,18 +99,17 @@ impl<T: Config> Pallet<T> {
 	pub fn do_remove_attribute(
 		class_id: NonFungibleClassId,
 		maybe_check_owner: Option<T::AccountId>,
-		attribute_name: Vec<u8>,
+		attribute_name: AttributeKey,
 	) -> DispatchResult {
-		let key: AttributeKey = attribute_name.try_into().map_err(|_| Error::<T>::AttributeConversionError)?;
 		let mut details = Classes::<T>::get(class_id).ok_or(Error::<T>::UnknownClass)?;
 		if let Some(check_owner) = maybe_check_owner {
 			ensure!(details.owner == check_owner, Error::<T>::NoPermission);
 		}
 		let asset_id:Option<NonFungibleAssetId> = None;
-		if Attributes::<T>::take((&class_id, &asset_id, &key)).is_some() {
+		if Attributes::<T>::take((&class_id, &asset_id, &attribute_name)).is_some() {
 			details.attributes.saturating_dec();
 			Classes::<T>::insert(&class_id, &details);
-			Self::deposit_event(Event::AttributeRemoved { class_id, key });
+			Self::deposit_event(Event::AttributeRemoved { class_id, key: attribute_name });
 		}
 		Ok(())
 	}

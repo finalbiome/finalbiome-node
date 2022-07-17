@@ -214,5 +214,6 @@ fn testnet_genesis(
 			assets: fungible_assets,
 			accounts: fungible_assets_balances,
 		},
+		non_fungible_assets: Default::default(),
 	}
 }

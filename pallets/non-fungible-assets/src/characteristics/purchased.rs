@@ -1,5 +1,4 @@
 //! The Purchased Characteristic code
-use super::super::*;
 use super::*;
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]

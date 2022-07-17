@@ -33,70 +33,6 @@ pub struct AssetDetails<AccountId> {
   pub(super) owner: AccountId,
 }
 
-// region: Attributes
-
-
-#[derive(RuntimeDebug, PartialEq)]
-pub struct AttributeDetailsBuilder<T: Config> {
-  attr_type: AttributeValue,
-  marker: PhantomData<T>,
-}
-impl<T: Config> AttributeDetailsBuilder<T> {
-  pub fn new(value: AttributeTypeRaw) -> AttributeDetailsBuilderResult<T> {
-    match value {
-      AttributeTypeRaw::Number(value) => {
-        if let Some(max_val) = value.number_max {
-          if value.number_value > max_val {
-            return Err(Error::<T>::NumberAttributeValueExceedsMaximum.into())
-          }
-        }
-        Ok(AttributeDetailsBuilder {
-          attr_type: AttributeValue::Number(NumberAttribute {
-            number_value: value.number_value,
-            number_max: value.number_max,
-          }),
-          marker: PhantomData,
-        })
-      },
-      AttributeTypeRaw::String(value) => {
-        match value.try_into() {
-          Ok(value) => Ok(AttributeDetailsBuilder {
-            attr_type: AttributeValue::String(value),
-            marker: PhantomData,
-          }),
-          Err(_) => Err(Error::<T>::StringAttributeLengthLimitExceeded.into()),
-        }
-      },
-    }
-  }
-
-  /// Validation of the attribute.
-  fn validate(&self) -> DispatchResult {
-    Ok(())
-  }
-
-  pub fn build(self) -> DispatchResultAs<AttributeValue> {
-    self.validate()?;
-    Ok(self.attr_type)
-  }
-}
-
-#[derive(RuntimeDebug, Clone, PartialEq, Encode, TypeInfo, Decode)]
-pub enum AttributeTypeRaw {
-  Number(NumberAttributeRaw),
-  String(StringAttributeRaw),
-}
-
-#[derive(RuntimeDebug, Clone, PartialEq, Encode, TypeInfo, Decode)]
-pub struct NumberAttributeRaw {
-  pub number_value: u32,
-  pub number_max: Option<u32>,
-}
-
-type StringAttributeRaw = Vec<u8>;
-pub type StringAttribute<T> = BoundedVec<u8, <T as pallet::Config>::AttributeValueLimit>;
-
-// endregion: Attributes
 
 // region: Builders
 #[derive(RuntimeDebug, PartialEq)]
@@ -181,7 +117,6 @@ impl<T: pallet::Config> AssetDetailsBuilder<T> {
 pub type ClassNameLimit<T> = BoundedVec<u8, <T as pallet::Config>::ClassNameLimit>;
 type ClassDetailsBuilderResult<T> = DispatchResultAs<ClassDetailsBuilder<T>>;
 type AssetDetailsBuilderResult<T> = DispatchResultAs<AssetDetailsBuilder<T>>;
-type AttributeDetailsBuilderResult<T> = DispatchResultAs<AttributeDetailsBuilder<T>>;
 pub type BettorOutcomeNameLimit<T> = BoundedVec<u8, <T as pallet::Config>::BettorOutcomeNameLimit>;
 pub type BettorOutcomeName<T> = BoundedVec<u8,<T as pallet::Config>::BettorOutcomeNameLimit>;
 pub type ClassDetailsOf<T> = ClassDetails<AccountIdOf<T>, ClassNameLimit<T>, BettorOutcomeName<T>>;
@@ -189,3 +124,6 @@ pub type ClassDetailsOf<T> = ClassDetails<AccountIdOf<T>, ClassNameLimit<T>, Bet
 pub type CharacteristicBettorOf<T> = Option<Bettor<BettorOutcomeName<T>>>;
 pub type CharacteristicPurchased = Option<Purchased>;
 
+// region: Genesis Types
+pub type GenesisClassesConfigOf<T> = Vec<(NonFungibleClassId, AccountIdOf<T>, Vec<u8>)>;
+// endregion: Genesis Types

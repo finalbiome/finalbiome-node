@@ -154,6 +154,11 @@ impl AttributeValue {
   }
 }
 
+impl Attribute {
+  pub fn validate(&self) -> DispatchResult {
+    self.value.validate()
+  }
+}
 /// Type of the attribute key for NFA
 pub type AttributeKey = BoundedVec<u8, AttributeKeyStringLimit>;
 /// Represent a list of the attributes

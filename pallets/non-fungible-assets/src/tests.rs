@@ -5,7 +5,6 @@ use crate::{
 	ClassDetailsBuilder,
 	Event as NfaEvent,
 	characteristics::{bettor::*, purchased::{Purchased, Offer}},
-	characteristics::*,
 };
 use frame_support::{assert_noop, assert_ok};
 use frame_system::{EventRecord, Phase};
@@ -70,14 +69,6 @@ fn asset_details_builder() {
 		let b = AssetDetailsBuilder::<Test>::new(1).unwrap();
 		let d = b.build().unwrap();
 		assert_eq!(d.owner, 1);
-	});
-}
-
-#[test]
-fn correct_error_for_none_value() {
-	new_test_ext().execute_with(|| {
-		// Ensure the expected error is thrown when no value is present.
-		assert_noop!(NonFungibleAssets::cause_error(Origin::signed(1)), Error::<Test>::NoneValue);
 	});
 }
 
@@ -186,11 +177,11 @@ fn do_destroy_class_removes_attributes() {
 			name.clone()
 		));
 		// create attribute
-		let ar = AttributeTypeRaw::Number(NumberAttributeRaw {
-			number_value: 100,
-			number_max: None,
-		});
-		assert_ok!(NonFungibleAssets::do_create_attribute(class_id, Some(org), br"a_name".to_vec(), ar));
+		let a: Attribute = Attribute {
+			key: br"a_name".to_vec().try_into().unwrap(),
+			value: 100u32.try_into().unwrap()
+		};
+		assert_ok!(NonFungibleAssets::do_create_attribute(class_id, Some(org), a));
 		let key: AttributeKey = br"a_name".to_vec().try_into().unwrap();
 		assert_eq!(Attributes::<Test>::contains_key((&class_id, None as Option<NonFungibleAssetId>, &key)), true);
 		assert_eq!(Classes::<Test>::get(&class_id).unwrap().attributes, 1);
@@ -374,129 +365,55 @@ fn do_mint_worked() {
 }
 
 #[test]
-fn attribute_build_string() {
-	new_test_ext().execute_with(|| {
-		let ar = AttributeTypeRaw::String(br"some_a".to_vec());
-		let a = AttributeDetailsBuilder::<Test>::new(ar).unwrap().build().unwrap();
-		match a {
-			AttributeValue::String(a) => assert_eq!(a.to_vec(), br"some_a".to_vec()),
-			_ => unreachable!()
-		}
-	});
-}
-
-#[test]
-fn attribute_build_string_limit() {
-	new_test_ext().execute_with(|| {
-		let ar = AttributeTypeRaw::String(br"some_aaaaaaaasome_aaaaaaaasome_aaaaaaaasome_aaaaaaaasome_aaaaaaaasome_aaaaaaaasome_aaaaaaaasome_aaaaaaaasome_aaaaaaaasome_aaaaaaaa".to_vec());
-		assert_noop!(AttributeDetailsBuilder::<Test>::new(ar), Error::<Test>::StringAttributeLengthLimitExceeded);
-	});
-}
-
-#[test]
-fn attribute_build_number_simple() {
-	new_test_ext().execute_with(|| {
-		let ar = AttributeTypeRaw::Number(NumberAttributeRaw {
-			number_value: 10,
-			number_max: None,
-		});
-		let a = AttributeDetailsBuilder::<Test>::new(ar).unwrap().build().unwrap();
-		match a {
-			AttributeValue::Number(a) => {
-				assert_eq!(a.number_value, 10);
-				assert_eq!(a.number_max, None);
-			}
-			_ => unreachable!()
-		}
-	});
-}
-
-#[test]
-fn attribute_build_number_max() {
-	new_test_ext().execute_with(|| {
-		let ar = AttributeTypeRaw::Number(NumberAttributeRaw {
-			number_value: 10,
-			number_max: Some(100),
-		});
-		let a = AttributeDetailsBuilder::<Test>::new(ar).unwrap().build().unwrap();
-		match a {
-			AttributeValue::Number(a) => {
-				assert_eq!(a.number_value, 10);
-				assert_eq!(a.number_max, Some(100));
-			}
-			_ => unreachable!()
-		}
-	});
-}
-
-#[test]
-fn attribute_build_number_max_low() {
-	new_test_ext().execute_with(|| {
-		let ar = AttributeTypeRaw::Number(NumberAttributeRaw {
-			number_value: 100,
-			number_max: Some(10),
-		});
-		assert_noop!(AttributeDetailsBuilder::<Test>::new(ar), Error::<Test>::NumberAttributeValueExceedsMaximum);
-	});
-}
-
-#[test]
 fn do_create_attribute_wrong_attr() {
 	new_test_ext().execute_with(|| {
-		let ar = AttributeTypeRaw::Number(NumberAttributeRaw {
+		let nv = NumberAttribute {
 			number_value: 100,
 			number_max: Some(10),
-		});
-		assert_noop!(NonFungibleAssets::do_create_attribute(1, None, br"a_name".to_vec(), ar), Error::<Test>::NumberAttributeValueExceedsMaximum);
-	});
-}
-
-#[test]
-fn do_create_attribute_wrong_attr_name() {
-	new_test_ext().execute_with(|| {
-		let ar = AttributeTypeRaw::Number(NumberAttributeRaw {
-			number_value: 100,
-			number_max: Some(10),
-		});
-		assert_noop!(NonFungibleAssets::do_create_attribute(1, None, br"a_name_looooooooooong__a_name_looooooooooong__a_name_looooooooooong__a_name_looooooooooong__a_name_looooooooooong__a_name_looooooooooong__a_name_looooooooooong__a_name_looooooooooong__a_name_looooooooooong__a_name_looooooooooong__a_name_looooooooooong__".to_vec(), ar), Error::<Test>::AttributeConversionError);
+		};
+		let a: Attribute = Attribute {
+			key: br"a_name".to_vec().try_into().unwrap(),
+			value: AttributeValue::Number(nv),
+		};
+		assert_noop!(NonFungibleAssets::do_create_attribute(1, None, a), DispatchError::Other("Attribute numeric value exceeds the maximum value"));
 	});
 }
 
 #[test]
 fn do_create_attribute_class_not_exists() {
 	new_test_ext().execute_with(|| {
-		let ar = AttributeTypeRaw::Number(NumberAttributeRaw {
-			number_value: 100,
-			number_max: None,
-		});
-		assert_noop!(NonFungibleAssets::do_create_attribute(1000, None, br"a_name".to_vec(), ar), Error::<Test>::UnknownClass);
+		let a: Attribute = Attribute {
+			key: br"a_name".to_vec().try_into().unwrap(),
+			value: 100u32.try_into().unwrap()
+		};
+		assert_noop!(NonFungibleAssets::do_create_attribute(1000, None, a), Error::<Test>::UnknownClass);
 	});
 }
 
 #[test]
 fn do_create_attribute_owner_no_permissions() {
 	new_test_ext().execute_with(|| {
-		let ar = AttributeTypeRaw::Number(NumberAttributeRaw {
-			number_value: 100,
-			number_max: None,
-		});
+		let a: Attribute = Attribute {
+			key: br"a_name".to_vec().try_into().unwrap(),
+			value: 100u32.try_into().unwrap()
+		};
 		// create class
 		let name = br"nfa name".to_vec();
 		let nfa_id = get_next_class_id();
 		let org = 2;
 		assert_ok!(NonFungibleAssets::create(Origin::signed(1), org, name.clone()));
 
-		assert_noop!(NonFungibleAssets::do_create_attribute(nfa_id, Some(1111), br"a_name".to_vec(), ar), Error::<Test>::NoPermission);
+		assert_noop!(NonFungibleAssets::do_create_attribute(nfa_id, Some(1111), a), Error::<Test>::NoPermission);
 	});
 }
 
 #[test]
 fn do_create_attribute_already_exists() {
 	new_test_ext().execute_with(|| {
-		let ar = AttributeTypeRaw::Number(NumberAttributeRaw {
-			number_value: 100,
-			number_max: None,
-		});
+		let a: Attribute = Attribute {
+			key: br"a_name".to_vec().try_into().unwrap(),
+			value: 100u32.try_into().unwrap()
+		};
 		// create class
 		let name = br"nfa name".to_vec();
 		let nfa_id = get_next_class_id();
@@ -507,17 +424,17 @@ fn do_create_attribute_already_exists() {
 		let attr_name: AttributeKey = br"a_name".to_vec().try_into().unwrap();
 		Attributes::<Test>::insert((nfa_id, None as Option<NonFungibleAssetId>, attr_name), eat);
 
-		assert_noop!(NonFungibleAssets::do_create_attribute(nfa_id, Some(org), br"a_name".to_vec(), ar), Error::<Test>::AttributeAlreadyExists);
+		assert_noop!(NonFungibleAssets::do_create_attribute(nfa_id, Some(org), a), Error::<Test>::AttributeAlreadyExists);
 	});
 }
 
 #[test]
 fn do_create_attribute_already_exists1() {
 	new_test_ext().execute_with(|| {
-		let ar = AttributeTypeRaw::Number(NumberAttributeRaw {
-			number_value: 100,
-			number_max: None,
-		});
+		let a: Attribute = Attribute {
+			key: br"a_name".to_vec().try_into().unwrap(),
+			value: 100u32.try_into().unwrap()
+		};
 		// create class
 		let name = br"nfa name".to_vec();
 		let nfa_id = get_next_class_id();
@@ -526,7 +443,7 @@ fn do_create_attribute_already_exists1() {
 		assert_eq!(Classes::<Test>::get(nfa_id).unwrap().attributes, 0);
 
 		System::reset_events();
-		assert_ok!(NonFungibleAssets::do_create_attribute(nfa_id, Some(org), br"a_name".to_vec(), ar));
+		assert_ok!(NonFungibleAssets::do_create_attribute(nfa_id, Some(org), a));
 		
 		let attr_name: AttributeKey = br"a_name".to_vec().try_into().unwrap();
 		assert_eq!(Attributes::<Test>::contains_key((nfa_id, None as Option<NonFungibleAssetId>, &attr_name)), true);
@@ -545,16 +462,9 @@ fn do_create_attribute_already_exists1() {
 }
 
 #[test]
-fn do_remove_attribute_wrong_attr_name() {
-	new_test_ext().execute_with(|| {
-		assert_noop!(NonFungibleAssets::do_remove_attribute(1, None, br"a_name_looooooooooong__a_name_looooooooooong__a_name_looooooooooong__a_name_looooooooooong__a_name_looooooooooong__a_name_looooooooooong__a_name_looooooooooong__a_name_looooooooooong__a_name_looooooooooong__a_name_looooooooooong__a_name_looooooooooong__a_name_looooooooooong__a_name_looooooooooong__".to_vec()), Error::<Test>::AttributeConversionError);
-	});
-}
-
-#[test]
 fn do_remove_attribute_class_not_exists() {
 	new_test_ext().execute_with(|| {
-		assert_noop!(NonFungibleAssets::do_remove_attribute(1000, None, br"a_name".to_vec()), Error::<Test>::UnknownClass);
+		assert_noop!(NonFungibleAssets::do_remove_attribute(1000, None, br"a_name".to_vec().try_into().unwrap()), Error::<Test>::UnknownClass);
 	});
 }
 
@@ -567,7 +477,7 @@ fn do_remove_attribute_owner_no_permissions() {
 		let org = 2;
 		assert_ok!(NonFungibleAssets::create(Origin::signed(1), org, name.clone()));
 
-		assert_noop!(NonFungibleAssets::do_remove_attribute(nfa_id, Some(1111), br"a_name".to_vec()), Error::<Test>::NoPermission);
+		assert_noop!(NonFungibleAssets::do_remove_attribute(nfa_id, Some(1111), br"a_name".to_vec().try_into().unwrap()), Error::<Test>::NoPermission);
 	});
 }
 
@@ -580,11 +490,11 @@ fn do_remove_attribute_work() {
 		let org = 2;
 		assert_ok!(NonFungibleAssets::create(Origin::signed(1), org, name.clone()));
 		// create attribute
-		let ar = AttributeTypeRaw::Number(NumberAttributeRaw {
-			number_value: 100,
-			number_max: None,
-		});
-		assert_ok!(NonFungibleAssets::do_create_attribute(class_id, Some(org), br"a_name".to_vec(), ar));
+		let a: Attribute = Attribute {
+			key: br"a_name".to_vec().try_into().unwrap(),
+			value: 100u32.try_into().unwrap()
+		};
+		assert_ok!(NonFungibleAssets::do_create_attribute(class_id, Some(org), a));
 		assert_eq!(Classes::<Test>::get(class_id).unwrap().attributes, 1);
 		let key: AttributeKey = br"a_name".to_vec().try_into().unwrap();
 		assert_eq!(Attributes::<Test>::get((&class_id, None as Option<NonFungibleAssetId>, &key)).unwrap(), AttributeValue::Number(NumberAttribute {
@@ -595,7 +505,7 @@ fn do_remove_attribute_work() {
 		System::reset_events();
 
 		assert_eq!(Attributes::<Test>::contains_key((&class_id, None as Option<NonFungibleAssetId>, &key)), true);
-		assert_ok!(NonFungibleAssets::do_remove_attribute(class_id, Some(org), br"a_name".to_vec()));
+		assert_ok!(NonFungibleAssets::do_remove_attribute(class_id, Some(org), br"a_name".to_vec().try_into().unwrap()));
 		assert_eq!(Attributes::<Test>::contains_key((&class_id, None as Option<NonFungibleAssetId>, &key)), false);
 		assert_eq!(Classes::<Test>::get(class_id).unwrap().attributes, 0);
 
@@ -621,13 +531,12 @@ fn create_attribute_unsigned() {
 		let org = 2;
 		assert_ok!(NonFungibleAssets::create(Origin::signed(1), org, name.clone()));
 
-		let attribute_value = AttributeTypeRaw::Number(NumberAttributeRaw {
-			number_value: 100,
-			number_max: None,
-		});
-		let attribute_name = br"a_name".to_vec();
+		let a: Attribute = Attribute {
+			key: br"a_name".to_vec().try_into().unwrap(),
+			value: 100u32.try_into().unwrap()
+		};
 
-		assert_noop!(NonFungibleAssets::create_attribute(Origin::none(), org, class_id, attribute_name, attribute_value), sp_runtime::traits::BadOrigin);
+		assert_noop!(NonFungibleAssets::create_attribute(Origin::none(), org, class_id, a), sp_runtime::traits::BadOrigin);
 	});
 }
 
@@ -640,13 +549,12 @@ fn create_attribute_worked() {
 		let org = 2;
 		assert_ok!(NonFungibleAssets::create(Origin::signed(1), org, name.clone()));
 
-		let attribute_value = AttributeTypeRaw::Number(NumberAttributeRaw {
-			number_value: 100,
-			number_max: None,
-		});
-		let attribute_name = br"a_name".to_vec();
+		let a: Attribute = Attribute {
+			key: br"a_name".to_vec().try_into().unwrap(),
+			value: 100u32.try_into().unwrap()
+		};
 
-		assert_ok!(NonFungibleAssets::create_attribute(Origin::signed(1), org, class_id, attribute_name, attribute_value));
+		assert_ok!(NonFungibleAssets::create_attribute(Origin::signed(1), org, class_id, a));
 		
 		let attr_name: AttributeKey = br"a_name".to_vec().try_into().unwrap();
 		assert_eq!(Attributes::<Test>::contains_key((class_id, None as Option<NonFungibleAssetId>, &attr_name)), true);
@@ -663,7 +571,7 @@ fn remove_attribute_unsigned() {
 		let org = 2;
 		assert_ok!(NonFungibleAssets::create(Origin::signed(1), org, name.clone()));
 
-		let attribute_name = br"a_name".to_vec();
+		let attribute_name = br"a_name".to_vec().try_into().unwrap();
 
 		assert_noop!(NonFungibleAssets::remove_attribute(Origin::none(), org, class_id, attribute_name), sp_runtime::traits::BadOrigin);
 	});
@@ -678,18 +586,17 @@ fn remove_attribute_worked() {
 		let org = 2;
 		assert_ok!(NonFungibleAssets::create(Origin::signed(1), org, name.clone()));
 
-		let attribute_value = AttributeTypeRaw::Number(NumberAttributeRaw {
-			number_value: 100,
-			number_max: None,
-		});
-		let attribute_name = br"a_name".to_vec();
+		let a: Attribute = Attribute {
+			key: br"a_name".to_vec().try_into().unwrap(),
+			value: 100u32.try_into().unwrap()
+		};
 
-		assert_ok!(NonFungibleAssets::create_attribute(Origin::signed(1), org, class_id, attribute_name.clone(), attribute_value));
+		assert_ok!(NonFungibleAssets::create_attribute(Origin::signed(1), org, class_id, a.clone()));
 		
 		let attr_name: AttributeKey = br"a_name".to_vec().try_into().unwrap();
 		assert_eq!(Attributes::<Test>::contains_key((class_id, None as Option<NonFungibleAssetId>, &attr_name)), true);
 
-		assert_ok!(NonFungibleAssets::remove_attribute(Origin::signed(1), org, class_id, attribute_name));
+		assert_ok!(NonFungibleAssets::remove_attribute(Origin::signed(1), org, class_id, a.key));
 		assert_eq!(Attributes::<Test>::contains_key((class_id, None as Option<NonFungibleAssetId>, &attr_name)), false);
 
 
@@ -767,7 +674,7 @@ fn assign_attributes_works() {
 		};
 		let a2 = Attribute {
 			key: br"a2".to_vec().try_into().unwrap(),
-			value: AttributeValue::String(br"v1".to_vec().try_into().unwrap())
+			value: AttributeValue::Text(br"v1".to_vec().try_into().unwrap())
 		};
 		let attributes: AttributeList = vec![a1.clone(), a2.clone()].try_into().unwrap();
 		assert_ok!(NonFungibleAssets::assign_attributes(&10, &20, attributes));

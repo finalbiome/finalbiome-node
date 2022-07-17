@@ -1,5 +1,4 @@
 //! The Bettor Characteristics code
-use super::super::*;
 use super::*;
 
 /// Parameters of the Bettor Characteristic
