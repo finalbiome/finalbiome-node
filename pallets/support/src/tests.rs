@@ -1,6 +1,6 @@
 // use super::*;
 
-// use frame_support::{assert_noop, assert_ok};
+use frame_support::{assert_ok};
 
 use crate::{AttributeValue, NumberAttribute};
 
@@ -42,7 +42,7 @@ fn attribute_value_from_tuple_u32_error() {
 #[test]
 fn attribute_value_from_str() {
   let val: AttributeValue = "test".try_into().unwrap();
-  if let AttributeValue::String(s) = val {
+  if let AttributeValue::Text(s) = val {
     assert_eq!(s.to_vec(), br"test".to_vec());
   } else {
     assert_eq!(false, true);
@@ -62,7 +62,7 @@ fn attribute_value_from_str_error() {
 #[test]
 fn attribute_value_from_vec() {
   let val: AttributeValue = br"test".to_vec().try_into().unwrap();
-  if let AttributeValue::String(s) = val {
+  if let AttributeValue::Text(s) = val {
     assert_eq!(s.to_vec(), br"test".to_vec());
   } else {
     assert_eq!(false, true);
@@ -77,4 +77,34 @@ fn attribute_value_from_vec_error() {
   
   let _: AttributeValue = br"looooong___string_________looooong___string_________looooong___string_________looooong___string_________looooong___string_________looooong___string_________looooong___string_________"
     .to_vec().try_into().unwrap();
+}
+
+#[test]
+fn attribute_validate_w_max_val() {
+  let val: AttributeValue = AttributeValue::Number(NumberAttribute {
+    number_value: 10,
+    number_max: None,
+  });
+  assert_ok!(val.validate());
+}
+
+#[test]
+fn attribute_validate_no_max_val() {
+  let val: AttributeValue = AttributeValue::Number(NumberAttribute {
+    number_value: 10,
+    number_max: Some(100),
+  });
+  assert_ok!(val.validate());
+}
+#[test]
+#[should_panic(expected = "Attribute numeric value exceeds the maximum value")]
+fn attribute_validate_no_max_val_err() {
+  // hiding trace stack
+  std::panic::set_hook(Box::new(|_| {}));
+    
+  let val: AttributeValue = AttributeValue::Number(NumberAttribute {
+    number_value: 10,
+    number_max: Some(1),
+  });
+  val.validate().unwrap();
 }

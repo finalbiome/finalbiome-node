@@ -86,7 +86,7 @@ pub struct Attribute {
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 pub enum AttributeValue {
   Number(NumberAttribute),
-  String(BoundedVec<u8, AttributeValueStringLimit>)
+  Text(BoundedVec<u8, AttributeValueStringLimit>)
 }
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 pub struct NumberAttribute {
@@ -109,7 +109,7 @@ impl TryFrom<(u32, u32)> for AttributeValue {
 
     fn try_from(value: (u32, u32)) -> Result<Self, Self::Error> {
       if value.0 > value.1 {
-        Err("Attribute numeric value exceeds the maximum value")
+        Err(ERROR_VALIDATE_NUMBER_ATTRIBUTE)
       } else {
         Ok(AttributeValue::Number(NumberAttribute {
           number_value: value.0,
@@ -123,8 +123,8 @@ impl TryFrom<&str> for AttributeValue {
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
       match value.as_bytes().to_vec().try_into() {
-        Ok(val) => Ok(AttributeValue::String(val)),
-        Err(_) => Err("String attribute length out of bound")
+        Ok(val) => Ok(AttributeValue::Text(val)),
+        Err(_) => Err(ERROR_VALIDATE_TEXT_ATTRIBUTE)
       }
       
     }
@@ -134,11 +134,24 @@ impl TryFrom<Vec<u8>> for AttributeValue {
 
     fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
       match value.try_into() {
-        Ok(val) => Ok(AttributeValue::String(val)),
-        Err(_) => Err("String attribute length out of bound")
+        Ok(val) => Ok(AttributeValue::Text(val)),
+        Err(_) => Err(ERROR_VALIDATE_TEXT_ATTRIBUTE)
       }
       
     }
+}
+
+impl AttributeValue {
+  pub fn validate(&self) -> DispatchResult {
+    if let AttributeValue::Number(value) = self {
+      if let Some(max_val) = value.number_max {
+        if value.number_value > max_val {
+          return Err(DispatchError::Other(ERROR_VALIDATE_NUMBER_ATTRIBUTE));
+        }
+      }
+    };
+    Ok(())
+  }
 }
 
 /// Type of the attribute key for NFA
