@@ -21,7 +21,7 @@ fn get_offer(
             Err(Error::<T>::WrongParameter.into())
           }
         } else {
-          Err(Error::<T>::UnsupportedCharacreristic.into())
+          Err(Error::<T>::UnsupportedCharacteristic.into())
         }
     }
 

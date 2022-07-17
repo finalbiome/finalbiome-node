@@ -130,4 +130,38 @@ impl<T: Config> Pallet<T> {
 		}
 		Ok(())
 	}
+
+	pub(crate) fn do_set_characteristic(
+		class_id: NonFungibleClassId,
+		maybe_check_owner: Option<T::AccountId>,
+		characteristic: Characteristic,
+	) -> DispatchResult {
+		// TODO: add references management.
+		// If references to FA or NFA are changed then references in assets must be changed
+		let mut details = Classes::<T>::get(class_id).ok_or(Error::<T>::UnknownClass)?;
+
+		if let Some(check_owner) = maybe_check_owner {
+			ensure!(details.owner == check_owner, Error::<T>::NoPermission);
+		}
+
+		match characteristic {
+			Characteristic::Bettor(bettor) => {
+				if let Some(inner) = &bettor {
+					AssetCharacteristic::<T>::ensure(inner)?;
+				};
+				details.bettor = bettor;
+			},
+			Characteristic::Purchased(purchased) => {
+				if let Some(inner) = &purchased {
+					AssetCharacteristic::<T>::ensure(inner)?;
+				};
+				details.purchased = purchased;
+			},
+		};
+
+		Classes::<T>::insert(&class_id, &details);
+		Self::deposit_event(Event::Updated { class_id });
+		Ok(())
+	}
+
 }

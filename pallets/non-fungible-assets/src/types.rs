@@ -60,7 +60,7 @@ impl<T: pallet::Config> ClassDetailsBuilder<T> {
   /// Set the Bettor chracteristic of the NFA
   pub fn bettor(mut self, bettor: CharacteristicBettor) -> ClassDetailsBuilderResult<T> {
     if let Some(ref inc_bettor) = bettor {
-      if !inc_bettor.is_valid() {
+      if !AssetCharacteristic::<T>::is_valid(inc_bettor) {
         return Err(Error::<T>::WrongBettor.into())
       }
     }
@@ -70,7 +70,7 @@ impl<T: pallet::Config> ClassDetailsBuilder<T> {
 
   pub fn purchased(mut self, purchased: CharacteristicPurchased) -> ClassDetailsBuilderResult<T> {
     if let Some(ref inc_purchased) = purchased {
-      if !inc_purchased.is_valid() {
+      if !AssetCharacteristic::<T>::is_valid(inc_purchased) {
         return Err(Error::<T>::WrongPurchased.into())
       }
     }

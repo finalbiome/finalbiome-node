@@ -11,7 +11,7 @@ pub struct Bettor {
   pub draw_outcome: DrawOutcomeResult,
 }
 
-impl AssetCharacteristic for Bettor {
+impl<T: Config> AssetCharacteristic<T> for Bettor {
   fn is_valid(&self) -> bool {
       // count of outcomes must be more than 0
       if self.outcomes.len() == 0 {

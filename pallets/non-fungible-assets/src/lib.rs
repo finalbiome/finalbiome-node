@@ -17,9 +17,6 @@ pub use pallet_support::{
 	Attribute,
 	AttributeKey, AttributeList,
 };
-// use frame_support::{
-// 	log,
-// };
 
 pub use pallet::*;
 
@@ -44,7 +41,7 @@ use sp_std::{vec::Vec};
 use frame_support:: {
 	traits:: {
 		EnsureOriginWithArg,
-	}
+	},
 };
 
 use frame_support::pallet_prelude::*;
@@ -174,6 +171,8 @@ pub trait Config: frame_system::Config {
 		Created { class_id: NonFungibleClassId, owner: T::AccountId },
 		/// An asset class has been destroyed.
 		Destroyed { class_id: NonFungibleClassId },
+		/// An asset class has been updated.
+		Updated { class_id: NonFungibleClassId },
 		/// An asset `instance` has been issued.
 		Issued { class_id: NonFungibleClassId, asset_id: NonFungibleAssetId, owner: T::AccountId },
 		/// New attribute metadata has been set for the asset class.
@@ -218,7 +217,9 @@ pub trait Config: frame_system::Config {
 		/// General error if any parameter is invalid
 		WrongParameter,
 		/// This characteristic is not supported by this asset
-		UnsupportedCharacreristic,
+		UnsupportedCharacteristic,
+		/// Characteristic is invalid
+		WrongCharacteristic,
 	}
 
 	// Dispatchable functions allows users to interact with the pallet and invoke state changes.
@@ -325,12 +326,19 @@ pub trait Config: frame_system::Config {
 		}
 		
 		#[pallet::weight(T::DbWeight::get().reads_writes(2, 2))]
-		pub fn set_characretistic(
-			_origin: OriginFor<T>,
-			_organization_id: <T::Lookup as StaticLookup>::Source,
-			#[pallet::compact] _class_id: NonFungibleClassId,
-			_characteristic: Characteristic,
+		pub fn set_characteristic(
+			origin: OriginFor<T>,
+			organization_id: <T::Lookup as StaticLookup>::Source,
+			#[pallet::compact] class_id: NonFungibleClassId,
+			characteristic: Characteristic,
 		) -> DispatchResult {
+			// owner of a class must be an orgnization
+			let owner = T::Lookup::lookup(organization_id)?;
+			// Only organization can manage an asset class
+			T::CreateOrigin::ensure_origin(origin, &owner)?;
+
+			Self::do_set_characteristic(class_id, Some(owner), characteristic)?;
+
 			Ok(())
 		}
 	}

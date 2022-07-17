@@ -7,7 +7,7 @@ pub struct Purchased {
   pub offers: BoundedVec<Offer, ConstU32<{ u8::MAX as u32 }>>,
 }
 
-impl AssetCharacteristic for Purchased {
+impl<T: Config> AssetCharacteristic<T> for Purchased {
     fn is_valid(&self) -> bool {
         // number of offers must be more than 0
         if self.offers.len() == 0 {
