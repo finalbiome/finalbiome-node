@@ -13,7 +13,7 @@ use sp_runtime::{
 
 mod types;
 mod constants;
-use constants::*;
+pub use constants::*;
 pub mod traits;
 
 #[cfg(test)]

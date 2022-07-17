@@ -1,16 +1,17 @@
 //! The Bettor Characteristics code
 use super::*;
+use pallet_support::DefaultStringLimit;
 
 /// Parameters of the Bettor Characteristic
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
-pub struct Bettor<BoundedName> {
-  pub outcomes: WeakBoundedVec<BettorOutcome<BoundedName>, ConstU32<{ u8::MAX as u32 }>>,
-  pub winnings: WeakBoundedVec<BettorWinning, ConstU32<{ u8::MAX as u32 }>>,
+pub struct Bettor {
+  pub outcomes: BoundedVec<BettorOutcome, ConstU32<{ u8::MAX as u32 }>>,
+  pub winnings: BoundedVec<BettorWinning, ConstU32<{ u8::MAX as u32 }>>,
   pub rounds: u8,
   pub draw_outcome: DrawOutcomeResult,
 }
 
-impl<BoundedName> AssetCharacteristic for Bettor<BoundedName> {
+impl AssetCharacteristic for Bettor {
   fn is_valid(&self) -> bool {
       // count of outcomes must be more than 0
       if self.outcomes.len() == 0 {
@@ -45,9 +46,9 @@ impl<BoundedName> AssetCharacteristic for Bettor<BoundedName> {
 }
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
-pub struct BettorOutcome<BoundedName> {
+pub struct BettorOutcome {
   /// Name of the outcome
-  pub name: BoundedName,
+  pub name: BoundedVec<u8, DefaultStringLimit>,
   /// The probability of the outcome
   pub probability: u8,
 }

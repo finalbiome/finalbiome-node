@@ -13,7 +13,7 @@ pub type FungibleAssetId = pallet_support::FungibleAssetId;
 pub type FungibleAssetBalance = pallet_support::FungibleAssetBalance;
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
-pub struct ClassDetails<AccountId, BoundedString, BoundedName> {
+pub struct ClassDetails<AccountId, BoundedString> {
   pub owner: AccountId,
   /// The total number of outstanding instances of this asset class
 	pub instances: u32,
@@ -22,7 +22,7 @@ pub struct ClassDetails<AccountId, BoundedString, BoundedName> {
   /// Name of the Asset. Limited in length by `ClassNameLimit`
 	pub name: BoundedString,
   /// Characteristic of bets
-  pub bettor: Option<Bettor<BoundedName>>,
+  pub bettor: Option<Bettor>,
   /// Characteristic of purchases
   pub purchased: Option<Purchased>,
 }
@@ -39,7 +39,7 @@ pub struct AssetDetails<AccountId> {
 pub struct ClassDetailsBuilder<T: Config> {
   owner: T::AccountId,
   name: ClassNameLimit<T>,
-  bettor: CharacteristicBettorOf<T>,
+  bettor: CharacteristicBettor,
   purchased: CharacteristicPurchased,
 }
 impl<T: pallet::Config> ClassDetailsBuilder<T> {
@@ -58,7 +58,7 @@ impl<T: pallet::Config> ClassDetailsBuilder<T> {
   }
 
   /// Set the Bettor chracteristic of the NFA
-  pub fn bettor(mut self, bettor: CharacteristicBettorOf<T>) -> ClassDetailsBuilderResult<T> {
+  pub fn bettor(mut self, bettor: CharacteristicBettor) -> ClassDetailsBuilderResult<T> {
     if let Some(ref inc_bettor) = bettor {
       if !inc_bettor.is_valid() {
         return Err(Error::<T>::WrongBettor.into())
@@ -117,11 +117,9 @@ impl<T: pallet::Config> AssetDetailsBuilder<T> {
 pub type ClassNameLimit<T> = BoundedVec<u8, <T as pallet::Config>::ClassNameLimit>;
 type ClassDetailsBuilderResult<T> = DispatchResultAs<ClassDetailsBuilder<T>>;
 type AssetDetailsBuilderResult<T> = DispatchResultAs<AssetDetailsBuilder<T>>;
-pub type BettorOutcomeNameLimit<T> = BoundedVec<u8, <T as pallet::Config>::BettorOutcomeNameLimit>;
-pub type BettorOutcomeName<T> = BoundedVec<u8,<T as pallet::Config>::BettorOutcomeNameLimit>;
-pub type ClassDetailsOf<T> = ClassDetails<AccountIdOf<T>, ClassNameLimit<T>, BettorOutcomeName<T>>;
+pub type ClassDetailsOf<T> = ClassDetails<AccountIdOf<T>, ClassNameLimit<T>>;
 
-pub type CharacteristicBettorOf<T> = Option<Bettor<BettorOutcomeName<T>>>;
+pub type CharacteristicBettor = Option<Bettor>;
 pub type CharacteristicPurchased = Option<Purchased>;
 
 // region: Genesis Types

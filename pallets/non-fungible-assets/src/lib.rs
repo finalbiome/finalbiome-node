@@ -44,8 +44,7 @@ use sp_std::{vec::Vec};
 use frame_support:: {
 	traits:: {
 		EnsureOriginWithArg,
-	},
-	WeakBoundedVec,
+	}
 };
 
 use frame_support::pallet_prelude::*;
@@ -68,15 +67,6 @@ pub trait Config: frame_system::Config {
 		type CreateOrigin: EnsureOriginWithArg<Self::Origin, Self::AccountId>;
 		/// Connector to fungible assets instances
 		type FungibleAssets: pallet_support::traits::FungibleAssets<Self::AccountId>;
-		/// Lenght limit of the name for the bettor ouncome
-		#[pallet::constant]
-		type BettorOutcomeNameLimit: Get<u32>;
-		/// Lenght limit of the string attribute value
-		#[pallet::constant]
-		type AttributeValueLimit: Get<u32>;
-		/// The maximum length of an attribute key.
-		#[pallet::constant]
-		type AttributeKeyLimit: Get<u32>;
 	}
 
 	#[pallet::pallet]

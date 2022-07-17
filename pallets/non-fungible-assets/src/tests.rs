@@ -214,7 +214,7 @@ fn destroy_class_not_org() {
 #[test]
 fn bettor_empty() {
 	new_test_ext().execute_with(|| {
-		let b:Bettor<ConstU32<8>> = Bettor {
+		let b:Bettor = Bettor {
 			outcomes: vec![].try_into().expect("Outcomes vec too big"),
 			winnings: vec![].try_into().expect("Winnings vec too big"),
 			rounds: 1,
@@ -227,7 +227,7 @@ fn bettor_empty() {
 #[test]
 fn bettor_prob_more_100() {
 	new_test_ext().execute_with(|| {
-		let b:Bettor<BoundedVec<u8,<Test as pallet::Config>::BettorOutcomeNameLimit>> = Bettor {
+		let b:Bettor = Bettor {
 			outcomes: vec![
 				BettorOutcome {
 					name: br"out0".to_vec().try_into().expect("too long"),
@@ -247,7 +247,7 @@ fn bettor_prob_more_100() {
 #[test]
 fn bettor_probs_less_100() {
 	new_test_ext().execute_with(|| {
-		let b:Bettor<BoundedVec<u8,<Test as pallet::Config>::BettorOutcomeNameLimit>> = Bettor {
+		let b:Bettor = Bettor {
 			outcomes: vec![
 				BettorOutcome {
 					name: br"out0".to_vec().try_into().expect("too long"),
@@ -262,7 +262,7 @@ fn bettor_probs_less_100() {
 		};
 		assert_eq!(b.is_valid(), false);
 
-		let b:Bettor<BoundedVec<u8,<Test as pallet::Config>::BettorOutcomeNameLimit>> = Bettor {
+		let b:Bettor = Bettor {
 			outcomes: vec![
 				BettorOutcome {
 					name: br"out0".to_vec().try_into().expect("too long"),
@@ -282,7 +282,7 @@ fn bettor_probs_less_100() {
 #[test]
 fn bettor_wins_empty() {
 	new_test_ext().execute_with(|| {
-		let b:Bettor<BoundedVec<u8,<Test as pallet::Config>::BettorOutcomeNameLimit>> = Bettor {
+		let b:Bettor = Bettor {
 			outcomes: vec![
 				BettorOutcome {
 					name: br"out0".to_vec().try_into().expect("too long"),
@@ -300,7 +300,7 @@ fn bettor_wins_empty() {
 		};
 		assert_eq!(b.is_valid(), false);
 
-		let b:Bettor<BoundedVec<u8,<Test as pallet::Config>::BettorOutcomeNameLimit>> = Bettor {
+		let b:Bettor = Bettor {
 			outcomes: vec![
 				BettorOutcome {
 					name: br"out0".to_vec().try_into().expect("too long"),

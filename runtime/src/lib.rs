@@ -295,11 +295,7 @@ impl pallet_non_fungible_assets::Config for Runtime {
 	type Event = Event;
 	type ClassNameLimit = ConstU32<32>;
 	type CreateOrigin = pallet_organization_identity::EnsureMemberOfOrganization<Runtime>;
-	type BettorOutcomeNameLimit = ConstU32<32>;
 	type FungibleAssets = FungibleAssets;
-	type AttributeValueLimit = ConstU32<32>;
-	type AttributeKeyLimit = ConstU32<32>;
-
 }
 
 impl pallet_mechanics::Config for Runtime {
