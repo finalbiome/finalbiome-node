@@ -1,0 +1,15 @@
+{
+  "AccountInfo": "AccountInfoWithDualRefCount",
+  "Address": "MultiAddress",
+  "LookupSource": "AccountId",
+  "PalletNonFungibleAssetsNumberAttributeRaw": {
+    "number_value": "u32",
+    "number_max": "Option<u32>"
+  },
+  "PalletNonFungibleAssetsAttributeTypeRaw": {
+    "_enum": {
+      "Number": "PalletNonFungibleAssetsNumberAttributeRaw",
+      "Text": "Bytes"
+    }
+  }
+}
