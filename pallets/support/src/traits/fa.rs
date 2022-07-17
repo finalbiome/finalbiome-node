@@ -4,6 +4,7 @@ use crate::{
   FungibleAssetBalance,
 };
 use frame_support::traits::tokens::WithdrawConsequence;
+use sp_runtime::DispatchResult;
 
 /// Trait for providing an interface to a fungible assets instances.
 pub trait FungibleAssets<AccountId> {
@@ -25,4 +26,11 @@ pub trait FungibleAssets<AccountId> {
     who: &AccountId, 
     amount: FungibleAssetBalance
   ) -> DispatchResultAs<FungibleAssetBalance>;
+
+  /// Increment the references counter on an asset.
+  fn inc_references(asset: &FungibleAssetId) -> DispatchResult;
+  /// Increment the references counter on an asset.
+  ///
+	/// This *MUST* only be done once for every time you called `inc_references` on `who`.
+  fn dec_references(asset: &FungibleAssetId) -> DispatchResult;
 }

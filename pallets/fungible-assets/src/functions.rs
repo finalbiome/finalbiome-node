@@ -273,4 +273,31 @@ impl<T: Config> Pallet<T> {
 
     T::DbWeight::get().reads_writes(reads, writes)
   }
+
+  /// Increment the references counter on an asset.
+	pub fn inc_references(asset: &AssetId) -> DispatchResult {
+    Assets::<T>::try_mutate(asset, |maybe_details| -> DispatchResult {
+      let details = maybe_details.as_mut().ok_or(TokenError::UnknownAsset)?;
+      details.references = details.references.checked_add(1).ok_or(ArithmeticError::Overflow)?;
+      Ok(())
+    })?;
+    Ok(())
+	}
+
+  /// Decrement the references counter on an asset.
+  pub fn dec_references(asset: &AssetId) -> DispatchResult {
+    Assets::<T>::try_mutate(asset, |maybe_details| -> DispatchResult {
+      let details = maybe_details.as_mut().ok_or(TokenError::UnknownAsset)?;
+      if details.references == 0 {
+        // Logic error - cannot decrement beyond zero.
+        log::error!(
+          target: "fungible-assets",
+          "Logic error: Unexpected underflow in reducing references",
+        );
+      }
+      details.references = details.references.checked_sub(1).ok_or(ArithmeticError::Underflow)?;
+      Ok(())
+    })?;
+    Ok(())
+  }
 }

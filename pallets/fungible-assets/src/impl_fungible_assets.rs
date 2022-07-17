@@ -18,5 +18,13 @@ fn burn_from(
     Self::decrease_balance(asset, who, amount, false)
   }
 
+  /// Increment the references counter on an asset.
+	fn inc_references(asset: &AssetId) -> DispatchResult {
+    Self::inc_references(asset)
+	}
+
+  fn dec_references(asset: &AssetId) -> DispatchResult {
+    Self::dec_references(asset)
+  }
 
 }

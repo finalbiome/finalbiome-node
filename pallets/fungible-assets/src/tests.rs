@@ -275,6 +275,7 @@ fn next_step_topup() {
 			name: br"fa name".to_vec().try_into().unwrap(),
 			owner: 2,
 			supply: 100,
+			references: 0,
 			top_upped: Some(TopUppedFA {speed: 5}),
 			cup_local: Some(CupFA {amount: 20}),
 		};
@@ -292,6 +293,7 @@ fn next_step_topup() {
 			name: br"fa name".to_vec().try_into().unwrap(),
 			owner: 2,
 			supply: 100,
+			references: 0,
 			top_upped: None,
 			cup_local: Some(CupFA {amount: 20}),
 		};
@@ -303,6 +305,7 @@ fn next_step_topup() {
 			name: br"fa name".to_vec().try_into().unwrap(),
 			owner: 2,
 			supply: 100,
+			references: 0,
 			top_upped: Some(TopUppedFA {speed: 5}),
 			cup_local: Some(CupFA {amount: 3}),
 		};
@@ -850,5 +853,30 @@ fn process_top_up_in_progress() {
 		assert_eq!(TopUpQueue::<Test>::contains_key(&id, &1100), false);
 		assert_eq!(TopUpQueue::<Test>::contains_key(&id, &1200), false);
 
+	})
+}
+
+#[test]
+fn inc_dec_references_worked() {
+	new_test_ext().execute_with(|| {
+		// create several accounts with balances
+		let id = 1; // it's top upped asset with speed of 5 and limit 20
+		assert_ok!(FungibleAssets::inc_references(&id));
+		assert_eq!(Assets::<Test>::get(id).unwrap().references, 1);
+		assert_ok!(FungibleAssets::inc_references(&id));
+		assert_eq!(Assets::<Test>::get(id).unwrap().references, 2);
+		assert_ok!(FungibleAssets::dec_references(&id));
+		assert_eq!(Assets::<Test>::get(id).unwrap().references, 1);
+		assert_ok!(FungibleAssets::dec_references(&id));
+		assert_eq!(Assets::<Test>::get(id).unwrap().references, 0);
+	})
+}
+#[test]
+fn dec_references_err() {
+	new_test_ext().execute_with(|| {
+		// create several accounts with balances
+		let id = 1; // it's top upped asset with speed of 5 and limit 20
+		assert_eq!(Assets::<Test>::get(id).unwrap().references, 0);
+		assert_noop!(FungibleAssets::dec_references(&id), ArithmeticError::Underflow);
 	})
 }

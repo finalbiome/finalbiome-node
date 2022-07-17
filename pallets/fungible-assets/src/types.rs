@@ -53,6 +53,9 @@ pub struct AssetDetails<AccountId, BoundedString> {
 	pub(super) supply: FungibleAssetBalance,
   /// The total number of accounts.
 	pub(super) accounts: u32,
+  /// The total number of references.  \
+  /// When an asset used in NFA or some mechanics it can't be destroyed
+	pub(super) references: u32,
   /// Name of the Asset. Limited in length by `NameLimit`.
 	pub(super) name: BoundedString,
   /// Characteristic of auto generation
@@ -181,6 +184,7 @@ impl<T: pallet::Config> AssetDetailsBuilder<T> {
       owner: self.owner,
       supply: Zero::zero(),
       accounts: Zero::zero(),
+      references: Zero::zero(),
       name: self.name,
       top_upped: self.top_upped,
       cup_global: self.cup_global,
