@@ -31,6 +31,24 @@ fn attribute_value_from_tuple_u32() {
 }
 
 #[test]
+fn attribute_value_from_opt_tuple_u32() {
+  let val: AttributeValue = (15u32, Some(100u32)).try_into().unwrap();
+  if let AttributeValue::Number(NumberAttribute { number_value: v, number_max: m }) = val {
+    assert_eq!(v, 15u32);
+    assert_eq!(m, Some(100u32))
+  } else {
+    assert_eq!(false, true);
+  }
+  let val: AttributeValue = (15u32, None).try_into().unwrap();
+  if let AttributeValue::Number(NumberAttribute { number_value: v, number_max: m }) = val {
+    assert_eq!(v, 15u32);
+    assert_eq!(m, None)
+  } else {
+    assert_eq!(false, true);
+  }
+}
+
+#[test]
 #[should_panic(expected = "Attribute numeric value exceeds the maximum value")]
 fn attribute_value_from_tuple_u32_error() {
   // hiding trace stack

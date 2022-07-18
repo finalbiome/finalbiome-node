@@ -118,6 +118,16 @@ impl TryFrom<(u32, u32)> for AttributeValue {
       }
     }
 }
+impl TryFrom<(u32, Option<u32>)> for AttributeValue {
+    type Error = &'static str;
+
+    fn try_from(value: (u32, Option<u32>)) -> Result<Self, Self::Error> {
+      match value.1 {
+        Some(max_val) => Self::try_from((value.0, max_val)),
+        None => Self::try_from(value.0)
+      }
+    }
+}
 impl TryFrom<&str> for AttributeValue {
     type Error = &'static str;
 
