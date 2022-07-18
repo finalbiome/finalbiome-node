@@ -141,8 +141,15 @@ pub trait Config: frame_system::Config {
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
-		/// Genesis assets: class_id, organization_id, name, bettor, purchased
+		/// Genesis classes: class_id, organization_id, name
 		pub classes: GenesisClassesConfigOf<T>,
+		/// Genesis number attributes of classes: class_id, key, value, max_value
+		pub num_attributes: GenesisNumberAttributesConfig,
+		/// Genesis text attributes of classes: class_id, key, value
+		pub text_attributes: GenesisTextAttributesConfig,
+		/// Genesis Purchased characteristics of classes: class_id, fa_id, price, attributes
+		/// Delivered as each value is an offer
+		pub characteristics_purchased: GenesisPurchasedClassesConfig,
 	}
 
 	#[cfg(feature = "std")]
@@ -150,6 +157,9 @@ pub trait Config: frame_system::Config {
 		fn default() -> Self {
 			Self {
 				classes: Default::default(),
+				num_attributes: Default::default(),
+				text_attributes: Default::default(),
+				characteristics_purchased: Default::default(),
 			}
 		}
 	}
@@ -157,6 +167,87 @@ pub trait Config: frame_system::Config {
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {
+			// filling classes
+			for (class_id, organization_id, name) in &self.classes {
+				assert!(!Classes::<T>::contains_key(&class_id), "Class id already in use");
+				let details = ClassDetailsBuilder::<T>::new(organization_id.clone(), name.clone()).unwrap()
+					.build().unwrap();
+				Classes::<T>::insert(
+					class_id,
+					details,
+				);
+				ClassAccounts::<T>::insert(
+					organization_id,
+					class_id,
+					()
+				);
+				let id = *class_id;
+				// WARN: assets ids in the genesis config should be monotonically increasing.
+				// TODO: refactor to setting a next id from max id in genesis config.
+				NextClassId::<T>::put(id.checked_add(One::one()).unwrap());
+			}
+			// filling attrs for created classes
+			for (class_id, key, value, max_value) in &self.num_attributes {
+				assert!(Classes::<T>::contains_key(&class_id), "Class id doesn't exist");
+
+				let attr_val: AttributeValue = (*value, *max_value).try_into().unwrap();
+				let attr_key: AttributeKey = key.clone().try_into().unwrap();
+				let asset_id: Option<NonFungibleAssetId> = None;
+				Attributes::<T>::insert(
+					(*class_id, asset_id, attr_key),
+					attr_val,
+				);
+			}
+			for (class_id, key, value) in &self.text_attributes {
+				assert!(Classes::<T>::contains_key(&class_id), "Class id doesn't exist");
+
+				let attr_val: AttributeValue = value.clone().try_into().unwrap();
+				let attr_key: AttributeKey = key.clone().try_into().unwrap();
+				let asset_id: Option<NonFungibleAssetId> = None;
+				Attributes::<T>::insert(
+					(*class_id, asset_id, attr_key),
+					attr_val,
+				);
+			}
+			// filling charact. purchased 
+			for (class_id, fa_id, price, attributes) in &self.characteristics_purchased {
+				let details = Classes::<T>::get(class_id).unwrap();
+				
+				let mut attribute_list: AttributeList = Vec::new().try_into().unwrap();
+				for (key, num_val, num_max, text_val) in attributes {
+					let value: AttributeValue = if let Some(num_val) = num_val {
+						(*num_val, *num_max).try_into().unwrap()
+					} else if let Some(text_val) = text_val {
+						text_val.clone().try_into().unwrap()
+					} else {
+						panic!("Attribute value should contains num or text, supplied {:?}", (key, num_val, num_max, text_val))
+					};
+					let key: AttributeKey = key.clone().try_into().unwrap();
+					attribute_list.try_push(Attribute {
+						key,
+						value,
+					}).unwrap();
+				}
+
+				let offer = purchased::Offer {
+					fa: *fa_id,
+					price: *price,
+					attributes: attribute_list,
+				};
+				let ch: Characteristic = if let Some(purch) = details.purchased {
+					let mut p = purch.clone();
+					p.offers.try_push(offer).unwrap();
+					Characteristic::Purchased(Some(p))
+				} else {
+					Characteristic::Purchased(
+						Some(purchased::Purchased {
+							offers: Vec::from([offer]).try_into().unwrap(),
+						}),
+					)
+				};
+				Pallet::<T>::do_set_characteristic(*class_id, None, ch).unwrap();
+			}
+
 		}
 	}
 

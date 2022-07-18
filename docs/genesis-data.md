@@ -15,12 +15,12 @@ The document contains data that is included in the genesis block.
 ## FA
 
 ### Assets
-  1.  ass01 `1`
+  1.  ass01 `0`
       owner `Eve`
       top up - None
       local cup - None
       global cup - None
-  2.  ass02
+  2.  ass02 `1`
       owner `Eve`
       top up - 5
       local cup - 20
@@ -30,3 +30,28 @@ The document contains data that is included in the genesis block.
       ass01 - 1000
   2.  Dave
       ass02 - 20
+
+## FNA
+  1.  nfa01 `0`
+      owner `Eve`
+      attrs: [
+        * attr1 - `stone`
+        * attr2 - (5, 10)
+        * attr3 - (20, None)
+      ]
+      purchased:
+        * offer1
+          - fa - `0`
+          - price - `10`
+          - attrs [
+            * attr4 - (10, None)
+          ]
+        * offer2
+          - fa - `0`
+          - price - `50`
+          - attrs [
+            * attr4 - (50, None)
+          ]
+  1.  nfa02 `1`
+      owner `Eve`
+      attrs: []

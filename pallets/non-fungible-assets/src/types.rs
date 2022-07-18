@@ -124,4 +124,9 @@ pub type CharacteristicPurchased = Option<Purchased>;
 
 // region: Genesis Types
 pub type GenesisClassesConfigOf<T> = Vec<(NonFungibleClassId, AccountIdOf<T>, Vec<u8>)>;
+pub type GenesisNumberAttributesConfig = Vec<(NonFungibleClassId, Vec<u8>, u32, Option<u32>)>;
+pub type GenesisTextAttributesConfig = Vec<(NonFungibleClassId, Vec<u8>, Vec<u8>)>;
+/// key, num_value, num_max, text_value
+pub type GenesisCommonAttributesList = Vec<(Vec<u8>, Option<u32>, Option<u32>, Option<Vec<u8>>)>;
+pub type GenesisPurchasedClassesConfig = Vec<(NonFungibleClassId, FungibleAssetId, FungibleAssetBalance, GenesisCommonAttributesList)>;
 // endregion: Genesis Types

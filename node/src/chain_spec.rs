@@ -1,7 +1,8 @@
 use finalbiome_node_runtime::{
 	AccountId, AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig, Signature, SudoConfig,
-	SystemConfig, WASM_BINARY, OrganizationIdentityConfig, FungibleAssetsConfig, Balance,
-	pallet_fungible_assets::{AssetId as AssetId}
+	SystemConfig, WASM_BINARY, OrganizationIdentityConfig, FungibleAssetsConfig, Balance, NonFungibleAssetsConfig,
+	pallet_fungible_assets::{AssetId as AssetId},
+	pallet_non_fungible_assets::{NonFungibleClassId, GenesisPurchasedClassesConfig},
 };
 
 use sc_service::ChainType;
@@ -88,6 +89,22 @@ pub fn development_config() -> Result<ChainSpec, String> {
 					(get_account_id_from_seed::<sr25519::Public>("Charlie"), 0, 1000),
 					(get_account_id_from_seed::<sr25519::Public>("Dave"), 1, 20),
 				],
+				vec![
+					(0, get_account_id_from_seed::<sr25519::Public>("Eve"), br"nfa01".to_vec()),
+					(1, get_account_id_from_seed::<sr25519::Public>("Eve"), br"nfa02".to_vec()),
+				],
+				vec![
+					(0, br"atr1".to_vec(), 5u32, Some(10u32)),
+					(0, br"atr2".to_vec(), 20u32, None),
+				],
+				vec![
+					(0, br"atr3".to_vec(), br"stone".to_vec()),
+				],
+				vec![
+					// class_id, fa_id, price, attrs [key, num_value, num_max, text_value]
+					(0, 0, 10, vec![(br"attr4".to_vec(), Some(10), None, None)]),
+					(0, 0, 50, vec![(br"attr4".to_vec(), Some(50), None, None)]),
+				],
 				true,
 			)
 		},
@@ -157,6 +174,22 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 					(get_account_id_from_seed::<sr25519::Public>("Charlie"), 0, 1000),
 					(get_account_id_from_seed::<sr25519::Public>("Dave"), 1, 20),
 				],
+				vec![
+					(0, get_account_id_from_seed::<sr25519::Public>("Eve"), br"nfa01".to_vec()),
+					(1, get_account_id_from_seed::<sr25519::Public>("Eve"), br"nfa02".to_vec()),
+				],
+				vec![
+					(0, br"atr1".to_vec(), 5u32, Some(10u32)),
+					(0, br"atr2".to_vec(), 20u32, None),
+				],
+				vec![
+					(0, br"atr3".to_vec(), br"stone".to_vec()),
+				],
+				vec![
+					// class_id, fa_id, price, attrs [key, num_value, num_max, text_value]
+					(0, 0, 10, vec![(br"attr4".to_vec(), Some(10), None, None)]),
+					(0, 0, 50, vec![(br"attr4".to_vec(), Some(50), None, None)]),
+				],
 				true,
 			)
 		},
@@ -184,6 +217,10 @@ fn testnet_genesis(
 	organization_members: Vec<(AccountId, AccountId)>,
 	fungible_assets: Vec<(AssetId, AccountId, Vec<u8>, Option<Balance>, Option<Balance>, Option<Balance>)>,
 	fungible_assets_balances: Vec<(AccountId, AssetId, Balance)>,
+	non_fungible_classes: Vec<(NonFungibleClassId, AccountId, Vec<u8>)>,
+	non_fungible_num_attributes: Vec<(NonFungibleClassId, Vec<u8>, u32, Option<u32>)>,
+	non_fungible_text_attributes: Vec<(NonFungibleClassId, Vec<u8>, Vec<u8>)>,
+	non_fungible_characteristics_purchased: GenesisPurchasedClassesConfig,
 	_enable_println: bool,
 ) -> GenesisConfig {
 	GenesisConfig {
@@ -214,6 +251,11 @@ fn testnet_genesis(
 			assets: fungible_assets,
 			accounts: fungible_assets_balances,
 		},
-		non_fungible_assets: Default::default(),
+		non_fungible_assets: NonFungibleAssetsConfig {
+			classes: non_fungible_classes,
+			num_attributes: non_fungible_num_attributes,
+			text_attributes: non_fungible_text_attributes,
+			characteristics_purchased: non_fungible_characteristics_purchased,
+		},
 	}
 }
