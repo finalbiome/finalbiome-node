@@ -8,6 +8,7 @@ use crate::{
 };
 use frame_support::{assert_noop, assert_ok};
 use frame_system::{EventRecord, Phase};
+use pallet_support::{Locker, MechanicId};
 
 fn get_next_class_id() -> u32 {
 	NextClassId::<Test>::get()
@@ -69,6 +70,7 @@ fn asset_details_builder() {
 		let b = AssetDetailsBuilder::<Test>::new(1).unwrap();
 		let d = b.build().unwrap();
 		assert_eq!(d.owner, 1);
+		assert_eq!(d.locked, Locker::None);
 	});
 }
 
@@ -220,7 +222,7 @@ fn bettor_empty() {
 			rounds: 1,
 			draw_outcome: DrawOutcomeResult::Keep,
 		};
-		assert_eq!(b.is_valid(), false)
+		assert_eq!(characteristics::AssetCharacteristic::<Test>::is_valid(&b), false)
 	});
 }
 
@@ -240,7 +242,7 @@ fn bettor_prob_more_100() {
 			rounds: 1,
 			draw_outcome: DrawOutcomeResult::Keep,
 		};
-		assert_eq!(b.is_valid(), false)
+		assert_eq!(characteristics::AssetCharacteristic::<Test>::is_valid(&b), false)
 	});
 }
 
@@ -260,7 +262,7 @@ fn bettor_probs_less_100() {
 			rounds: 1,
 			draw_outcome: DrawOutcomeResult::Keep,
 		};
-		assert_eq!(b.is_valid(), false);
+		assert_eq!(characteristics::AssetCharacteristic::<Test>::is_valid(&b), false);
 
 		let b:Bettor = Bettor {
 			outcomes: vec![
@@ -275,7 +277,7 @@ fn bettor_probs_less_100() {
 			rounds: 1,
 			draw_outcome: DrawOutcomeResult::Keep,
 		};
-		assert_eq!(b.is_valid(), true);
+		assert_eq!(characteristics::AssetCharacteristic::<Test>::is_valid(&b), true);
 	});
 }
 
@@ -298,7 +300,7 @@ fn bettor_wins_empty() {
 			rounds: 1,
 			draw_outcome: DrawOutcomeResult::Keep,
 		};
-		assert_eq!(b.is_valid(), false);
+		assert_eq!(characteristics::AssetCharacteristic::<Test>::is_valid(&b), false);
 
 		let b:Bettor = Bettor {
 			outcomes: vec![
@@ -317,7 +319,7 @@ fn bettor_wins_empty() {
 			rounds: 1,
 			draw_outcome: DrawOutcomeResult::Keep,
 		};
-		assert_eq!(b.is_valid(), true);
+		assert_eq!(characteristics::AssetCharacteristic::<Test>::is_valid(&b), true);
 	});
 }
 
@@ -609,7 +611,7 @@ fn purchased_empty() {
 		let b:Purchased = Purchased {
 			offers: vec![].try_into().unwrap(),
 		};
-		assert_eq!(b.is_valid(), false)
+		assert_eq!(characteristics::AssetCharacteristic::<Test>::is_valid(&b), false)
 	});
 }
 
@@ -635,7 +637,7 @@ fn purchased_has_0_price() {
 				},
 			].try_into().unwrap(),
 		};
-		assert_eq!(b.is_valid(), false)
+		assert_eq!(characteristics::AssetCharacteristic::<Test>::is_valid(&b), false)
 	});
 }
 
@@ -661,7 +663,7 @@ fn purchased_has_0_price_2() {
 				},
 			].try_into().unwrap(),
 		};
-		assert_eq!(b.is_valid(), true)
+		assert_eq!(characteristics::AssetCharacteristic::<Test>::is_valid(&b), true)
 	});
 }
 
@@ -680,5 +682,118 @@ fn assign_attributes_works() {
 		assert_ok!(NonFungibleAssets::assign_attributes(&10, &20, attributes));
 		assert_eq!(Attributes::<Test>::get((&10, Some(&20), a1.key)), Some(a1.value));
 		assert_eq!(Attributes::<Test>::get((&10, Some(&20), a2.key)), Some(a2.value));
+	});
+}
+
+#[test]
+fn set_lock_try_unlock() {
+	new_test_ext().execute_with(|| {
+		// create test class
+		let nfa_id = get_next_class_id();
+		let name = br"nfa name".to_vec();
+		let id = get_next_asset_id();
+		let org = 2;
+		let acc = 1;
+		assert_ok!(NonFungibleAssets::create(
+			Origin::signed(1),
+			org,
+			name.clone()
+		));
+		// create test asset
+		assert_eq!(NonFungibleAssets::do_mint(nfa_id, acc).unwrap(), id);
+
+		let origin = Locker::None;
+		let minted = Assets::<Test>::get(&nfa_id, &id).unwrap();
+		assert_eq!(minted.locked, origin);
+		assert_noop!(NonFungibleAssets::set_lock(&acc, origin, &nfa_id, &id), Error::<Test>::Locked);
+	});
+}
+
+#[test]
+fn set_lock_unknown_asset() {
+	new_test_ext().execute_with(|| {
+		let origin = Locker::Mechanic(MechanicId {account_id: 1, nonce: 2});
+		assert_noop!(NonFungibleAssets::set_lock(&1, origin, &234, &123), Error::<Test>::UnknownAsset);
+	});
+}
+
+#[test]
+fn set_lock_not_owner() {
+	new_test_ext().execute_with(|| {
+		// create test class
+		let nfa_id = get_next_class_id();
+		let name = br"nfa name".to_vec();
+		let id = get_next_asset_id();
+		let org = 2;
+		let acc = 1;
+		assert_ok!(NonFungibleAssets::create(
+			Origin::signed(1),
+			org,
+			name.clone()
+		));
+		// create test asset
+		assert_eq!(NonFungibleAssets::do_mint(nfa_id, acc).unwrap(), id);
+
+		let origin = Locker::Mechanic(MechanicId {account_id: 1, nonce: 2});
+		assert_noop!(NonFungibleAssets::set_lock(&5, origin, &nfa_id, &id), Error::<Test>::NoPermission);
+	});
+}
+
+
+#[test]
+fn set_lock_for_no_locked() {
+	new_test_ext().execute_with(|| {
+		// create test class
+		let nfa_id = get_next_class_id();
+		let name = br"nfa name".to_vec();
+		let id = get_next_asset_id();
+		let org = 2;
+		let acc = 1;
+		assert_ok!(NonFungibleAssets::create(
+			Origin::signed(1),
+			org,
+			name.clone()
+		));
+		// create test asset
+		assert_eq!(NonFungibleAssets::do_mint(nfa_id, acc).unwrap(), id);
+
+		let origin = Locker::Mechanic(MechanicId {account_id: 1, nonce: 2});
+		assert_ok!(NonFungibleAssets::set_lock(&acc, origin.clone(), &nfa_id, &id), LockResult::Locked);
+		
+		let minted = Assets::<Test>::get(&nfa_id, &id).unwrap();
+		assert_eq!(minted.locked, origin);
+
+		let origin = Locker::Mechanic(MechanicId {account_id: 1, nonce: 2});
+		assert_ok!(NonFungibleAssets::set_lock(&acc, origin.clone(), &nfa_id, &id), LockResult::Already);
+
+	});
+}
+
+#[test]
+fn set_lock_for_locked() {
+	new_test_ext().execute_with(|| {
+		// create test class
+		let nfa_id = get_next_class_id();
+		let name = br"nfa name".to_vec();
+		let id = get_next_asset_id();
+		let org = 2;
+		let acc = 1;
+		assert_ok!(NonFungibleAssets::create(
+			Origin::signed(1),
+			org,
+			name.clone()
+		));
+		// create test asset
+		assert_eq!(NonFungibleAssets::do_mint(nfa_id, acc).unwrap(), id);
+
+		let origin = Locker::Mechanic(MechanicId {account_id: 1, nonce: 2});
+		assert_ok!(NonFungibleAssets::set_lock(&acc, origin.clone(), &nfa_id, &id), LockResult::Locked);
+		
+		let minted = Assets::<Test>::get(&nfa_id, &id).unwrap();
+		assert_eq!(minted.locked, origin);
+
+		let origin = Locker::Mechanic(MechanicId {account_id: 2, nonce: 4});
+		assert_noop!(NonFungibleAssets::set_lock(&acc, origin, &nfa_id, &id), Error::<Test>::Locked);
+
 	});
 }

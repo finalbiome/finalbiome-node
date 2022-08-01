@@ -1,5 +1,7 @@
 //! Functions for the Non-Fungible-Assets pallet.
 
+use pallet_support::Locker;
+
 use super::*;
 
 impl<T: Config> Pallet<T> {
@@ -164,4 +166,33 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
+
+	/// Set an asset lock
+	pub(crate) fn set_lock(
+		who: &AccountIdOf<T>,
+    origin: Locker<AccountIdOf<T>, IndexOf<T>>,
+    class_id: &NonFungibleClassId,
+    asset_id: &NonFungibleAssetId,
+	) -> DispatchResultAs<LockResult> {
+		// unlock not allowed
+		ensure!(origin != Locker::None, Error::<T>::Locked);
+
+		let mut details = Assets::<T>::get(class_id, asset_id).ok_or(Error::<T>::UnknownAsset)?;
+		// ownership check
+		ensure!(&details.owner == who, Error::<T>::NoPermission);
+
+		match details.locked {
+			Locker::None => {
+				details.locked = origin;
+				Assets::<T>::insert(class_id, asset_id, details);
+				Ok(LockResult::Locked)
+			},
+			_ if details.locked == origin => {
+				Ok(LockResult::Already)
+			},
+			_ => {
+				Err(Error::<T>::Locked.into())
+			},
+		}
+	}
 }

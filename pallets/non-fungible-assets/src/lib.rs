@@ -11,11 +11,13 @@ pub use types::*;
 pub use pallet_support;
 pub use pallet_support::{ 
 	AccountIdOf,
+	IndexOf,
 	DispatchResultAs,
 	AttributeValue,
 	NumberAttribute,
 	Attribute,
 	AttributeKey, AttributeList,
+	LockResult,
 };
 
 pub use pallet::*;
@@ -49,11 +51,13 @@ use frame_system::pallet_prelude::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use super::*;
+	use pallet_support::Index;
+
+use super::*;
 
 /// Configure the pallet by specifying the parameters and types on which it depends.
 #[pallet::config]
-pub trait Config: frame_system::Config {
+pub trait Config: frame_system::Config<Index = Index> {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		/// The maximum length of an class name stored on-chain.
@@ -112,7 +116,7 @@ pub trait Config: frame_system::Config {
 		NonFungibleClassId,
 		Blake2_128Concat,
 		NonFungibleAssetId,
-		AssetDetails<T::AccountId>,
+		AssetDetails<T::AccountId, T::Index>,
 		OptionQuery,
 	>;
 
@@ -291,8 +295,10 @@ pub trait Config: frame_system::Config {
 		ClassNameTooLong,
 		/// The signing account has no permission to do the operation.
 		NoPermission,
-		/// The given asset ID is unknown.
+		/// The given class Id is unknown.
 		UnknownClass,
+		/// The given asset Id is unknown.
+		UnknownAsset,
 		/// The bettor characteristic is wrong.
 		WrongBettor,
 		/// The purchased characteristic is wrong.
@@ -311,6 +317,8 @@ pub trait Config: frame_system::Config {
 		UnsupportedCharacteristic,
 		/// Characteristic is invalid
 		WrongCharacteristic,
+		/// The asset instance is locked
+		Locked,
 	}
 
 	// Dispatchable functions allows users to interact with the pallet and invoke state changes.

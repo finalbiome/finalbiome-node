@@ -68,11 +68,19 @@ pub type FungibleAssetBalance = u128;
 pub type NonFungibleClassId = u32;
 /// The units in which we record balances of the fungible assets
 pub type NonFungibleAssetId = u32;
+/// The Account index (aka nonce) type. This stores the number of previous transactions
+/// associated with a sender account.
+pub type Index = u32;
 
 pub type DispatchResultAs<T> = sp_std::result::Result<T, sp_runtime::DispatchError>;
 /// Type alias for `frame_system`'s account id. \
 /// The user account identifier type for the runtime.
 pub type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
+/// Type alias for `frame_system`'s index. \
+/// Account index (aka nonce) type. This stores the number of previous transactions associated with a sender account.
+pub type IndexOf<T> = <T as frame_system::Config>::Index;
+/// Type alias for Mechanic Id with config types
+pub type MechanicIdOf<T> = MechanicId<AccountIdOf<T>, IndexOf<T>>;
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 /// Represent a single attribute of NFA as a key and value
@@ -173,3 +181,41 @@ impl Attribute {
 pub type AttributeKey = BoundedVec<u8, AttributeKeyStringLimit>;
 /// Represent a list of the attributes
 pub type AttributeList = BoundedVec<Attribute, AttributeListLengthLimit>;
+
+/// Represent the origin of lock
+#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
+pub enum Locker<AccountId, Index> {
+  /// Not locked
+  None,
+  /// Locked by mechanic
+  Mechanic(MechanicId<AccountId, Index>),
+}
+
+#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
+/// Structure to represent of the Mechanic Id
+pub struct  MechanicId<AccountId, Index>
+{
+  pub account_id: AccountId,
+  pub nonce: Index,
+}
+impl<AccountId, Index> MechanicId<AccountId, Index>
+{
+  /// Creates mechanic id from an account id
+  pub fn from_account_id<T: frame_system::Config> (account_id: &T::AccountId) -> MechanicId<T::AccountId, T::Index>
+  {
+    let nonce = <frame_system::Pallet<T>>::account_nonce(account_id);
+    MechanicId {
+      account_id: account_id.clone(),
+      nonce,
+    }
+  }
+}
+
+#[derive(RuntimeDebug, PartialEq)]
+/// Result of locking assets
+pub enum LockResult {
+  /// The asset has been blocked
+  Locked,
+  /// The asset already has the required status
+  Already,
+}

@@ -14,7 +14,7 @@ fn mechanic_id_from_account() {
 		let acc = 222;
 		let n = System::account_nonce(acc);
 		System::inc_account_nonce(acc);
-		let id = MechanicId::<Test>::from_account_id(&acc);
+		let id = MechanicId::<<Test as frame_system::Config>::AccountId, <Test as frame_system::Config>::Index>::from_account_id::<Test>(&acc);
 		assert_eq!(acc, id.account_id);
 		assert_eq!(n+1, id.nonce);
 	});

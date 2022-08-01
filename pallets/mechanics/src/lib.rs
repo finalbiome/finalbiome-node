@@ -16,7 +16,8 @@ mod functions;
 
 pub use types::*;
 pub use pallet_support::{
-	AccountIdOf,
+	AccountIdOf, MechanicId, Index, MechanicIdOf,
+	LockResult,
 };
 
 use frame_support::pallet_prelude::*;
@@ -24,7 +25,6 @@ use frame_system::pallet_prelude::*;
 
 use sp_runtime::{
 	traits:: {
-		AtLeast32BitUnsigned,
 		Saturating,
 	},
 };
@@ -35,23 +35,13 @@ pub mod pallet {
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
-	pub trait Config: frame_system::Config {
+	pub trait Config: frame_system::Config<Index = Index> {
 		/// The runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		/// Connector to fungible assets instances.
 		type FungibleAssets: pallet_support::traits::FungibleAssets<Self::AccountId>;
 		/// Connector to non-fungible assets instances.
-		type NonFungibleAssets: pallet_support::traits::NonFungibleAssets<Self::AccountId>;
-		/// Account index (aka nonce) type. This stores the number of previous transactions
-		/// associated with a sender account.
-		type NonceIndex: From<Self::Index>
-			+ Member
-			+ Parameter
-			+ AtLeast32BitUnsigned
-			+ Default
-			+ Copy
-			+ MaybeSerializeDeserialize
-			+ MaxEncodedLen;
+		type NonFungibleAssets: pallet_support::traits::NonFungibleAssets<Self::AccountId, Self::Index>;
 		/// The origin which may execute mechanics.
 		/// 
 		/// Mechanics can only be executed by a regular user, neither the organization nor any of its members can execute mechanics
@@ -75,7 +65,7 @@ pub mod pallet {
 		Blake2_128Concat,
 		T::AccountId,
 		Blake2_128Concat,
-		T::NonceIndex,
+		T::Index,
 		(),
 		OptionQuery,
 	>;
@@ -87,7 +77,7 @@ pub mod pallet {
 		(
 			NMapKey<Blake2_128Concat, T::BlockNumber>, // when time out will happen
 			NMapKey<Blake2_128Concat, T::AccountId>,
-			NMapKey<Blake2_128Concat, T::NonceIndex>,
+			NMapKey<Blake2_128Concat, T::Index>,
 		),
 		(),
 		OptionQuery,
@@ -100,7 +90,7 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// The mechanics were done.
-		Finished { id: T::NonceIndex, owner: T::AccountId },
+		Finished { id: T::Index, owner: T::AccountId },
 	}
 
 	// Errors inform users that something went wrong.

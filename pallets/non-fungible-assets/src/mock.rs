@@ -31,7 +31,7 @@ impl system::Config for Test {
 	type DbWeight = ();
 	type Origin = Origin;
 	type Call = Call;
-	type Index = u64;
+	type Index = u32;
 	type BlockNumber = u64;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
@@ -69,6 +69,13 @@ impl pallet_support::traits::FungibleAssets<u64> for FAPallet {
   ) -> pallet_support::DispatchResultAs<pallet_support::FungibleAssetBalance> {
         todo!()
     }
+	
+		fn inc_references(_asset: &pallet_support::FungibleAssetId) -> sp_runtime::DispatchResult {
+			Ok(())
+		}
+		fn dec_references(_asset: &pallet_support::FungibleAssetId) -> sp_runtime::DispatchResult {
+			Ok(())
+		}
 }
 
 impl pallet_non_fungible_assets::Config for Test {

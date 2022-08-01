@@ -4,12 +4,12 @@ use crate::{
   FungibleAssetId,
   FungibleAssetBalance,
   DispatchResultAs,
-  AttributeList,
+  AttributeList, Locker, LockResult,
 };
 use sp_runtime::DispatchResult;
 
 /// Trait for providing an interface to a non-fungible assets instances.
-pub trait NonFungibleAssets<AccountId> {
+pub trait NonFungibleAssets<AccountId, Index> {
 
   fn mint_into(
     class_id: &NonFungibleClassId,
@@ -29,4 +29,12 @@ pub trait NonFungibleAssets<AccountId> {
     asset_id: &NonFungibleAssetId,
     attributes: AttributeList,
   ) -> DispatchResult;
+
+  /// Attempt to block an asset from the specified origin
+  fn try_lock(
+    who: &AccountId,
+    origin: Locker<AccountId, Index>,
+    class_id: &NonFungibleClassId,
+    asset_id: &NonFungibleAssetId,
+  ) -> DispatchResultAs<LockResult>;
 }

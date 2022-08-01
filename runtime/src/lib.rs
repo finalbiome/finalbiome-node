@@ -65,7 +65,7 @@ pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::Account
 pub type Balance = u128;
 
 /// Index of a transaction in the chain.
-pub type Index = u32;
+pub type Index = pallet_support::Index;
 
 /// A hash of some data used by the chain.
 pub type Hash = sp_core::H256;
@@ -302,7 +302,6 @@ impl pallet_mechanics::Config for Runtime {
 	type Event = Event;
 	type FungibleAssets = FungibleAssets;
 	type NonFungibleAssets = NonFungibleAssets;
-	type NonceIndex = Index;
 	type AssetsListLimit = ConstU32<64>;
 	type MechanicsLifeTime = ConstU32<60>;
 	type ExecuteOrigin = pallet_organization_identity::EnsureUser<Runtime>;

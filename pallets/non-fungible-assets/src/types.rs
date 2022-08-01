@@ -2,6 +2,7 @@ use super::*;
 use characteristics::*;
 use characteristics::bettor::*;
 use characteristics::purchased::*;
+use pallet_support::Locker;
 
 /// Type of the non-fungible asset instance ids
 pub type NonFungibleAssetId = pallet_support::NonFungibleAssetId;
@@ -28,9 +29,11 @@ pub struct ClassDetails<AccountId, BoundedString> {
 }
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
-pub struct AssetDetails<AccountId> {
+pub struct AssetDetails<AccountId, Index> {
   /// The owner of this asset.
-  pub(super) owner: AccountId,
+  pub owner: AccountId,
+  // Who locked this instance
+  pub locked: Locker<AccountId, Index>,
 }
 
 
@@ -105,9 +108,10 @@ impl<T: pallet::Config> AssetDetailsBuilder<T> {
       owner
     })
   }
-  pub fn build(self) -> DispatchResultAs<AssetDetails<T::AccountId>> {
+  pub fn build(self) -> DispatchResultAs<AssetDetails<T::AccountId, T::Index>> {
     Ok(AssetDetails {
       owner: self.owner,
+      locked: Locker::None,
     })
   }
 }

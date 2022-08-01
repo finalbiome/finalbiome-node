@@ -77,11 +77,19 @@ fn burn_from(
 		}
 		todo!()
 	}
+
+	fn inc_references(_asset: &FungibleAssetId) -> sp_runtime::DispatchResult {
+		Ok(())
+	}
+
+	fn dec_references(_asset: &FungibleAssetId) -> sp_runtime::DispatchResult {
+		Ok(())
+	}
 }
 
 /// Mock of non-fungible-assets-pallet impl
 pub struct NFAPallet {}
-impl pallet_support::traits::NonFungibleAssets<u64> for NFAPallet {
+impl pallet_support::traits::NonFungibleAssets<u64, u32> for NFAPallet {
 
 fn mint_into(
     class_id: &u32,
@@ -125,13 +133,20 @@ fn set_attributes(
 		}
 		todo!()
 	}
+	fn try_lock(
+			_who: &u64,
+			_origin: Locker<u64, u32>,
+			_class_id: &NonFungibleClassId,
+			_asset_id: &NonFungibleAssetId,
+		) -> DispatchResultAs<LockResult> {
+			todo!()
+	}
 }
 
 impl pallet_mechanics::Config for Test {
 	type Event = Event;
 	type FungibleAssets = FAPallet;
 	type NonFungibleAssets = NFAPallet;
-	type NonceIndex = u32;
 	type AssetsListLimit = ConstU32<16>;
 	type MechanicsLifeTime = ConstU64<20>;
 	type ExecuteOrigin = frame_system::EnsureSigned<u64>;
