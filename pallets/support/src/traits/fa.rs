@@ -33,4 +33,14 @@ pub trait FungibleAssets<AccountId> {
   ///
 	/// This *MUST* only be done once for every time you called `inc_references` on `who`.
   fn dec_references(asset: &FungibleAssetId) -> DispatchResult;
+
+  /// Attempt to increase the `asset` balance of `who` by `amount`.
+	///
+	/// If not possible then don't do anything. Possible reasons for failure include:
+	/// - Account cannot be created (e.g. because there is no provider reference and/or the asset
+	///   isn't considered worth anything).
+	///
+	/// Since this is an operation which should be possible to take alone, if successful it will
+	/// increase the overall supply of the underlying token.
+	fn mint_into(asset: FungibleAssetId, who: &AccountId, amount: FungibleAssetBalance) -> DispatchResult;
 }

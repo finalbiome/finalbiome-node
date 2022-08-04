@@ -2,7 +2,7 @@ use super::*;
 
 impl<T: Config> pallet_support::traits::FungibleAssets<AccountIdOf<T>> for Pallet<T> {
 
-fn can_withdraw(
+  fn can_withdraw(
 		asset: AssetId,
 		who: &AccountIdOf<T>,
 		amount: AssetBalance,
@@ -10,7 +10,15 @@ fn can_withdraw(
     Pallet::<T>::can_decrease(asset, who, amount)
   }
 
-fn burn_from(
+  fn mint_into(
+		asset: AssetId,
+		who: &AccountIdOf<T>,
+		amount: AssetBalance,
+	) -> DispatchResult {
+		Self::do_mint(asset, who, amount)
+	}
+
+  fn burn_from(
     asset: AssetId,
     who: &<T as SystemConfig>::AccountId,
     amount: AssetBalance
