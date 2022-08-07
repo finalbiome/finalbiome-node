@@ -54,33 +54,35 @@ impl system::Config for Test {
 /// Mock of fungible-assets-pallet impl
 pub struct FAPallet {}
 impl pallet_support::traits::FungibleAssets<u64> for FAPallet {
-    fn can_withdraw(
+	fn can_withdraw(
 		_asset: pallet_support::FungibleAssetId,
 		_who: &u64,
 		_amount: pallet_support::FungibleAssetBalance,
 	) -> frame_support::traits::tokens::WithdrawConsequence<pallet_support::FungibleAssetBalance> {
-        todo!()
-    }
+		todo!()
+	}
 
-    fn burn_from(
+	fn burn_from(
     _asset: pallet_support::FungibleAssetId, 
     _who: &u64, 
     _amount: pallet_support::FungibleAssetBalance
   ) -> pallet_support::DispatchResultAs<pallet_support::FungibleAssetBalance> {
-        todo!()
-    }
+		todo!()
+	}
 	
-		fn inc_references(_asset: &pallet_support::FungibleAssetId) -> sp_runtime::DispatchResult {
-			Ok(())
-		}
-		fn dec_references(_asset: &pallet_support::FungibleAssetId) -> sp_runtime::DispatchResult {
-			Ok(())
-		}
+	fn inc_references(_asset: &pallet_support::FungibleAssetId) -> sp_runtime::DispatchResult {
+		Ok(())
+	}
+	fn dec_references(_asset: &pallet_support::FungibleAssetId) -> sp_runtime::DispatchResult {
+		Ok(())
+	}
+	fn mint_into(_asset: pallet_support::FungibleAssetId, _who: &u64, _amount: pallet_support::FungibleAssetBalance) -> sp_runtime::DispatchResult {
+		todo!()
+	}
 }
 
 impl pallet_non_fungible_assets::Config for Test {
 	type Event = Event;
-	type ClassNameLimit = ConstU32<8>;
 	type CreateOrigin = AsEnsureOriginWithArg<frame_system::EnsureSigned<u64>>;
 	type FungibleAssets = FAPallet;
 }

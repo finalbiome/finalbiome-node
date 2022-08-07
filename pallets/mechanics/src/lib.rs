@@ -17,16 +17,22 @@ mod functions;
 pub use types::*;
 pub use pallet_support::{
 	AccountIdOf, MechanicId, Index, MechanicIdOf,
-	LockResult,
+	LockResult, ClassDetailsOf,
 };
 
 use frame_support::pallet_prelude::*;
 use frame_system::pallet_prelude::*;
 
 use sp_runtime::{
-	traits:: {
+	traits::{
 		Saturating,
 	},
+};
+
+use frame_support:: {
+	traits::{
+		Randomness,
+	}
 };
 
 #[frame_support::pallet]
@@ -42,6 +48,8 @@ pub mod pallet {
 		type FungibleAssets: pallet_support::traits::FungibleAssets<Self::AccountId>;
 		/// Connector to non-fungible assets instances.
 		type NonFungibleAssets: pallet_support::traits::NonFungibleAssets<Self::AccountId, Self::Index>;
+		/// Something that provides randomness in the runtime.
+		type Randomness: Randomness<Self::Hash, Self::BlockNumber>;
 		/// The origin which may execute mechanics.
 		/// 
 		/// Mechanics can only be executed by a regular user, neither the organization nor any of its members can execute mechanics
@@ -66,7 +74,7 @@ pub mod pallet {
 		T::AccountId,
 		Blake2_128Concat,
 		T::Index,
-		(),
+		MechanicDetailsOf<T>,
 		OptionQuery,
 	>;
 
@@ -96,10 +104,14 @@ pub mod pallet {
 	// Errors inform users that something went wrong.
 	#[pallet::error]
 	pub enum Error<T> {
-		/// Error names should be descriptive.
-		NoneValue,
-		/// Errors should have helpful documentation associated with them.
-		StorageOverflow,
+		/// Mechanics are not available for this asset or this origin
+		MechanicsNotAvailable,
+		/// Internal error
+		Internal,
+		/// The number of assets exceeds the allowable
+		AssetsExceedsAllowable,
+		/// Asset is incompatible with mechanics
+		IncompatibleAsset,
 	}
 
 	// Dispatchable functions allows users to interact with the pallet and invoke state changes.
@@ -109,7 +121,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 
 		/// Execute mechanic `Buy NFA`
-		#[pallet::weight(T::DbWeight::get().reads_writes(1,1))]
+		#[pallet::weight(T::DbWeight::get().reads_writes(1, 1))]
 		pub fn exec_buy_nfa(origin: OriginFor<T>, class_id: NonFungibleClassId, offer_id: u32) -> DispatchResult {
 			// Only a regular user can execute mechanic
 			let who = T::ExecuteOrigin::ensure_origin(origin)?;
@@ -117,6 +129,15 @@ pub mod pallet {
 			let mechanic_id = Self::get_mechanic_id(&who);
 			Self::do_buy_nfa(&who, &class_id, &offer_id)?;
 			Self::deposit_event(Event::Finished { id: mechanic_id.nonce, owner: mechanic_id.account_id });
+			Ok(())
+		}
+
+		/// Execute mechanic `Bet`
+		#[pallet::weight(T::DbWeight::get().reads_writes(5, 5))]
+		pub fn exec_bet(origin: OriginFor<T>, class_id: NonFungibleClassId, asset_id: NonFungibleAssetId) -> DispatchResult {
+			// Only a regular user can execute mechanic
+			let who = T::ExecuteOrigin::ensure_origin(origin)?;
+			Self::do_bet(&who, &class_id, &asset_id)?;
 			Ok(())
 		}
 	}

@@ -293,7 +293,6 @@ impl pallet_fungible_assets::Config for Runtime {
 
 impl pallet_non_fungible_assets::Config for Runtime {
 	type Event = Event;
-	type ClassNameLimit = ConstU32<32>;
 	type CreateOrigin = pallet_organization_identity::EnsureMemberOfOrganization<Runtime>;
 	type FungibleAssets = FungibleAssets;
 }
@@ -302,6 +301,7 @@ impl pallet_mechanics::Config for Runtime {
 	type Event = Event;
 	type FungibleAssets = FungibleAssets;
 	type NonFungibleAssets = NonFungibleAssets;
+	type Randomness = RandomnessCollectiveFlip;
 	type AssetsListLimit = ConstU32<64>;
 	type MechanicsLifeTime = ConstU32<60>;
 	type ExecuteOrigin = pallet_organization_identity::EnsureUser<Runtime>;

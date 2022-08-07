@@ -300,4 +300,18 @@ impl<T: Config> Pallet<T> {
     })?;
     Ok(())
   }
+
+
+	/// Increases the asset `id` balance of `beneficiary` by `amount`.
+	///
+	/// This alters the registered supply of the asset and emits an event.
+	///
+	/// Will return an error or will increase the amount by exactly `amount`.
+	pub(super) fn do_mint(
+		id: AssetId,
+		beneficiary: &T::AccountId,
+		amount: AssetBalance,
+	) -> DispatchResult {
+		Self::increase_balance(id, beneficiary, amount)
+	}
 }

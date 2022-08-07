@@ -2,7 +2,7 @@
 
 use frame_support::{assert_ok};
 
-use crate::{AttributeValue, NumberAttribute};
+use crate::{AttributeValue, NumberAttribute, bettor::*, purchased::*, characteristics::*, misc::{cumsum_array_owned, cumsum_owned}, BETTOR_MAX_NUMBER_OF_ROUNDS, };
 
 #[test]
 fn template_test() {
@@ -125,4 +125,348 @@ fn attribute_validate_no_max_val_err() {
     number_max: Some(1),
   });
   val.validate().unwrap();
+}
+
+#[test]
+fn bettor_empty() {
+  let b:Bettor = Bettor {
+    outcomes: vec![].try_into().expect("Outcomes vec too big"),
+    winnings: vec![].try_into().expect("Winnings vec too big"),
+    rounds: 1,
+    draw_outcome: DrawOutcomeResult::Keep,
+  };
+  assert_eq!(AssetCharacteristic::is_valid(&b), false)
+}
+
+#[test]
+fn bettor_probs_eq_0() {
+  let b:Bettor = Bettor {
+    outcomes: vec![
+      BettorOutcome {
+        name: br"out0".to_vec().try_into().expect("too long"),
+        probability: 0,
+        result: OutcomeResult::Win,
+      },
+      BettorOutcome {
+        name: br"out1".to_vec().try_into().expect("too long"),
+        probability: 5,
+        result: OutcomeResult::Lose,
+      },
+      BettorOutcome {
+        name: br"out2".to_vec().try_into().expect("too long"),
+        probability: 95,
+        result: OutcomeResult::Draw,
+      },
+    ].try_into().expect("Outcomes vec too big"),
+    winnings: vec![
+      BettorWinning::Fa(1, 33),
+    ].try_into().expect("Winnings vec too big"),
+    rounds: 1,
+    draw_outcome: DrawOutcomeResult::Keep,
+  };
+  assert_eq!(AssetCharacteristic::is_valid(&b), false);
+
+  let b:Bettor = Bettor {
+    outcomes: vec![
+      BettorOutcome {
+        name: br"out0".to_vec().try_into().expect("too long"),
+        probability: 5,
+        result: OutcomeResult::Win,
+      },
+      BettorOutcome {
+        name: br"out0".to_vec().try_into().expect("too long"),
+        probability: 95,
+        result: OutcomeResult::Lose,
+      },
+    ].try_into().expect("Outcomes vec too big"),
+    winnings: vec![
+      BettorWinning::Fa(1, 33),
+    ].try_into().expect("Winnings vec too big"),
+    rounds: 1,
+    draw_outcome: DrawOutcomeResult::Keep,
+  };
+  assert_eq!(AssetCharacteristic::is_valid(&b), true);
+}
+
+#[test]
+fn bettor_outcomes_less_2() {
+  let b:Bettor = Bettor {
+    outcomes: vec![
+      BettorOutcome {
+        name: br"out1".to_vec().try_into().expect("too long"),
+        probability: 100,
+        result: OutcomeResult::Win,
+      },
+    ].try_into().expect("Outcomes vec too big"),
+    winnings: vec![
+      BettorWinning::Fa(1, 33),
+    ].try_into().expect("Winnings vec too big"),
+    rounds: 1,
+    draw_outcome: DrawOutcomeResult::Keep,
+  };
+  assert_eq!(AssetCharacteristic::is_valid(&b), false);
+
+  let b:Bettor = Bettor {
+    outcomes: vec![
+      BettorOutcome {
+        name: br"out0".to_vec().try_into().expect("too long"),
+        probability: 5,
+        result: OutcomeResult::Win,
+      },
+      BettorOutcome {
+        name: br"out0".to_vec().try_into().expect("too long"),
+        probability: 95,
+        result: OutcomeResult::Win,
+      },
+    ].try_into().expect("Outcomes vec too big"),
+    winnings: vec![
+      BettorWinning::Fa(1, 33),
+    ].try_into().expect("Winnings vec too big"),
+    rounds: 1,
+    draw_outcome: DrawOutcomeResult::Keep,
+  };
+  assert_eq!(AssetCharacteristic::is_valid(&b), false);
+
+  let b:Bettor = Bettor {
+    outcomes: vec![
+      BettorOutcome {
+        name: br"out0".to_vec().try_into().expect("too long"),
+        probability: 5,
+        result: OutcomeResult::Lose,
+      },
+      BettorOutcome {
+        name: br"out0".to_vec().try_into().expect("too long"),
+        probability: 95,
+        result: OutcomeResult::Lose,
+      },
+    ].try_into().expect("Outcomes vec too big"),
+    winnings: vec![
+      BettorWinning::Fa(1, 33),
+    ].try_into().expect("Winnings vec too big"),
+    rounds: 1,
+    draw_outcome: DrawOutcomeResult::Keep,
+  };
+  assert_eq!(AssetCharacteristic::is_valid(&b), false);
+  let b:Bettor = Bettor {
+    outcomes: vec![
+      BettorOutcome {
+        name: br"out0".to_vec().try_into().expect("too long"),
+        probability: 5,
+        result: OutcomeResult::Win,
+      },
+      BettorOutcome {
+        name: br"out0".to_vec().try_into().expect("too long"),
+        probability: 95,
+        result: OutcomeResult::Lose,
+      },
+    ].try_into().expect("Outcomes vec too big"),
+    winnings: vec![
+      BettorWinning::Fa(1, 33),
+    ].try_into().expect("Winnings vec too big"),
+    rounds: 1,
+    draw_outcome: DrawOutcomeResult::Keep,
+  };
+  assert_eq!(AssetCharacteristic::is_valid(&b), true);
+}
+
+#[test]
+fn bettor_rounds_less_1() {
+  let b:Bettor = Bettor {
+    outcomes: vec![
+      BettorOutcome {
+        name: br"out0".to_vec().try_into().expect("too long"),
+        probability: 5,
+        result: OutcomeResult::Win,
+      },
+      BettorOutcome {
+        name: br"out0".to_vec().try_into().expect("too long"),
+        probability: 95,
+        result: OutcomeResult::Lose,
+      },
+    ].try_into().expect("Outcomes vec too big"),
+    winnings: vec![
+      BettorWinning::Fa(1, 33),
+    ].try_into().expect("Winnings vec too big"),
+    rounds: 0,
+    draw_outcome: DrawOutcomeResult::Keep,
+  };
+  assert_eq!(AssetCharacteristic::is_valid(&b), false);
+
+  let b:Bettor = Bettor {
+    outcomes: vec![
+      BettorOutcome {
+        name: br"out0".to_vec().try_into().expect("too long"),
+        probability: 5,
+        result: OutcomeResult::Win,
+      },
+      BettorOutcome {
+        name: br"out0".to_vec().try_into().expect("too long"),
+        probability: 95,
+        result: OutcomeResult::Lose,
+      },
+    ].try_into().expect("Outcomes vec too big"),
+    winnings: vec![
+      BettorWinning::Fa(1, 33),
+    ].try_into().expect("Winnings vec too big"),
+    rounds: 1,
+    draw_outcome: DrawOutcomeResult::Keep,
+  };
+  assert_eq!(AssetCharacteristic::is_valid(&b), true);
+}
+
+#[test]
+fn bettor_rounds_more_than_limit() {
+  let b:Bettor = Bettor {
+    outcomes: vec![
+      BettorOutcome {
+        name: br"out0".to_vec().try_into().expect("too long"),
+        probability: 5,
+        result: OutcomeResult::Win,
+      },
+      BettorOutcome {
+        name: br"out0".to_vec().try_into().expect("too long"),
+        probability: 95,
+        result: OutcomeResult::Lose,
+      },
+    ].try_into().expect("Outcomes vec too big"),
+    winnings: vec![
+      BettorWinning::Fa(1, 33),
+    ].try_into().expect("Winnings vec too big"),
+    rounds: BETTOR_MAX_NUMBER_OF_ROUNDS + 1,
+    draw_outcome: DrawOutcomeResult::Keep,
+  };
+  assert_eq!(AssetCharacteristic::is_valid(&b), false);
+
+  let b:Bettor = Bettor {
+    outcomes: vec![
+      BettorOutcome {
+        name: br"out0".to_vec().try_into().expect("too long"),
+        probability: 5,
+        result: OutcomeResult::Win,
+      },
+      BettorOutcome {
+        name: br"out0".to_vec().try_into().expect("too long"),
+        probability: 95,
+        result: OutcomeResult::Lose,
+      },
+    ].try_into().expect("Outcomes vec too big"),
+    winnings: vec![
+      BettorWinning::Fa(1, 33),
+    ].try_into().expect("Winnings vec too big"),
+    rounds: BETTOR_MAX_NUMBER_OF_ROUNDS,
+    draw_outcome: DrawOutcomeResult::Keep,
+  };
+  assert_eq!(AssetCharacteristic::is_valid(&b), true);
+}
+
+#[test]
+fn bettor_wins_empty() {
+  let b:Bettor = Bettor {
+    outcomes: vec![
+      BettorOutcome {
+        name: br"out0".to_vec().try_into().expect("too long"),
+        probability: 5,
+        result: OutcomeResult::Win,
+      },
+      BettorOutcome {
+        name: br"out1".to_vec().try_into().expect("too long"),
+        probability: 95,
+        result: OutcomeResult::Lose,
+      },
+    ].try_into().expect("Outcomes vec too big"),
+    winnings: vec![
+    ].try_into().expect("Winnings vec too big"),
+    rounds: 1,
+    draw_outcome: DrawOutcomeResult::Keep,
+  };
+  assert_eq!(AssetCharacteristic::is_valid(&b), false);
+
+  let b:Bettor = Bettor {
+    outcomes: vec![
+      BettorOutcome {
+        name: br"out0".to_vec().try_into().expect("too long"),
+        probability: 5,
+        result: OutcomeResult::Win,
+      },
+      BettorOutcome {
+        name: br"out1".to_vec().try_into().expect("too long"),
+        probability: 95,
+        result: OutcomeResult::Lose,
+      },
+    ].try_into().expect("Outcomes vec too big"),
+    winnings: vec![
+      BettorWinning::Fa(1, 33),
+    ].try_into().expect("Winnings vec too big"),
+    rounds: 1,
+    draw_outcome: DrawOutcomeResult::Keep,
+  };
+  assert_eq!(AssetCharacteristic::is_valid(&b), true);
+}
+
+#[test]
+fn purchased_empty() {
+  let b:Purchased = Purchased {
+    offers: vec![].try_into().unwrap(),
+  };
+  assert_eq!(AssetCharacteristic::is_valid(&b), false);
+}
+
+#[test]
+fn purchased_has_0_price() {
+  let b:Purchased = Purchased {
+    offers: vec![
+      Offer {
+        fa: 1,
+        price: 10,
+        attributes: vec![].try_into().unwrap(),
+      },
+      Offer {
+        fa: 2,
+        price: 100,
+        attributes: vec![].try_into().unwrap(),
+      },
+      Offer {
+        fa: 3,
+        price: 0,
+        attributes: vec![].try_into().unwrap(),
+      },
+    ].try_into().unwrap(),
+  };
+  assert_eq!(AssetCharacteristic::is_valid(&b), false)
+}
+
+#[test]
+fn purchased_has_0_price_2() {
+  let b:Purchased = Purchased {
+    offers: vec![
+      Offer {
+        fa: 1,
+        price: 10,
+        attributes: vec![].try_into().unwrap(),
+      },
+      Offer {
+        fa: 2,
+        price: 100,
+        attributes: vec![].try_into().unwrap(),
+      },
+      Offer {
+        fa: 3,
+        price: 1000,
+        attributes: vec![].try_into().unwrap(),
+      },
+    ].try_into().unwrap(),
+  };
+  assert_eq!(AssetCharacteristic::is_valid(&b), true)
+}
+
+#[test]
+fn test_cumsums() {
+  let a: [i32; 0] = [];
+  assert_eq!(cumsum_array_owned::<i32, 0>([]), a);
+  assert_eq!(cumsum_array_owned([1]), [1]);
+  assert_eq!(cumsum_array_owned([1, 2, 3]), [1, 3, 6]);
+
+  // assert_eq!(cumsum_owned::<i32>(vec![]), a.into::<i32>());
+  assert_eq!(cumsum_owned(vec![1]), vec![1]);
+  assert_eq!(cumsum_owned(vec![1, 2, 3]), vec![1, 3, 6]);
 }

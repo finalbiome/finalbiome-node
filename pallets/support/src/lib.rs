@@ -4,61 +4,36 @@
 
 use frame_support::pallet_prelude::*;
 use frame_support::inherent::Vec;
+
+use codec::{Decode, Encode, MaxEncodedLen};
+use scale_info::TypeInfo;
+use frame_support::{
+  PalletError,
+};
+
 // use frame_system::pallet_prelude::*;
 use sp_runtime::{
 	traits:: {
-		AtLeast32BitUnsigned,
+    Zero,
 	},
 };
 
 mod types;
+pub use types::*;
 mod constants;
 pub use constants::*;
 pub mod traits;
+pub mod types_nfa;
+mod characteristics;
+pub use characteristics::*;
+mod errors;
+pub use errors::*;
+pub mod misc;
+
+use types_nfa::{AssetDetails, ClassDetails};
 
 #[cfg(test)]
 mod tests;
-
-/// Trait to collect together properties for a Fungible AssetsId.
-pub trait AssetId: Member
-  + Parameter
-  + AtLeast32BitUnsigned
-  + Default
-  + Copy
-  + MaybeSerializeDeserialize
-  + MaxEncodedLen
-  + TypeInfo {}
-
-impl<T: Member
-  + Parameter
-  + AtLeast32BitUnsigned
-  + Default
-  + Copy
-  + MaybeSerializeDeserialize
-  + MaxEncodedLen
-  + TypeInfo> AssetId
-for T {}
-
-/// Trait to collect together properties for a Fungible Assets Balance.
-pub trait Balance: Member
-  + Parameter
-  + AtLeast32BitUnsigned
-  + Default
-  + Copy
-  + MaybeSerializeDeserialize
-  + MaxEncodedLen
-  + TypeInfo
-{}
-
-impl<T: Member
-  + Parameter
-  + AtLeast32BitUnsigned
-  + Default
-  + Copy
-  + MaybeSerializeDeserialize
-  + MaxEncodedLen
-  + TypeInfo> Balance
-for T {}
 
 /// Type of the fungible asset id
 pub type FungibleAssetId = u32;
@@ -79,8 +54,14 @@ pub type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 /// Type alias for `frame_system`'s index. \
 /// Account index (aka nonce) type. This stores the number of previous transactions associated with a sender account.
 pub type IndexOf<T> = <T as frame_system::Config>::Index;
-/// Type alias for Mechanic Id with config types
+/// Type alias for Mechanic Id with config type
 pub type MechanicIdOf<T> = MechanicId<AccountIdOf<T>, IndexOf<T>>;
+/// Type alias for ClassDetails with config type
+pub type ClassDetailsOf<T> = ClassDetails<AccountIdOf<T>>;
+/// Type alias for AssetDetails with config type
+pub type AssetDetailsOf<T> = AssetDetails<AccountIdOf<T>, IndexOf<T>>;
+/// Type alias for LockResult with config type
+pub type LockResultOf<T> = LockResult<AccountIdOf<T>, IndexOf<T>>;
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 /// Represent a single attribute of NFA as a key and value
@@ -199,6 +180,7 @@ pub struct  MechanicId<AccountId, Index>
   pub nonce: Index,
 }
 impl<AccountId, Index> MechanicId<AccountId, Index>
+where AccountId: PartialEq
 {
   /// Creates mechanic id from an account id
   pub fn from_account_id<T: frame_system::Config> (account_id: &T::AccountId) -> MechanicId<T::AccountId, T::Index>
@@ -209,13 +191,28 @@ impl<AccountId, Index> MechanicId<AccountId, Index>
       nonce,
     }
   }
+  /// Ensure that `who` equal `account_id` of mechanic id
+  pub fn ensure_owner(&self, who: &AccountId) -> Result<(), &str> {
+    if &self.account_id == who {
+      Ok(())
+    } else {
+      Err("Not owner of mechanic")
+    }
+  }
 }
 
 #[derive(RuntimeDebug, PartialEq)]
 /// Result of locking assets
-pub enum LockResult {
-  /// The asset has been blocked
-  Locked,
+pub enum LockResult<AccountId, Index> {
+  /// The asset has been locked for the first time
+  Locked(AssetDetails<AccountId, Index>),
   /// The asset already has the required status
-  Already,
+  Already(AssetDetails<AccountId, Index>),
+}
+
+#[derive(Copy, Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
+/// Represent an FA or NFA asset id of any type
+pub enum AssetId {
+  Fa(FungibleAssetId),
+  Nfa(NonFungibleClassId, NonFungibleAssetId),
 }

@@ -1,8 +1,9 @@
 use super::*;
-use characteristics::*;
-use characteristics::bettor::*;
-use characteristics::purchased::*;
-use pallet_support::Locker;
+use pallet_support::{
+  Locker,
+  CharacteristicBettor, CharacteristicPurchased,
+  AssetCharacteristic, DefaultStringLimit,
+};
 
 /// Type of the non-fungible asset instance ids
 pub type NonFungibleAssetId = pallet_support::NonFungibleAssetId;
@@ -13,35 +14,11 @@ pub type FungibleAssetId = pallet_support::FungibleAssetId;
 /// The units in which we record balances of the fungible assets
 pub type FungibleAssetBalance = pallet_support::FungibleAssetBalance;
 
-#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
-pub struct ClassDetails<AccountId, BoundedString> {
-  pub owner: AccountId,
-  /// The total number of outstanding instances of this asset class
-	pub instances: u32,
-  /// The total number of attributes for this asset class.
-	pub attributes: u32,
-  /// Name of the Asset. Limited in length by `ClassNameLimit`
-	pub name: BoundedString,
-  /// Characteristic of bets
-  pub bettor: Option<Bettor>,
-  /// Characteristic of purchases
-  pub purchased: Option<Purchased>,
-}
-
-#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
-pub struct AssetDetails<AccountId, Index> {
-  /// The owner of this asset.
-  pub owner: AccountId,
-  // Who locked this instance
-  pub locked: Locker<AccountId, Index>,
-}
-
-
 // region: Builders
-#[derive(RuntimeDebug, PartialEq)]
+#[cfg_attr(test, derive(Debug, PartialEq))]
 pub struct ClassDetailsBuilder<T: Config> {
   owner: T::AccountId,
-  name: ClassNameLimit<T>,
+  name: BoundedVec<u8, DefaultStringLimit>,
   bettor: CharacteristicBettor,
   purchased: CharacteristicPurchased,
 }
@@ -63,9 +40,9 @@ impl<T: pallet::Config> ClassDetailsBuilder<T> {
   /// Set the Bettor chracteristic of the NFA
   pub fn bettor(mut self, bettor: CharacteristicBettor) -> ClassDetailsBuilderResult<T> {
     if let Some(ref inc_bettor) = bettor {
-      if !AssetCharacteristic::<T>::is_valid(inc_bettor) {
-        return Err(Error::<T>::WrongBettor.into())
-      }
+      AssetCharacteristic::ensure(inc_bettor)
+        .map_err::<Error<T>, _>(Into::into)
+        .map_err::<DispatchError, _>(Into::into)?;
     }
     self.bettor = bettor;
     Ok(self)
@@ -73,9 +50,9 @@ impl<T: pallet::Config> ClassDetailsBuilder<T> {
 
   pub fn purchased(mut self, purchased: CharacteristicPurchased) -> ClassDetailsBuilderResult<T> {
     if let Some(ref inc_purchased) = purchased {
-      if !AssetCharacteristic::<T>::is_valid(inc_purchased) {
-        return Err(Error::<T>::WrongPurchased.into())
-      }
+      AssetCharacteristic::ensure(inc_purchased)
+        .map_err::<Error<T>, _>(Into::into)
+        .map_err::<DispatchError, _>(Into::into)?;
     }
     self.purchased = purchased;
     Ok(self)
@@ -118,13 +95,9 @@ impl<T: pallet::Config> AssetDetailsBuilder<T> {
 
 // endregion: Builders
 
-pub type ClassNameLimit<T> = BoundedVec<u8, <T as pallet::Config>::ClassNameLimit>;
 type ClassDetailsBuilderResult<T> = DispatchResultAs<ClassDetailsBuilder<T>>;
 type AssetDetailsBuilderResult<T> = DispatchResultAs<AssetDetailsBuilder<T>>;
-pub type ClassDetailsOf<T> = ClassDetails<AccountIdOf<T>, ClassNameLimit<T>>;
-
-pub type CharacteristicBettor = Option<Bettor>;
-pub type CharacteristicPurchased = Option<Purchased>;
+pub type ClassDetailsOf<T> = ClassDetails<AccountIdOf<T>>;
 
 // region: Genesis Types
 pub type GenesisClassesConfigOf<T> = Vec<(NonFungibleClassId, AccountIdOf<T>, Vec<u8>)>;

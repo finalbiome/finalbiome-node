@@ -3,8 +3,6 @@
 mod types;
 mod functions;
 mod impl_non_fubgible_assets;
-mod characteristics;
-pub use characteristics::*;
 
 pub use types::*;
 
@@ -17,7 +15,13 @@ pub use pallet_support::{
 	NumberAttribute,
 	Attribute,
 	AttributeKey, AttributeList,
-	LockResult,
+	LockResultOf,
+	types_nfa:: {
+		AssetDetails,
+		ClassDetails,
+	},
+	purchased,
+	Characteristic,
 };
 
 pub use pallet::*;
@@ -51,7 +55,7 @@ use frame_system::pallet_prelude::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use pallet_support::Index;
+	use pallet_support::{Index, CommonError};
 
 use super::*;
 
@@ -60,9 +64,6 @@ use super::*;
 pub trait Config: frame_system::Config<Index = Index> {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-		/// The maximum length of an class name stored on-chain.
-		#[pallet::constant]
-		type ClassNameLimit: Get<u32>;
 		/// The origin which may create or destroy a class and acts as owner or the class.
 		/// Only organization member can crete a class
 		type CreateOrigin: EnsureOriginWithArg<Self::Origin, Self::AccountId>;
@@ -121,14 +122,25 @@ pub trait Config: frame_system::Config<Index = Index> {
 	>;
 
 	#[pallet::storage]
-	/// Attributes of an asset class.
-	pub(super) type Attributes<T: Config> = StorageNMap<
+	/// Attributes of an assets.
+	pub(super) type Attributes<T: Config> = StorageDoubleMap<
 		_,
-		(
-			NMapKey<Blake2_128Concat, NonFungibleClassId>,
-			NMapKey<Blake2_128Concat, Option<NonFungibleAssetId>>,
-			NMapKey<Blake2_128Concat, AttributeKey>,
-		),
+		Blake2_128Concat,
+		NonFungibleAssetId,
+		Blake2_128Concat,
+		AttributeKey,
+		AttributeValue,
+		OptionQuery,
+	>;
+
+	#[pallet::storage]
+	/// Attributes of an asset class.
+	pub(super) type ClassAttributes<T: Config> = StorageDoubleMap<
+		_,
+		Blake2_128Concat,
+		NonFungibleClassId,
+		Blake2_128Concat,
+		AttributeKey,
 		AttributeValue,
 		OptionQuery,
 	>;
@@ -196,9 +208,8 @@ pub trait Config: frame_system::Config<Index = Index> {
 
 				let attr_val: AttributeValue = (*value, *max_value).try_into().unwrap();
 				let attr_key: AttributeKey = key.clone().try_into().unwrap();
-				let asset_id: Option<NonFungibleAssetId> = None;
-				Attributes::<T>::insert(
-					(*class_id, asset_id, attr_key),
+				ClassAttributes::<T>::insert(
+					*class_id, attr_key,
 					attr_val,
 				);
 			}
@@ -207,9 +218,8 @@ pub trait Config: frame_system::Config<Index = Index> {
 
 				let attr_val: AttributeValue = value.clone().try_into().unwrap();
 				let attr_key: AttributeKey = key.clone().try_into().unwrap();
-				let asset_id: Option<NonFungibleAssetId> = None;
-				Attributes::<T>::insert(
-					(*class_id, asset_id, attr_key),
+				ClassAttributes::<T>::insert(
+					*class_id, attr_key,
 					attr_val,
 				);
 			}
@@ -275,6 +285,8 @@ pub trait Config: frame_system::Config<Index = Index> {
 			class_id: NonFungibleClassId, key: AttributeKey, value: AttributeValue },
 		/// Attribute metadata has been removed for the asset class.
 		AttributeRemoved { class_id: NonFungibleClassId, key: AttributeKey },
+		/// An asset `instance` was destroyed.
+		Burned { class_id: NonFungibleClassId, asset_id: NonFungibleAssetId, owner: T::AccountId },
 		/// Event documentation should end with an array that provides descriptive names for event
 		/// parameters. [something, who]
 		SomethingStored(u32, T::AccountId),
@@ -319,6 +331,18 @@ pub trait Config: frame_system::Config<Index = Index> {
 		WrongCharacteristic,
 		/// The asset instance is locked
 		Locked,
+		/// The common error
+		CommonError(CommonError)
+	}
+
+	impl<T> From<CommonError> for Error<T> {
+		fn from(t: CommonError) -> Self {
+			match t {
+				CommonError::WrongBettor => Error::<T>::WrongBettor,
+				CommonError::WrongPurchased => Error::<T>::WrongPurchased,
+				_ => Error::<T>::CommonError(t)
+			}
+		}
 	}
 
 	// Dispatchable functions allows users to interact with the pallet and invoke state changes.

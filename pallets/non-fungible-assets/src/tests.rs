@@ -4,7 +4,6 @@ use crate::{
 	mock::*, Error,
 	ClassDetailsBuilder,
 	Event as NfaEvent,
-	characteristics::{bettor::*, purchased::{Purchased, Offer}},
 };
 use frame_support::{assert_noop, assert_ok};
 use frame_system::{EventRecord, Phase};
@@ -60,7 +59,8 @@ fn class_details_builder() {
 #[test]
 fn class_details_builder_name_len_exceed() {
 	new_test_ext().execute_with(|| {
-		assert_noop!(ClassDetailsBuilder::<Test>::new(1, br"n234567810".to_vec()), Error::<Test>::ClassNameTooLong); // max 8 symbols
+		let name = (0..100).map(|_| "X").collect::<String>().as_bytes().to_vec();
+		assert_noop!(ClassDetailsBuilder::<Test>::new(1, name), Error::<Test>::ClassNameTooLong); // max 64 symbols
 	});
 }
 
@@ -185,13 +185,13 @@ fn do_destroy_class_removes_attributes() {
 		};
 		assert_ok!(NonFungibleAssets::do_create_attribute(class_id, Some(org), a));
 		let key: AttributeKey = br"a_name".to_vec().try_into().unwrap();
-		assert_eq!(Attributes::<Test>::contains_key((&class_id, None as Option<NonFungibleAssetId>, &key)), true);
+		assert_eq!(ClassAttributes::<Test>::contains_key(&class_id, &key), true);
 		assert_eq!(Classes::<Test>::get(&class_id).unwrap().attributes, 1);
 
 		assert_ok!(NonFungibleAssets::do_destroy_class(class_id, Some(org)));
 		assert_eq!(Classes::<Test>::contains_key(&class_id), false);
 		assert_eq!(ClassAccounts::<Test>::contains_key(&org, &class_id), false);
-		assert_eq!(Attributes::<Test>::contains_key((&class_id, None as Option<NonFungibleAssetId>, &key)), false);
+		assert_eq!(ClassAttributes::<Test>::contains_key(&class_id, &key), false);
 
 	});
 }
@@ -210,116 +210,6 @@ fn destroy_class_not_org() {
 		));
 		System::reset_events();
 		assert_noop!(NonFungibleAssets::destroy(Origin::none(), org, nfa_id), sp_runtime::traits::BadOrigin);
-	});
-}
-
-#[test]
-fn bettor_empty() {
-	new_test_ext().execute_with(|| {
-		let b:Bettor = Bettor {
-			outcomes: vec![].try_into().expect("Outcomes vec too big"),
-			winnings: vec![].try_into().expect("Winnings vec too big"),
-			rounds: 1,
-			draw_outcome: DrawOutcomeResult::Keep,
-		};
-		assert_eq!(characteristics::AssetCharacteristic::<Test>::is_valid(&b), false)
-	});
-}
-
-#[test]
-fn bettor_prob_more_100() {
-	new_test_ext().execute_with(|| {
-		let b:Bettor = Bettor {
-			outcomes: vec![
-				BettorOutcome {
-					name: br"out0".to_vec().try_into().expect("too long"),
-					probability: 233,
-				}
-			].try_into().expect("Outcomes vec too big"),
-			winnings: vec![
-				BettorWinning::Fa(1, 33),
-			].try_into().expect("Winnings vec too big"),
-			rounds: 1,
-			draw_outcome: DrawOutcomeResult::Keep,
-		};
-		assert_eq!(characteristics::AssetCharacteristic::<Test>::is_valid(&b), false)
-	});
-}
-
-#[test]
-fn bettor_probs_less_100() {
-	new_test_ext().execute_with(|| {
-		let b:Bettor = Bettor {
-			outcomes: vec![
-				BettorOutcome {
-					name: br"out0".to_vec().try_into().expect("too long"),
-					probability: 5,
-				}
-			].try_into().expect("Outcomes vec too big"),
-			winnings: vec![
-				BettorWinning::Fa(1, 33),
-			].try_into().expect("Winnings vec too big"),
-			rounds: 1,
-			draw_outcome: DrawOutcomeResult::Keep,
-		};
-		assert_eq!(characteristics::AssetCharacteristic::<Test>::is_valid(&b), false);
-
-		let b:Bettor = Bettor {
-			outcomes: vec![
-				BettorOutcome {
-					name: br"out0".to_vec().try_into().expect("too long"),
-					probability: 100,
-				}
-			].try_into().expect("Outcomes vec too big"),
-			winnings: vec![
-				BettorWinning::Fa(1, 33),
-			].try_into().expect("Winnings vec too big"),
-			rounds: 1,
-			draw_outcome: DrawOutcomeResult::Keep,
-		};
-		assert_eq!(characteristics::AssetCharacteristic::<Test>::is_valid(&b), true);
-	});
-}
-
-#[test]
-fn bettor_wins_empty() {
-	new_test_ext().execute_with(|| {
-		let b:Bettor = Bettor {
-			outcomes: vec![
-				BettorOutcome {
-					name: br"out0".to_vec().try_into().expect("too long"),
-					probability: 5,
-				},
-				BettorOutcome {
-					name: br"out1".to_vec().try_into().expect("too long"),
-					probability: 95,
-				},
-			].try_into().expect("Outcomes vec too big"),
-			winnings: vec![
-			].try_into().expect("Winnings vec too big"),
-			rounds: 1,
-			draw_outcome: DrawOutcomeResult::Keep,
-		};
-		assert_eq!(characteristics::AssetCharacteristic::<Test>::is_valid(&b), false);
-
-		let b:Bettor = Bettor {
-			outcomes: vec![
-				BettorOutcome {
-					name: br"out0".to_vec().try_into().expect("too long"),
-					probability: 5,
-				},
-				BettorOutcome {
-					name: br"out1".to_vec().try_into().expect("too long"),
-					probability: 95,
-				},
-			].try_into().expect("Outcomes vec too big"),
-			winnings: vec![
-				BettorWinning::Fa(1, 33),
-			].try_into().expect("Winnings vec too big"),
-			rounds: 1,
-			draw_outcome: DrawOutcomeResult::Keep,
-		};
-		assert_eq!(characteristics::AssetCharacteristic::<Test>::is_valid(&b), true);
 	});
 }
 
@@ -363,6 +253,132 @@ fn do_mint_worked() {
 				},
 			]
 		);
+	});
+}
+
+#[test]
+fn do_burn_no_attributes() {
+	new_test_ext().execute_with(|| {
+		// create test class
+		let nfa_id = get_next_class_id();
+		let name = br"nfa name".to_vec();
+		let id = get_next_asset_id();
+		let org = 2;
+		let acc = 1;
+		assert_ok!(NonFungibleAssets::create(
+			Origin::signed(1),
+			org,
+			name.clone()
+		));
+		
+		assert_eq!(NonFungibleAssets::do_mint(nfa_id, acc).unwrap(), id);
+		assert_eq!(Assets::<Test>::contains_key(&nfa_id, &id), true);
+		assert_eq!(Accounts::<Test>::contains_key((&acc, &nfa_id, &id)), true);
+		assert_eq!(Classes::<Test>::get(nfa_id).unwrap().instances, 1);
+		
+		let minted = Assets::<Test>::get(&nfa_id, &id).unwrap();
+		assert_eq!(minted.owner, acc);
+
+		System::reset_events();
+		assert_ok!(NonFungibleAssets::do_burn(nfa_id, id, Some(&acc)));
+		assert_eq!(Accounts::<Test>::contains_key((&acc, &nfa_id, &id)), false);
+
+
+		assert_eq!(
+			System::events(),
+			vec![
+				EventRecord {
+					phase: Phase::Initialization,
+					event: NfaEvent::Burned { class_id: nfa_id, asset_id: id, owner: acc }.into(),
+					topics: vec![],
+				},
+			]
+		);
+	});
+}
+
+#[test]
+fn do_burn_with_attributes() {
+	new_test_ext().execute_with(|| {
+		// create test class
+		let nfa_id = get_next_class_id();
+		let name = br"nfa name".to_vec();
+		let id = get_next_asset_id();
+		let org = 2;
+		let acc = 1;
+		assert_ok!(NonFungibleAssets::create(
+			Origin::signed(1),
+			org,
+			name.clone()
+		));
+		
+		assert_eq!(NonFungibleAssets::do_mint(nfa_id, acc).unwrap(), id);
+		assert_eq!(Assets::<Test>::contains_key(&nfa_id, &id), true);
+		assert_eq!(Accounts::<Test>::contains_key((&acc, &nfa_id, &id)), true);
+		assert_eq!(Classes::<Test>::get(nfa_id).unwrap().instances, 1);
+
+		let a = Attribute {
+			key: br"a1".to_vec().try_into().unwrap(),
+			value: AttributeValue::Number(NumberAttribute { number_max: None, number_value: 1})
+		};
+		let attributes: AttributeList = vec![a.clone()].try_into().unwrap();
+		assert_ok!(NonFungibleAssets::assign_attributes(&id, attributes));
+		assert_eq!(Attributes::<Test>::contains_key(&id, &a.key), true);
+		
+		let minted = Assets::<Test>::get(&nfa_id, &id).unwrap();
+		assert_eq!(minted.owner, acc);
+
+		System::reset_events();
+		assert_ok!(NonFungibleAssets::do_burn(nfa_id, id, Some(&acc)));
+		assert_eq!(Accounts::<Test>::contains_key((&acc, &nfa_id, &id)), false);
+		assert_eq!(Attributes::<Test>::contains_key(&id, a.key), false);
+
+
+		assert_eq!(
+			System::events(),
+			vec![
+				EventRecord {
+					phase: Phase::Initialization,
+					event: NfaEvent::Burned { class_id: nfa_id, asset_id: id, owner: acc }.into(),
+					topics: vec![],
+				},
+			]
+		);
+	});
+}
+
+#[test]
+fn do_burn_not_owner() {
+	new_test_ext().execute_with(|| {
+		// create test class
+		let nfa_id = get_next_class_id();
+		let name = br"nfa name".to_vec();
+		let id = get_next_asset_id();
+		let org = 2;
+		let acc = 1;
+		assert_ok!(NonFungibleAssets::create(
+			Origin::signed(1),
+			org,
+			name.clone()
+		));
+		
+		assert_eq!(NonFungibleAssets::do_mint(nfa_id, acc).unwrap(), id);
+		assert_eq!(Assets::<Test>::contains_key(&nfa_id, &id), true);
+		assert_eq!(Accounts::<Test>::contains_key((&acc, &nfa_id, &id)), true);
+		
+		let minted = Assets::<Test>::get(&nfa_id, &id).unwrap();
+		assert_eq!(minted.owner, acc);
+
+		System::reset_events();
+		assert_noop!(NonFungibleAssets::do_burn(nfa_id, id, Some(&33)), Error::<Test>::NoPermission);
+		assert_eq!(Accounts::<Test>::contains_key((&acc, &nfa_id, &id)), true);
+	});
+}
+
+#[test]
+fn do_burn_not_exists() {
+	new_test_ext().execute_with(|| {
+		assert_noop!(NonFungibleAssets::do_burn(11, 22, Some(&33)), Error::<Test>::UnknownAsset);
 	});
 }
 
@@ -424,7 +440,7 @@ fn do_create_attribute_already_exists() {
 		// create fake attr w/ same name
 		let eat = AttributeValue::Number(NumberAttribute {number_value: 10, number_max: None});
 		let attr_name: AttributeKey = br"a_name".to_vec().try_into().unwrap();
-		Attributes::<Test>::insert((nfa_id, None as Option<NonFungibleAssetId>, attr_name), eat);
+		ClassAttributes::<Test>::insert(nfa_id, attr_name, eat);
 
 		assert_noop!(NonFungibleAssets::do_create_attribute(nfa_id, Some(org), a), Error::<Test>::AttributeAlreadyExists);
 	});
@@ -448,7 +464,7 @@ fn do_create_attribute_already_exists1() {
 		assert_ok!(NonFungibleAssets::do_create_attribute(nfa_id, Some(org), a));
 		
 		let attr_name: AttributeKey = br"a_name".to_vec().try_into().unwrap();
-		assert_eq!(Attributes::<Test>::contains_key((nfa_id, None as Option<NonFungibleAssetId>, &attr_name)), true);
+		assert_eq!(ClassAttributes::<Test>::contains_key(nfa_id, &attr_name), true);
 		assert_eq!(Classes::<Test>::get(nfa_id).unwrap().attributes, 1);
 		assert_eq!(
 			System::events(),
@@ -499,16 +515,16 @@ fn do_remove_attribute_work() {
 		assert_ok!(NonFungibleAssets::do_create_attribute(class_id, Some(org), a));
 		assert_eq!(Classes::<Test>::get(class_id).unwrap().attributes, 1);
 		let key: AttributeKey = br"a_name".to_vec().try_into().unwrap();
-		assert_eq!(Attributes::<Test>::get((&class_id, None as Option<NonFungibleAssetId>, &key)).unwrap(), AttributeValue::Number(NumberAttribute {
+		assert_eq!(ClassAttributes::<Test>::get(&class_id, &key).unwrap(), AttributeValue::Number(NumberAttribute {
 			number_value: 100,
 			number_max: None,
 		}));
 
 		System::reset_events();
 
-		assert_eq!(Attributes::<Test>::contains_key((&class_id, None as Option<NonFungibleAssetId>, &key)), true);
+		assert_eq!(ClassAttributes::<Test>::contains_key(&class_id, &key), true);
 		assert_ok!(NonFungibleAssets::do_remove_attribute(class_id, Some(org), br"a_name".to_vec().try_into().unwrap()));
-		assert_eq!(Attributes::<Test>::contains_key((&class_id, None as Option<NonFungibleAssetId>, &key)), false);
+		assert_eq!(ClassAttributes::<Test>::contains_key(&class_id, &key), false);
 		assert_eq!(Classes::<Test>::get(class_id).unwrap().attributes, 0);
 
 		assert_eq!(
@@ -559,7 +575,7 @@ fn create_attribute_worked() {
 		assert_ok!(NonFungibleAssets::create_attribute(Origin::signed(1), org, class_id, a));
 		
 		let attr_name: AttributeKey = br"a_name".to_vec().try_into().unwrap();
-		assert_eq!(Attributes::<Test>::contains_key((class_id, None as Option<NonFungibleAssetId>, &attr_name)), true);
+		assert_eq!(ClassAttributes::<Test>::contains_key(class_id, &attr_name), true);
 
 	});
 }
@@ -596,76 +612,15 @@ fn remove_attribute_worked() {
 		assert_ok!(NonFungibleAssets::create_attribute(Origin::signed(1), org, class_id, a.clone()));
 		
 		let attr_name: AttributeKey = br"a_name".to_vec().try_into().unwrap();
-		assert_eq!(Attributes::<Test>::contains_key((class_id, None as Option<NonFungibleAssetId>, &attr_name)), true);
+		assert_eq!(ClassAttributes::<Test>::contains_key(class_id, &attr_name), true);
 
 		assert_ok!(NonFungibleAssets::remove_attribute(Origin::signed(1), org, class_id, a.key));
-		assert_eq!(Attributes::<Test>::contains_key((class_id, None as Option<NonFungibleAssetId>, &attr_name)), false);
+		assert_eq!(ClassAttributes::<Test>::contains_key(class_id, &attr_name), false);
 
 
 	});
 }
 
-#[test]
-fn purchased_empty() {
-	new_test_ext().execute_with(|| {
-		let b:Purchased = Purchased {
-			offers: vec![].try_into().unwrap(),
-		};
-		assert_eq!(characteristics::AssetCharacteristic::<Test>::is_valid(&b), false)
-	});
-}
-
-#[test]
-fn purchased_has_0_price() {
-	new_test_ext().execute_with(|| {
-		let b:Purchased = Purchased {
-			offers: vec![
-				Offer {
-					fa: 1,
-					price: 10,
-					attributes: vec![].try_into().unwrap(),
-				},
-				Offer {
-					fa: 2,
-					price: 100,
-					attributes: vec![].try_into().unwrap(),
-				},
-				Offer {
-					fa: 3,
-					price: 0,
-					attributes: vec![].try_into().unwrap(),
-				},
-			].try_into().unwrap(),
-		};
-		assert_eq!(characteristics::AssetCharacteristic::<Test>::is_valid(&b), false)
-	});
-}
-
-#[test]
-fn purchased_has_0_price_2() {
-	new_test_ext().execute_with(|| {
-		let b:Purchased = Purchased {
-			offers: vec![
-				Offer {
-					fa: 1,
-					price: 10,
-					attributes: vec![].try_into().unwrap(),
-				},
-				Offer {
-					fa: 2,
-					price: 100,
-					attributes: vec![].try_into().unwrap(),
-				},
-				Offer {
-					fa: 3,
-					price: 1000,
-					attributes: vec![].try_into().unwrap(),
-				},
-			].try_into().unwrap(),
-		};
-		assert_eq!(characteristics::AssetCharacteristic::<Test>::is_valid(&b), true)
-	});
-}
 
 #[test]
 fn assign_attributes_works() {
@@ -679,9 +634,9 @@ fn assign_attributes_works() {
 			value: AttributeValue::Text(br"v1".to_vec().try_into().unwrap())
 		};
 		let attributes: AttributeList = vec![a1.clone(), a2.clone()].try_into().unwrap();
-		assert_ok!(NonFungibleAssets::assign_attributes(&10, &20, attributes));
-		assert_eq!(Attributes::<Test>::get((&10, Some(&20), a1.key)), Some(a1.value));
-		assert_eq!(Attributes::<Test>::get((&10, Some(&20), a2.key)), Some(a2.value));
+		assert_ok!(NonFungibleAssets::assign_attributes(&20, attributes));
+		assert_eq!(Attributes::<Test>::get(&20, a1.key), Some(a1.value));
+		assert_eq!(Attributes::<Test>::get(&20, a2.key), Some(a2.value));
 	});
 }
 
@@ -757,14 +712,18 @@ fn set_lock_for_no_locked() {
 		// create test asset
 		assert_eq!(NonFungibleAssets::do_mint(nfa_id, acc).unwrap(), id);
 
+
 		let origin = Locker::Mechanic(MechanicId {account_id: 1, nonce: 2});
-		assert_ok!(NonFungibleAssets::set_lock(&acc, origin.clone(), &nfa_id, &id), LockResult::Locked);
+		let mut details = Assets::<Test>::get(&nfa_id, &id).unwrap();
+		details.locked = origin.clone();
+
+		assert_ok!(NonFungibleAssets::set_lock(&acc, origin.clone(), &nfa_id, &id), LockResultOf::<Test>::Locked(details.clone()));
 		
 		let minted = Assets::<Test>::get(&nfa_id, &id).unwrap();
 		assert_eq!(minted.locked, origin);
 
 		let origin = Locker::Mechanic(MechanicId {account_id: 1, nonce: 2});
-		assert_ok!(NonFungibleAssets::set_lock(&acc, origin.clone(), &nfa_id, &id), LockResult::Already);
+		assert_ok!(NonFungibleAssets::set_lock(&acc, origin.clone(), &nfa_id, &id), LockResultOf::<Test>::Already(details));
 
 	});
 }
@@ -787,13 +746,114 @@ fn set_lock_for_locked() {
 		assert_eq!(NonFungibleAssets::do_mint(nfa_id, acc).unwrap(), id);
 
 		let origin = Locker::Mechanic(MechanicId {account_id: 1, nonce: 2});
-		assert_ok!(NonFungibleAssets::set_lock(&acc, origin.clone(), &nfa_id, &id), LockResult::Locked);
+		let mut details = Assets::<Test>::get(&nfa_id, &id).unwrap();
+		details.locked = origin.clone();
+
+		assert_ok!(NonFungibleAssets::set_lock(&acc, origin.clone(), &nfa_id, &id), LockResultOf::<Test>::Locked(details));
 		
 		let minted = Assets::<Test>::get(&nfa_id, &id).unwrap();
 		assert_eq!(minted.locked, origin);
 
 		let origin = Locker::Mechanic(MechanicId {account_id: 2, nonce: 4});
 		assert_noop!(NonFungibleAssets::set_lock(&acc, origin, &nfa_id, &id), Error::<Test>::Locked);
+
+	});
+}
+
+#[test]
+fn unset_lock_for_locked() {
+	new_test_ext().execute_with(|| {
+		// create test class
+		let nfa_id = get_next_class_id();
+		let name = br"nfa name".to_vec();
+		let id = get_next_asset_id();
+		let org = 2;
+		let acc = 1;
+		assert_ok!(NonFungibleAssets::create(
+			Origin::signed(1),
+			org,
+			name.clone()
+		));
+		// create test asset
+		assert_eq!(NonFungibleAssets::do_mint(nfa_id, acc).unwrap(), id);
+
+		let origin = Locker::Mechanic(MechanicId {account_id: 1, nonce: 2});
+		let mut details = Assets::<Test>::get(&nfa_id, &id).unwrap();
+		details.locked = origin.clone();
+
+		assert_ok!(NonFungibleAssets::set_lock(&acc, origin.clone(), &nfa_id, &id), LockResultOf::<Test>::Locked(details));
+		
+		assert_ok!(NonFungibleAssets::unset_lock(&acc, &origin, &nfa_id, &id));
+		let details = Assets::<Test>::get(&nfa_id, &id).unwrap();
+
+		assert_eq!(details.locked, Locker::None);
+	});
+}
+
+#[test]
+fn unset_lock_for_locked_other_owner() {
+	new_test_ext().execute_with(|| {
+		// create test class
+		let nfa_id = get_next_class_id();
+		let name = br"nfa name".to_vec();
+		let id = get_next_asset_id();
+		let org = 2;
+		let acc = 1;
+		assert_ok!(NonFungibleAssets::create(
+			Origin::signed(1),
+			org,
+			name.clone()
+		));
+		// create test asset
+		assert_eq!(NonFungibleAssets::do_mint(nfa_id, acc).unwrap(), id);
+
+		let origin = Locker::Mechanic(MechanicId {account_id: 1, nonce: 2});
+		let mut details = Assets::<Test>::get(&nfa_id, &id).unwrap();
+		details.locked = origin.clone();
+
+		assert_ok!(NonFungibleAssets::set_lock(&acc, origin.clone(), &nfa_id, &id), LockResultOf::<Test>::Locked(details));
+		
+		assert_noop!(NonFungibleAssets::unset_lock(&2, &origin, &nfa_id, &id), Error::<Test>::NoPermission);
+	});
+}
+
+#[test]
+fn unset_lock_for_locked_other_origin() {
+	new_test_ext().execute_with(|| {
+		// create test class
+		let nfa_id = get_next_class_id();
+		let name = br"nfa name".to_vec();
+		let id = get_next_asset_id();
+		let org = 2;
+		let acc = 1;
+		assert_ok!(NonFungibleAssets::create(
+			Origin::signed(1),
+			org,
+			name.clone()
+		));
+		// create test asset
+		assert_eq!(NonFungibleAssets::do_mint(nfa_id, acc).unwrap(), id);
+
+		let origin = Locker::Mechanic(MechanicId {account_id: 1, nonce: 2});
+		let mut details = Assets::<Test>::get(&nfa_id, &id).unwrap();
+		details.locked = origin.clone();
+
+		assert_ok!(NonFungibleAssets::set_lock(&acc, origin.clone(), &nfa_id, &id), LockResultOf::<Test>::Locked(details));
+		let origin =  Locker::Mechanic(MechanicId {account_id: 1, nonce: 3});
+		assert_noop!(NonFungibleAssets::unset_lock(&acc, &origin, &nfa_id, &id), Error::<Test>::NoPermission);
+	});
+}
+
+#[test]
+fn unset_lock_for_unexisted_asset() {
+	new_test_ext().execute_with(|| {
+		let nfa_id = get_next_class_id();
+		let id = get_next_asset_id();
+		let acc = 1;
+
+		let origin = Locker::Mechanic(MechanicId {account_id: 1, nonce: 2});
+
+		assert_ok!(NonFungibleAssets::unset_lock(&acc, &origin, &nfa_id, &id));
 
 	});
 }

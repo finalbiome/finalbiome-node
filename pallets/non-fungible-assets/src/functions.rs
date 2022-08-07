@@ -1,6 +1,6 @@
 //! Functions for the Non-Fungible-Assets pallet.
 
-use pallet_support::Locker;
+use pallet_support::{Locker, AssetCharacteristic};
 
 use super::*;
 
@@ -34,7 +34,7 @@ impl<T: Config> Pallet<T> {
 			}
 			ClassAccounts::<T>::remove(&class_details.owner, &class_id);
 			// Remove attributes for class and for all instances
-			Attributes::<T>::remove_prefix((&class_id,), None);
+			ClassAttributes::<T>::remove_prefix(&class_id, None);
 			Self::deposit_event(Event::Destroyed { class_id });
 			Ok(())
 		})
@@ -69,6 +69,24 @@ impl<T: Config> Pallet<T> {
 		Ok(asset_id)
 	}
 
+	pub(crate) fn do_burn(
+		class_id: NonFungibleClassId,
+		asset_id: NonFungibleAssetId,
+		maybe_check_owner: Option<&T::AccountId>,
+	) -> DispatchResult {
+		Assets::<T>::try_mutate_exists(class_id, asset_id, |maybe_details| {
+			let asset_details = maybe_details.take().ok_or(Error::<T>::UnknownAsset)?;
+			if let Some(check_owner) = maybe_check_owner {
+				ensure!(&asset_details.owner == check_owner, Error::<T>::NoPermission);
+			};
+			Accounts::<T>::remove((&asset_details.owner, &class_id, &asset_id));
+			// Remove attributes for an instance
+			Attributes::<T>::remove_prefix(&asset_id, None);
+			Self::deposit_event(Event::Burned { class_id, asset_id, owner: asset_details.owner });
+			Ok(())
+		})
+	}
+	
 	/// Creates attribute for the asset class.  \
 	/// Attributes can be created only for classes
 	pub fn do_create_attribute(
@@ -83,14 +101,12 @@ impl<T: Config> Pallet<T> {
 		if let Some(check_owner) = maybe_check_owner {
 			ensure!(details.owner == check_owner, Error::<T>::NoPermission);
 		}
-		let asset_id:Option<NonFungibleAssetId> = None;
-		let key = (&class_id, &asset_id, &attribute.key);
 		// Attribute must not exits
-		if Attributes::<T>::contains_key(&key) {
+		if ClassAttributes::<T>::contains_key(&class_id, &attribute.key) {
 			return Err(Error::<T>::AttributeAlreadyExists.into())
 		}
 
-		Attributes::<T>::insert(&key, &attribute.value);
+		ClassAttributes::<T>::insert(&class_id, &attribute.key, &attribute.value);
 		details.attributes.saturating_inc();
 		Classes::<T>::insert(&class_id, &details);
 		Self::deposit_event(Event::AttributeCreated { class_id, key: attribute.key, value:attribute.value });
@@ -107,8 +123,7 @@ impl<T: Config> Pallet<T> {
 		if let Some(check_owner) = maybe_check_owner {
 			ensure!(details.owner == check_owner, Error::<T>::NoPermission);
 		}
-		let asset_id:Option<NonFungibleAssetId> = None;
-		if Attributes::<T>::take((&class_id, &asset_id, &attribute_name)).is_some() {
+		if ClassAttributes::<T>::take(&class_id, &attribute_name).is_some() {
 			details.attributes.saturating_dec();
 			Classes::<T>::insert(&class_id, &details);
 			Self::deposit_event(Event::AttributeRemoved { class_id, key: attribute_name });
@@ -126,9 +141,9 @@ impl<T: Config> Pallet<T> {
 
 	/// Assigns an attributes to asset  \
 	/// The method doesn't check for the existance of either the class or the asset
-	pub fn assign_attributes(class_id: &NonFungibleClassId, asset_id: &NonFungibleAssetId, attributes: AttributeList) -> DispatchResult {
+	pub fn assign_attributes(asset_id: &NonFungibleAssetId, attributes: AttributeList) -> DispatchResult {
 		for attr in attributes.iter() {
-			Attributes::<T>::insert((class_id, Some(asset_id), &attr.key), attr.value.clone());
+			Attributes::<T>::insert(asset_id, &attr.key, attr.value.clone());
 		}
 		Ok(())
 	}
@@ -149,13 +164,17 @@ impl<T: Config> Pallet<T> {
 		match characteristic {
 			Characteristic::Bettor(bettor) => {
 				if let Some(inner) = &bettor {
-					AssetCharacteristic::<T>::ensure(inner)?;
+					AssetCharacteristic::ensure(inner)
+						.map_err::<Error<T>, _>(Into::into)
+						.map_err::<DispatchError, _>(Into::into)?;
 				};
 				details.bettor = bettor;
 			},
 			Characteristic::Purchased(purchased) => {
 				if let Some(inner) = &purchased {
-					AssetCharacteristic::<T>::ensure(inner)?;
+					AssetCharacteristic::ensure(inner)
+						.map_err::<Error<T>, _>(Into::into)
+						.map_err::<DispatchError, _>(Into::into)?;
 				};
 				details.purchased = purchased;
 			},
@@ -173,7 +192,7 @@ impl<T: Config> Pallet<T> {
     origin: Locker<AccountIdOf<T>, IndexOf<T>>,
     class_id: &NonFungibleClassId,
     asset_id: &NonFungibleAssetId,
-	) -> DispatchResultAs<LockResult> {
+	) -> DispatchResultAs<LockResultOf<T>> {
 		// unlock not allowed
 		ensure!(origin != Locker::None, Error::<T>::Locked);
 
@@ -184,15 +203,31 @@ impl<T: Config> Pallet<T> {
 		match details.locked {
 			Locker::None => {
 				details.locked = origin;
-				Assets::<T>::insert(class_id, asset_id, details);
-				Ok(LockResult::Locked)
+				Assets::<T>::insert(class_id, asset_id, details.clone());
+				Ok(LockResultOf::<T>::Locked(details))
 			},
 			_ if details.locked == origin => {
-				Ok(LockResult::Already)
+				Ok(LockResultOf::<T>::Already(details))
 			},
 			_ => {
 				Err(Error::<T>::Locked.into())
 			},
 		}
+	}
+
+	pub(crate) fn unset_lock(
+		who: &AccountIdOf<T>,
+		origin: &Locker<AccountIdOf<T>, IndexOf<T>>,
+		class_id: &NonFungibleClassId,
+		asset_id: &NonFungibleAssetId,
+	) -> DispatchResult {
+		if let Some(mut details) = Assets::<T>::get(class_id, asset_id) {
+			// ownership check
+			ensure!(&details.owner == who, Error::<T>::NoPermission);
+			ensure!(&details.locked == origin, Error::<T>::NoPermission);
+			details.locked = Locker::None;
+			Assets::<T>::insert(class_id, asset_id, details);
+		}
+		Ok(())
 	}
 }

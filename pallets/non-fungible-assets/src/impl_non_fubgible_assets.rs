@@ -1,3 +1,5 @@
+use pallet_support::Locker;
+
 use super::*;
 
 impl<T: pallet::Config> pallet_support::traits::NonFungibleAssets<AccountIdOf<T>, IndexOf<T>> for Pallet<T> {
@@ -7,6 +9,14 @@ impl<T: pallet::Config> pallet_support::traits::NonFungibleAssets<AccountIdOf<T>
     who: &AccountIdOf<T>
   ) -> DispatchResultAs<NonFungibleAssetId> {
     Self::do_mint(*class_id, who.clone())
+  }
+
+  fn burn(
+      class_id: NonFungibleClassId,
+      asset_id: NonFungibleAssetId,
+      maybe_check_owner: Option<&T::AccountId>,
+    ) -> DispatchResult {
+      Self::do_burn(class_id, asset_id, maybe_check_owner)
   }
 
   fn get_offer(
@@ -26,19 +36,33 @@ impl<T: pallet::Config> pallet_support::traits::NonFungibleAssets<AccountIdOf<T>
   }
 
   fn set_attributes(
-    class_id: &NonFungibleClassId,
     asset_id: &NonFungibleAssetId,
     attributes: AttributeList
   ) -> DispatchResult {
-    Self::assign_attributes(class_id, asset_id, attributes)
+    Self::assign_attributes(asset_id, attributes)
   }
 
   fn try_lock(
     who: &AccountIdOf<T>,
-    origin: pallet_support::Locker<AccountIdOf<T>, IndexOf<T>>,
-    class_id: &pallet_support::NonFungibleClassId,
-    asset_id: &pallet_support::NonFungibleAssetId,
-  ) -> DispatchResultAs<LockResult> {
+    origin: Locker<AccountIdOf<T>, IndexOf<T>>,
+    class_id: &NonFungibleClassId,
+    asset_id: &NonFungibleAssetId,
+  ) -> DispatchResultAs<LockResultOf<T>> {
       Self::set_lock(who, origin, class_id, asset_id)
+  }
+
+  fn clear_lock(
+      who: &AccountIdOf<T>,
+      origin: &Locker<AccountIdOf<T>, IndexOf<T>>,
+      class_id: &NonFungibleClassId,
+      asset_id: &NonFungibleAssetId,
+    ) -> sp_runtime::DispatchResult {
+      Self::unset_lock(who, origin, class_id, asset_id)
+  }
+
+  fn get_class(
+      class_id: &NonFungibleClassId,
+    ) -> DispatchResultAs<ClassDetailsOf<T>> {
+      Self::get_class_details(class_id)
   }
 }
