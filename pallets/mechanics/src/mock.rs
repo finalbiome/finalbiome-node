@@ -242,6 +242,13 @@ fn mint_into(
 			});
 			return Ok(lr);
 		}
+		if class_id == &36u32 && asset_id == &36u32 { // test do_do_upgrade_bet_two_rounds_work
+			let lr:LockResultOf<Test> = LockResult::Locked(AssetDetails {
+				locked: origin,
+				owner: *who,
+			});
+			return Ok(lr);
+		}
 		todo!()
 	}
 	fn get_class(
@@ -327,6 +334,36 @@ fn mint_into(
 				owner: 1,
 			})
 		}
+		if class_id == &36 { // test do_do_upgrade_bet_two_rounds_work
+			return Ok(ClassDetails {
+				attributes: 0,	
+				name: br"a".to_vec().try_into().unwrap(),
+				bettor: Some(Bettor {
+					// with odd block numbers the bettor will lose
+					// with even - win
+					outcomes: bvec![
+						BettorOutcome {
+							name: bvec!(br"o1"),
+							probability: 1,
+							result: OutcomeResult::Win,
+						},
+						BettorOutcome {
+							name: bvec!(br"o2"),
+							probability: 1,
+							result: OutcomeResult::Lose,
+						},
+					],
+					winnings: bvec![
+						BettorWinning::Nfa(20)
+					],
+					rounds: 2,
+					draw_outcome: DrawOutcomeResult::Lose,
+				}),
+				purchased: None,
+				instances: 0,
+				owner: 1,
+			})
+		}
 		todo!()
 	}
 	fn burn(
@@ -367,6 +404,9 @@ fn mint_into(
 		if class_id == 35u32 && asset_id == 35u32 { // test do_bet_next_round_two_rounds_work
 			return Ok(());
 		}
+		if class_id == 36u32 && asset_id == 36u32 { // test do_do_upgrade_bet_two_rounds_work
+			return Ok(());
+		}
 		todo!()
 	}
 	fn clear_lock(
@@ -388,6 +428,9 @@ fn mint_into(
 			return Ok(())
 		}
 		if class_id == &35 && asset_id == &35 { // test do_bet_next_round_two_rounds_work
+			return Ok(())
+		}
+		if class_id == &36 && asset_id == &36 { // test do_do_upgrade_bet_two_rounds_work
 			return Ok(())
 		}
 		todo!()

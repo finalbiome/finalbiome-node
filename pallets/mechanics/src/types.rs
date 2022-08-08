@@ -1,4 +1,4 @@
-use pallet_support::{AssetId, DefaultListLengthLimit, BETTOR_MAX_NUMBER_OF_ROUNDS};
+use pallet_support::{AssetId, DefaultListLengthLimit, BETTOR_MAX_NUMBER_OF_ROUNDS, IndexOf};
 use scale_info::TypeInfo;
 use codec::{Decode, Encode, MaxEncodedLen};
 
@@ -15,6 +15,8 @@ pub type FungibleAssetBalance = pallet_support::FungibleAssetBalance;
 
 /// Bounded vector of NFA ids
 pub type NonFungibleAssetIds<T> = BoundedVec<NonFungibleAssetId, <T as Config>::AssetsListLimit>;
+
+#[derive(PartialEq)]
 /// Describes types of mechanics
 pub enum Mechanic {
     /// NFA purchase
@@ -37,12 +39,13 @@ pub(crate) struct MechanicDetails<AccountId, BlockNumber> {
 	pub data: MechanicData,
 }
 impl<AccountId, BlockNumber> MechanicDetails<AccountId, BlockNumber> {
-	pub fn new(owner: AccountId) -> Self {
+	#[cfg(test)]
+	pub fn new(owner: AccountId, data: MechanicData) -> Self {
 		Self { 
 			owner,
 			timeout_id: Default::default(),
 			locked: Default::default(),
-			data: Default::default(),
+			data,
 		 }
 	}
 }
@@ -50,18 +53,20 @@ impl<AccountId, BlockNumber> MechanicDetails<AccountId, BlockNumber> {
 #[derive(Clone, Encode, Decode, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(test, derive(Debug, PartialEq))]
 pub(crate) enum MechanicData {
-	/// None of mechanic data
-	None,
 	/// Data of the BuyNfa mechanic. Stub - no data needed
 	BuyNfa,
 	/// Data of the Bet mechanic
 	Bet(MechanicDataBet)
 }
-impl Default for MechanicData {
-	fn default() -> Self {
-		MechanicData::None
-	}
+impl From<&MechanicData> for Mechanic {
+    fn from(value: &MechanicData) -> Self {
+			match value {
+				MechanicData::Bet(_) => Mechanic::Bet,
+				MechanicData::BuyNfa => Mechanic::BuyNfa,
+			}
+    }
 }
+
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 /// Data for the Bet machanic hold results of the outcomes of rounds played.
@@ -78,6 +83,37 @@ pub(crate) enum BetResult {
   Draw,
 }
 
+#[derive(RuntimeDebug, Clone, PartialEq, Encode, Decode, TypeInfo)]
+/// The data that is transmitted to upgrade the mechanic.
+pub struct MechanicUpgradeData<AccountId, Index> {
+	pub mechanic_id: MechanicId<AccountId, Index>,
+	/// Payload of the data.  \
+	/// Depends on the type of mechanics
+	pub payload: MechanicUpgradePayload,
+}
+
+#[derive(RuntimeDebug, Clone, PartialEq, Encode, Decode, TypeInfo)]
+/// Payload of the data for upgrade specific mechanic
+pub enum MechanicUpgradePayload {
+	/// For the Bet mechanic no need any data
+	Bet,
+}
+impl From<&MechanicUpgradePayload> for Mechanic {
+    fn from(data: &MechanicUpgradePayload) -> Self {
+        match data {
+					MechanicUpgradePayload::Bet => Mechanic::Bet,
+				}
+    }
+}
+
+#[derive(Clone, PartialEq, RuntimeDebug, Encode, Decode, TypeInfo)]
+pub enum EventMechanicStopReason {
+	/// Needs a mechanical upgrade
+	UpgradeNeeded,
+}
+
 pub(crate) type MechanicDetailsOf<T> = MechanicDetails<AccountIdOf<T>, BlockNumberFor<T>>;
 /// Each index of `outcomes` represent the played round and a value - index of the dropped variant in the bettor respectively
 pub(crate) type MechanicDataBetOutcomes = BoundedVec<u32, ConstU32<BETTOR_MAX_NUMBER_OF_ROUNDS>>;
+
+pub(crate) type MechanicUpgradeDataOf<T> = MechanicUpgradeData<AccountIdOf<T>, IndexOf<T>>;

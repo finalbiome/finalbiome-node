@@ -97,8 +97,10 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		/// The mechanics were done.
+		/// Mechanics done.
 		Finished { id: T::Index, owner: T::AccountId },
+		/// Mechanics was stopped.
+		Stopped { id: T::Index, owner: T::AccountId, reason: EventMechanicStopReason },
 	}
 
 	// Errors inform users that something went wrong.
@@ -110,8 +112,12 @@ pub mod pallet {
 		Internal,
 		/// The number of assets exceeds the allowable
 		AssetsExceedsAllowable,
-		/// Asset is incompatible with mechanics
+		/// Asset is incompatible with mechanic
 		IncompatibleAsset,
+		/// Given data is incompatible with mechanic
+		IncompatibleData,
+		/// The signing account has no permission to do the operation.
+		NoPermission,
 	}
 
 	// Dispatchable functions allows users to interact with the pallet and invoke state changes.
@@ -138,6 +144,15 @@ pub mod pallet {
 			// Only a regular user can execute mechanic
 			let who = T::ExecuteOrigin::ensure_origin(origin)?;
 			Self::do_bet(&who, &class_id, &asset_id)?;
+			Ok(())
+		}
+
+		/// Upgrade mechanic
+		#[pallet::weight(T::DbWeight::get().reads_writes(1, 1))]
+		pub fn upgrade(origin: OriginFor<T>, upgrage_data: MechanicUpgradeDataOf<T>) -> DispatchResult {
+			// Only a regular user can upgrade mechanic
+			let who = T::ExecuteOrigin::ensure_origin(origin)?;
+			Self::do_upgrade(&who, upgrage_data)?;
 			Ok(())
 		}
 	}

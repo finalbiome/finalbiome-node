@@ -2,7 +2,7 @@ use crate::{
 	mock::*,
 	Event as MechanicsEvent,
 	Error,
-	Timeouts, MechanicId, MechanicDetails, MechanicData, MechanicDetailsOf, Mechanics, BetResult, Mechanic,
+	Timeouts, MechanicId, MechanicDetails, MechanicData, MechanicDetailsOf, Mechanics, BetResult, Mechanic, MechanicUpgradeData, MechanicUpgradePayload, MechanicUpgradeDataOf, EventMechanicStopReason,
 };
 use frame_support::{assert_noop, assert_ok, BoundedVec, };
 use frame_system::{EventRecord, Phase};
@@ -52,6 +52,12 @@ fn set_timeout_no_mechanic() {
 		let b = System::block_number();
 
 		let id = MechanicsModule::get_mechanic_id(&acc);
+		Mechanics::<Test>::insert(&id.account_id, &id.nonce, MechanicDetails {
+			owner: acc,
+			locked: bvec![],
+			data: MechanicData::BuyNfa,
+			timeout_id: None,
+		});
 		assert_ok!(MechanicsModule::_set_mechanic_timeout(&id));
 		assert_eq!(Timeouts::<Test>::contains_key(
 			(
@@ -63,7 +69,7 @@ fn set_timeout_no_mechanic() {
 			owner: acc,
 			timeout_id: Some(b+20),
 			locked: [].to_vec().try_into().unwrap(),
-			data: MechanicData::None,
+			data: MechanicData::BuyNfa,
 		};
 		assert_eq!(Mechanics::<Test>::get(&id.account_id, &id.nonce)
 			, Some(m));
@@ -84,7 +90,7 @@ fn set_timeout_mechanic_exists_no_timeout() {
 			owner: acc,
 			timeout_id: None,
 			locked: [].to_vec().try_into().unwrap(),
-			data: MechanicData::None,
+			data: MechanicData::BuyNfa,
 		};
 		Mechanics::<Test>::insert(&id.account_id, &id.nonce, m);
 
@@ -100,7 +106,7 @@ fn set_timeout_mechanic_exists_no_timeout() {
 				owner: acc,
 				timeout_id: Some(b+20),
 				locked: [].to_vec().try_into().unwrap(),
-				data: MechanicData::None,
+				data: MechanicData::BuyNfa,
 			};
 		assert_eq!(Mechanics::<Test>::get(&id.account_id, &id.nonce)
 			, Some(m1));
@@ -121,7 +127,7 @@ fn set_timeout_mechanic_exists_has_timeout() {
 			owner: acc,
 			timeout_id: Some(b+10),
 			locked: [].to_vec().try_into().unwrap(),
-			data: MechanicData::None,
+			data: MechanicData::BuyNfa,
 		};
 		Mechanics::<Test>::insert(&id.account_id, &id.nonce, m);
 
@@ -137,7 +143,7 @@ fn set_timeout_mechanic_exists_has_timeout() {
 				owner: acc,
 				timeout_id: Some(b+10),
 				locked: [].to_vec().try_into().unwrap(),
-				data: MechanicData::None,
+				data: MechanicData::BuyNfa,
 			};
 		assert_eq!(Mechanics::<Test>::get(&id.account_id, &id.nonce)
 			, Some(m1));
@@ -172,7 +178,7 @@ fn drop_mechanic_no_timeout() {
 			owner: acc,
 			timeout_id: None,
 			locked: [].to_vec().try_into().unwrap(),
-			data: MechanicData::None,
+			data: MechanicData::BuyNfa,
 		};
 		Mechanics::<Test>::insert(&id.account_id, &id.nonce, m);
 
@@ -190,6 +196,12 @@ fn drop_mechanic_with_timeout() {
 		let b = System::block_number();
 		
 		let id = MechanicsModule::get_mechanic_id(&acc);
+		Mechanics::<Test>::insert(&id.account_id, &id.nonce, MechanicDetails {
+			owner: 1,
+			locked: bvec![],
+			data: MechanicData::BuyNfa,
+			timeout_id: None,
+		});
 		assert_ok!(MechanicsModule::_set_mechanic_timeout(&id));
 		assert_eq!(Timeouts::<Test>::contains_key(
 			(
@@ -252,11 +264,11 @@ fn do_buy_nfa_worked() {
 #[test]
 fn mechanic_details_default() {
 	new_test_ext().execute_with(|| {
-		let md: MechanicDetailsOf<Test> = MechanicDetails::new(1);
+		let md: MechanicDetailsOf<Test> = MechanicDetails::new(1, MechanicData::BuyNfa);
 		assert_eq!(md.owner, 1);
 		assert_eq!(md.timeout_id, None);
 		assert_eq!(md.locked.to_vec(), [].to_vec());
-		assert_eq!(md.data, MechanicData::default());
+		assert_eq!(md.data, MechanicData::BuyNfa);
 	});
 }
 
@@ -1193,6 +1205,12 @@ fn try_lock_works() {
 		let mut locks = [asset_id.clone()].to_vec();
 
 		assert_eq!(Mechanics::<Test>::contains_key(&id.account_id, &id.nonce), false);
+		Mechanics::<Test>::insert(&id.account_id, &id.nonce, MechanicDetails {
+			owner: 1,
+			locked: bvec![],
+			data: MechanicData::BuyNfa,
+			timeout_id: None,
+		});
 		assert_ok!(MechanicsModule::try_lock(&id, asset_id.clone()));
 		assert_eq!(Mechanics::<Test>::contains_key(&id.account_id, &id.nonce), true);
 
@@ -1226,7 +1244,12 @@ fn clear_lock_works() {
 		let asset_id_2: AssetId = AssetId::Nfa(2, 3);
 		let locks = [asset_id.clone(), asset_id_2.clone()].to_vec();
 
-		assert_eq!(Mechanics::<Test>::contains_key(&id.account_id, &id.nonce), false);
+		Mechanics::<Test>::insert(&id.account_id, &id.nonce, MechanicDetails {
+			owner: 1,
+			locked: bvec![],
+			data: MechanicData::BuyNfa,
+			timeout_id: None,
+		});
 		assert_ok!(MechanicsModule::try_lock(&id, asset_id.clone()));
 		assert_ok!(MechanicsModule::try_lock(&id, asset_id_2.clone()));
 		assert_eq!(Mechanics::<Test>::contains_key(&id.account_id, &id.nonce), true);
@@ -1264,6 +1287,12 @@ fn try_lock_nfa_works() {
 		let asset_id = 3;
 
 		assert_eq!(Mechanics::<Test>::contains_key(&id.account_id, &id.nonce), false);
+		Mechanics::<Test>::insert(&id.account_id, &id.nonce, MechanicDetails {
+			owner: 1,
+			locked: bvec![],
+			data: MechanicData::BuyNfa,
+			timeout_id: None,
+		});
 		assert_ok!(MechanicsModule::try_lock_nfa(&id, &who, class_id, asset_id));
 		assert_eq!(Mechanics::<Test>::contains_key(&id.account_id, &id.nonce), true);
 
@@ -1283,6 +1312,12 @@ fn crear_lock_nfa_works() {
 		let locks = [AssetId::Nfa(4, 5)].to_vec();
 
 		assert_eq!(Mechanics::<Test>::contains_key(&id.account_id, &id.nonce), false);
+		Mechanics::<Test>::insert(&id.account_id, &id.nonce, MechanicDetails {
+			owner: 1,
+			locked: bvec![],
+			data: MechanicData::BuyNfa,
+			timeout_id: None,
+		});
 		assert_ok!(MechanicsModule::try_lock_nfa(&id, &who, class_id, asset_id));
 		assert_eq!(Mechanics::<Test>::contains_key(&id.account_id, &id.nonce), true);
 
@@ -1629,11 +1664,19 @@ fn play_bet_round_three_rounds_win_at_second_round() {
 
 		assert_eq!(
 			System::events(),
-			vec![]
+			vec![
+				EventRecord {
+					phase: Phase::Initialization,
+					event: MechanicsEvent::Stopped{ id: mechanic_id.nonce, owner: mechanic_id.account_id, reason: EventMechanicStopReason::UpgradeNeeded }.into(),
+					topics: vec![],
+				},
+			]
 		);
 		// at second round with one more wins should mint Nfa(16), drop mechanic, deposit event, clean timeout
 		let outcomes = vec![0];
 		System::set_block_number(2); // rnd(4) % total_outcomes(2) = 0; 0 = win
+		System::reset_events();
+
 		assert_ok!(MechanicsModule::play_bet_round(&who, mechanic_id.clone(), &class_id, &asset_id, &bettor, outcomes));
 		assert_eq!(Mechanics::<Test>::contains_key(&mechanic_id.account_id, &mechanic_id.nonce), false);
 
@@ -1741,11 +1784,21 @@ fn do_bet_next_round_two_rounds_work() {
 		System::set_block_number(2); // rnd(2) % total_outcomes(2) = 0; 0 = win
 		System::reset_events();
 		assert_ok!(MechanicsModule::do_bet(&who, &class_id, &asset_id));
-		
+		assert_eq!(
+			System::events(),
+			vec![
+				EventRecord {
+					phase: Phase::Initialization,
+					event: MechanicsEvent::Stopped{ id: inner_id.nonce, owner: inner_id.account_id, reason: EventMechanicStopReason::UpgradeNeeded }.into(),
+					topics: vec![],
+				},
+			]
+		);
 		// at first round should save mechanic
 		assert_eq!(Mechanics::<Test>::contains_key(&inner_id.account_id, &inner_id.nonce), true);
 
 		System::set_block_number(3); // rnd(3) % total_outcomes(2) = 1; 1 = lose
+		System::reset_events();
 		assert_ok!(MechanicsModule::do_bet_next_round(&who, inner_id.clone()));
 		// final result = draw
 		// should burn nfa, drop mechanic, deposit event
@@ -1761,6 +1814,120 @@ fn do_bet_next_round_two_rounds_work() {
 				},
 			]
 		);
+	});
+}
+
+#[test]
+fn do_do_upgrade_bet_two_rounds_work() {
+	new_test_ext().execute_with(|| {
+
+		let who = 118;
+		let _n = System::account_nonce(who);
+		System::inc_account_nonce(who);
+		let inner_id = MechanicsModule::get_mechanic_id(&who);
+		
+		let class_id = 36;
+		let asset_id = 36;
+
+		System::set_block_number(2); // rnd(2) % total_outcomes(2) = 0; 0 = win
+		System::reset_events();
+		assert_ok!(MechanicsModule::exec_bet(Origin::signed(who), class_id, asset_id));
+		assert_eq!(
+			System::events(),
+			vec![
+				EventRecord {
+					phase: Phase::Initialization,
+					event: MechanicsEvent::Stopped{ id: inner_id.nonce, owner: inner_id.account_id, reason: EventMechanicStopReason::UpgradeNeeded }.into(),
+					topics: vec![],
+				},
+			]
+		);
+		
+		// at first round should save mechanic
+		assert_eq!(Mechanics::<Test>::contains_key(&inner_id.account_id, &inner_id.nonce), true);
+
+
+		// NEXT round by upgrade mechanic
+		System::set_block_number(3); // rnd(3) % total_outcomes(2) = 1; 1 = lose
+		System::reset_events();
+		let upgrage_data: MechanicUpgradeDataOf<Test> = MechanicUpgradeData {
+			mechanic_id: inner_id.clone(),
+			payload: MechanicUpgradePayload::Bet,
+		};
+		assert_ok!(MechanicsModule::upgrade(Origin::signed(who), upgrage_data));
+		// final result = draw
+		// should burn nfa, drop mechanic, deposit event
+		assert_eq!(Mechanics::<Test>::contains_key(&inner_id.account_id, &inner_id.nonce), false);
+
+		assert_eq!(
+			System::events(),
+			vec![
+				EventRecord {
+					phase: Phase::Initialization,
+					event: MechanicsEvent::Finished { id: inner_id.nonce, owner: inner_id.account_id }.into(),
+					topics: vec![],
+				},
+			]
+		);
+	});
+}
+
+#[test]
+fn do_upgrade_who_not_own_mechanic_id() {
+	new_test_ext().execute_with(|| {
+		let who = 119;
+		let upgrage_data: MechanicUpgradeDataOf<Test> = MechanicUpgradeData {
+			mechanic_id: MechanicId { account_id: 2, nonce: 3 },
+			payload: MechanicUpgradePayload::Bet,
+		};
+		assert_noop!(MechanicsModule::do_upgrade(&who, upgrage_data), Error::<Test>::NoPermission);
+	});
+}
+
+#[test]
+fn do_upgrade_mechanic_not_exist() {
+	new_test_ext().execute_with(|| {
+		let who = 120;
+		let upgrage_data: MechanicUpgradeDataOf<Test> = MechanicUpgradeData {
+			mechanic_id: MechanicId { account_id: who, nonce: 3 },
+			payload: MechanicUpgradePayload::Bet,
+		};
+		assert_noop!(MechanicsModule::do_upgrade(&who, upgrage_data), Error::<Test>::MechanicsNotAvailable);
+	});
+}
+
+#[test]
+fn do_upgrade_mechanic_wrong_owner() {
+	new_test_ext().execute_with(|| {
+		let who = 121;
+		let upgrage_data: MechanicUpgradeDataOf<Test> = MechanicUpgradeData {
+			mechanic_id: MechanicId { account_id: who, nonce: 3 },
+			payload: MechanicUpgradePayload::Bet,
+		};
+		Mechanics::<Test>::insert(&who, &3, MechanicDetails {
+			owner: 2,
+			locked: bvec![],
+			data: MechanicData::BuyNfa,
+			timeout_id: None,
+		});
+		assert_noop!(MechanicsModule::do_upgrade(&who, upgrage_data), Error::<Test>::NoPermission);
+	});
+}
+#[test]
+fn do_upgrade_mechanic_incompatible_data() {
+	new_test_ext().execute_with(|| {
+		let who = 121;
+		let upgrage_data: MechanicUpgradeDataOf<Test> = MechanicUpgradeData {
+			mechanic_id: MechanicId { account_id: who, nonce: 3 },
+			payload: MechanicUpgradePayload::Bet,
+		};
+		Mechanics::<Test>::insert(&who, &3, MechanicDetails {
+			owner: who,
+			locked: bvec![],
+			data: MechanicData::BuyNfa,
+			timeout_id: None,
+		});
+		assert_noop!(MechanicsModule::do_upgrade(&who, upgrage_data), Error::<Test>::IncompatibleData);
 	});
 }
 

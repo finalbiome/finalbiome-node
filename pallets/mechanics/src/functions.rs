@@ -1,5 +1,5 @@
 //! Functions for the Mechnics pallet.
-use sp_std::{vec, vec::Vec};
+use sp_std::vec::Vec;
 
 use pallet_support::{Locker, bettor::{BettorOutcome, Bettor, BettorWinning, DrawOutcomeResult, OutcomeResult}, DefaultListLengthLimit, misc::cumsum_owned, AssetId, DispatchResultAs, LockResultOf};
 use pallet_support::traits::NonFungibleAssets;
@@ -34,11 +34,7 @@ impl<T: Config> Pallet<T> {
             should_set_timeout = false;
           }
         },
-        maybe_mechanic @ None => {
-          let mut new_mechanic: MechanicDetailsOf<T> = MechanicDetails::new(id.account_id.clone());
-          new_mechanic.timeout_id = Some(life_time_block);
-          *maybe_mechanic = Some(new_mechanic);
-        },
+        None => return Err(Error::<T>::MechanicsNotAvailable.into()),
       }
       Ok(())
     })?;
@@ -86,11 +82,7 @@ impl<T: Config> Pallet<T> {
         Some(ref mut mechanic) => {
           mechanic.locked.try_push(asset_id).map_err(|_| Error::<T>::AssetsExceedsAllowable)?;
         },
-        maybe_mechanic @ None => {
-          let mut new_mechanic: MechanicDetailsOf<T> = MechanicDetails::new(id.account_id.clone());
-          new_mechanic.locked = vec![asset_id].try_into().expect("BoundedVec with one element cannot exceed limit");
-          *maybe_mechanic = Some(new_mechanic);
-        },
+        None => return Err(Error::<T>::MechanicsNotAvailable.into()),
       }
       Ok(())
     })?;
@@ -181,7 +173,18 @@ impl<T: Config> Pallet<T> {
   ) -> DispatchResult {
     let mechanic_id = Self::get_mechanic_id(who);
 
-    let _ = Self::try_lock_nfa(&mechanic_id, who, *class_id, *asset_id)?;
+    // create the mechanic data
+    Mechanics::<T>::insert(&mechanic_id.account_id, &mechanic_id.nonce, MechanicDetails {
+      owner: mechanic_id.account_id.clone(),
+      data: MechanicData::Bet(MechanicDataBet {outcomes: [].to_vec().try_into().expect("zero cannot exceed the limit")}),
+      timeout_id: Default::default(),
+      locked: Default::default(),
+    });
+
+    let _ = Self::try_lock_nfa(&mechanic_id, who, *class_id, *asset_id).map_err(|err| {
+      let _ = Self::drop_mechanic(&mechanic_id);
+      err
+    })?;
     let class_details = T::NonFungibleAssets::get_class(class_id)?;
     // we need to check can it acceptable to this mechanic
     Self::can_use_mechanic(&Mechanic::Bet, &class_details).map_err(|err| {
@@ -265,6 +268,7 @@ impl<T: Config> Pallet<T> {
       debug_assert!(bettor.rounds > 1, "bettor cannot have one round here");
       // save results to mechanic data for future uses
       Self::add_bet_result(&mechanic_id, &outcomes)?;
+      Self::deposit_event(Event::Stopped { id: mechanic_id.nonce, owner: mechanic_id.account_id, reason: EventMechanicStopReason::UpgradeNeeded });
     };
     Ok(())
   }
@@ -410,8 +414,12 @@ impl<T: Config> Pallet<T> {
           mechanic.data = data;
         },
         maybe_mechanic @ None => {
-          let mut new_mechanic: MechanicDetailsOf<T> = MechanicDetails::new(id.account_id.clone());
-          new_mechanic.data = data;
+          let mut new_mechanic: MechanicDetailsOf<T> = MechanicDetails {
+            owner: id.account_id.clone(),
+            data,
+            timeout_id: Default::default(),
+			      locked: Default::default(),
+          };
           // for the new machanic we should set the timeout
           let timeout = Self::calc_timeout_block();
           new_mechanic.timeout_id = Some(timeout);
@@ -449,5 +457,33 @@ impl<T: Config> Pallet<T> {
         }
       },
     }
+  }
+
+  /// Upgrage mechanic by given data and try to execute it.
+  pub(crate) fn do_upgrade(
+    who: &AccountIdOf<T>,
+    upgrage_data: MechanicUpgradeDataOf<T>
+  ) -> DispatchResult {
+    // check validity of id
+    upgrage_data.mechanic_id.ensure_owner(who).map_err(|_| Error::<T>::NoPermission)?;
+    // checks an mechanic existance
+    let mechanic = Mechanics::<T>::try_get(&upgrage_data.mechanic_id.account_id, &upgrage_data.mechanic_id.nonce).map_err(|_| Error::<T>::MechanicsNotAvailable)?;
+    // checks mechanic owner
+    ensure!(&mechanic.owner == who, Error::<T>::NoPermission);
+
+    // validate data
+    // ensure compatibility
+    ensure!(Mechanic::from(&upgrage_data.payload) == Mechanic::from(&mechanic.data), Error::<T>::IncompatibleData);
+    // upgrade mechanic / update mechanic data
+    // execute mechanic
+
+    match upgrage_data.payload {
+      MechanicUpgradePayload::Bet => {
+        // for bet mechanic just execute next round
+        Self::do_bet_next_round(who, upgrage_data.mechanic_id)?;
+      }
+    }
+
+    Ok(())
   }
 }
