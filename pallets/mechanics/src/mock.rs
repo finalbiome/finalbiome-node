@@ -1,6 +1,6 @@
 use crate as pallet_mechanics;
 use codec::Encode;
-use frame_support::{traits::{ConstU16, ConstU32, ConstU64}};
+use frame_support::{traits::{ConstU16, ConstU32, ConstU64, Hooks}};
 use frame_system as system;
 use pallet_support::{*, types_nfa::{AssetDetails, ClassDetails}, bettor::{Bettor, BettorOutcome, OutcomeResult, BettorWinning, DrawOutcomeResult}};
 use sp_core::H256;
@@ -21,6 +21,9 @@ macro_rules! bvec {
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
+
+pub(crate) type BlockNumber = u64;
+
 
 /// Provides an implementation of [frame_support::traits::Randomness]
 /// that should only be used in tests!
@@ -61,7 +64,7 @@ impl system::Config for Test {
 	type Origin = Origin;
 	type Call = Call;
 	type Index = u32;
-	type BlockNumber = u64;
+	type BlockNumber = BlockNumber;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
 	type AccountId = u64;
@@ -453,8 +456,24 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut ext: sp_io::TestExternalities = storage.into();
 	ext.execute_with(|| {
 		System::set_block_number(1);
-		// System::on_initialize(1);
-		// NonFungibleAssets::on_initialize(1);
+		System::on_initialize(1);
+		MechanicsModule::on_initialize(1);
 	});
 	ext
+}
+
+/// Progress to the given block.
+///
+/// This will finalize the previous block, initialize up to the given block, essentially simulating
+/// a block import/propose process where we first initialize the block, then execute some stuff (not
+/// in the function), and then finalize the block.
+pub fn run_to_block(n: BlockNumber) {
+	while System::block_number() < n {
+		MechanicsModule::on_finalize(System::block_number());
+  	System::on_finalize(System::block_number());
+
+		System::set_block_number(System::block_number() + 1);
+		System::on_initialize(System::block_number());
+		MechanicsModule::on_initialize(System::block_number());
+	}
 }

@@ -2,7 +2,7 @@ use crate::{
 	mock::*,
 	Event as MechanicsEvent,
 	Error,
-	Timeouts, MechanicId, MechanicDetails, MechanicData, MechanicDetailsOf, Mechanics, BetResult, Mechanic, MechanicUpgradeData, MechanicUpgradePayload, MechanicUpgradeDataOf, EventMechanicStopReason,
+	Timeouts, MechanicId, MechanicDetails, MechanicData, MechanicDetailsOf, Mechanics, BetResult, Mechanic, MechanicUpgradeData, MechanicUpgradePayload, MechanicUpgradeDataOf, EventMechanicStopReason, AssetAction,
 };
 use frame_support::{assert_noop, assert_ok, BoundedVec, };
 use frame_system::{EventRecord, Phase};
@@ -11,7 +11,7 @@ use pallet_support::{
 	MechanicIdOf,
 	bettor::{BettorOutcome, Bettor, BettorWinning, DrawOutcomeResult, OutcomeResult},
 	DefaultListLengthLimit,
-	AssetCharacteristic, purchased::{Purchased, Offer}, ClassDetailsOf, types_nfa::ClassDetails, AssetId,
+	AssetCharacteristic, purchased::{Purchased, Offer}, ClassDetailsOf, types_nfa::ClassDetails, LockedAccet,
 };
 
 
@@ -160,7 +160,7 @@ fn drop_mechanic_none_mechanic() {
 		
 		let id = MechanicsModule::get_mechanic_id(&acc);
 
-		assert_ok!(MechanicsModule::drop_mechanic(&id));
+		assert_ok!(MechanicsModule::drop_mechanic(&id, AssetAction::Release));
 	});
 }
 
@@ -182,7 +182,7 @@ fn drop_mechanic_no_timeout() {
 		};
 		Mechanics::<Test>::insert(&id.account_id, &id.nonce, m);
 
-		assert_ok!(MechanicsModule::drop_mechanic(&id));
+		assert_ok!(MechanicsModule::drop_mechanic(&id, AssetAction::Release));
 		assert_eq!(Mechanics::<Test>::contains_key(&id.account_id, &id.nonce), false);
 	});
 }
@@ -210,7 +210,7 @@ fn drop_mechanic_with_timeout() {
 				&id.nonce,
 			)), true);
 
-		assert_ok!(MechanicsModule::drop_mechanic(&id));
+		assert_ok!(MechanicsModule::drop_mechanic(&id, AssetAction::Release));
 		assert_eq!(Mechanics::<Test>::contains_key(&id.account_id, &id.nonce), false);
 		assert_eq!(Timeouts::<Test>::contains_key(
 			(
@@ -1201,7 +1201,7 @@ fn try_lock_works() {
 			nonce: 2,
 		};
 
-		let asset_id: AssetId = AssetId::Nfa(1, 2);
+		let asset_id: LockedAccet = LockedAccet::Nfa(1, 2);
 		let mut locks = [asset_id.clone()].to_vec();
 
 		assert_eq!(Mechanics::<Test>::contains_key(&id.account_id, &id.nonce), false);
@@ -1218,7 +1218,7 @@ fn try_lock_works() {
 		assert_eq!(m.locked.to_vec(), locks);
 
 		for i in 1..256 {
-			let asset_id: AssetId = AssetId::Nfa(1 + i, 2 + i);
+			let asset_id: LockedAccet = LockedAccet::Nfa(1 + i, 2 + i);
 			locks.push(asset_id.clone());
 			if i == 255 {
 				assert_noop!(MechanicsModule::try_lock(&id, asset_id.clone()), Error::<Test>::AssetsExceedsAllowable);
@@ -1240,8 +1240,8 @@ fn clear_lock_works() {
 			nonce: 2,
 		};
 
-		let asset_id: AssetId = AssetId::Nfa(1, 2);
-		let asset_id_2: AssetId = AssetId::Nfa(2, 3);
+		let asset_id: LockedAccet = LockedAccet::Nfa(1, 2);
+		let asset_id_2: LockedAccet = LockedAccet::Nfa(2, 3);
 		let locks = [asset_id.clone(), asset_id_2.clone()].to_vec();
 
 		Mechanics::<Test>::insert(&id.account_id, &id.nonce, MechanicDetails {
@@ -1258,7 +1258,7 @@ fn clear_lock_works() {
 		assert_eq!(m.locked.to_vec(), locks);
 
 		// ignoring not existed asset
-		let asset_id_3: AssetId = AssetId::Nfa(3, 4);
+		let asset_id_3: LockedAccet = LockedAccet::Nfa(3, 4);
 		assert_ok!(MechanicsModule::_clear_lock(&id, asset_id_3));
 
 		// chreck wrong mechanic
@@ -1309,7 +1309,7 @@ fn crear_lock_nfa_works() {
 		let who = 1;
 		let class_id = 4;
 		let asset_id = 5;
-		let locks = [AssetId::Nfa(4, 5)].to_vec();
+		let locks = [LockedAccet::Nfa(4, 5)].to_vec();
 
 		assert_eq!(Mechanics::<Test>::contains_key(&id.account_id, &id.nonce), false);
 		Mechanics::<Test>::insert(&id.account_id, &id.nonce, MechanicDetails {
@@ -1913,6 +1913,7 @@ fn do_upgrade_mechanic_wrong_owner() {
 		assert_noop!(MechanicsModule::do_upgrade(&who, upgrage_data), Error::<Test>::NoPermission);
 	});
 }
+
 #[test]
 fn do_upgrade_mechanic_incompatible_data() {
 	new_test_ext().execute_with(|| {
@@ -1928,6 +1929,110 @@ fn do_upgrade_mechanic_incompatible_data() {
 			timeout_id: None,
 		});
 		assert_noop!(MechanicsModule::do_upgrade(&who, upgrage_data), Error::<Test>::IncompatibleData);
+	});
+}
+
+#[test]
+fn process_mechanic_timeouts_dropped() {
+	new_test_ext().execute_with(|| {
+		let who = 122;
+		let nonce = 3;
+		let timeout_id = 15;
+		// add mechanic with timeout
+		Mechanics::<Test>::insert(&who, &nonce, MechanicDetails {
+			owner: who,
+			locked: bvec![],
+			data: MechanicData::BuyNfa,
+			timeout_id: Some(timeout_id),
+		});
+		// add timeout records
+		Timeouts::<Test>::insert((
+			&timeout_id,
+			&who,
+			&nonce
+		), ());
+		assert_eq!(Timeouts::<Test>::contains_key((&timeout_id, &who, &nonce)), true);
+		assert_eq!(Mechanics::<Test>::contains_key(&who, &nonce), true);
+
+		System::set_block_number(2);
+		assert_eq!(MechanicsModule::process_mechanic_timeouts(), (0, 0));
+		assert_eq!(Timeouts::<Test>::contains_key((&timeout_id, &who, &nonce)), true);
+		assert_eq!(Mechanics::<Test>::contains_key(&who, &nonce), true);
+
+		System::set_block_number(timeout_id);
+		assert_eq!(MechanicsModule::process_mechanic_timeouts(), (0, 1));
+
+		assert_eq!(Mechanics::<Test>::contains_key(&who, &nonce), false);
+		assert_eq!(Timeouts::<Test>::contains_key((&timeout_id, &who, &nonce)), false);
+		System::set_block_number(timeout_id + 1);
+		assert_eq!(MechanicsModule::process_mechanic_timeouts(), (0, 0));
+	});
+}
+
+#[test]
+fn process_mechanic_timeouts_lifecycle() {
+	new_test_ext().execute_with(|| {
+		let who = 122;
+		let nonce = 3;
+		let timeout_id = 15;
+		let timeout_id_2 = 150;
+		// add mechanic with timeout
+		Mechanics::<Test>::insert(&who, &nonce, MechanicDetails {
+			owner: who,
+			locked: bvec![],
+			data: MechanicData::BuyNfa,
+			timeout_id: Some(timeout_id),
+		});
+		// add timeout records
+		Timeouts::<Test>::insert((
+			&timeout_id,
+			&who,
+			&nonce
+		), ());
+		// add mechanic with timeout 2
+		Mechanics::<Test>::insert(&33, &44, MechanicDetails {
+			owner: who,
+			locked: bvec![],
+			data: MechanicData::BuyNfa,
+			timeout_id: Some(timeout_id_2),
+		});
+		// add timeout records 2
+		Timeouts::<Test>::insert((
+			&timeout_id_2,
+			&33,
+			&44
+		), ());
+		// add mechanic with timeout 3
+		Mechanics::<Test>::insert(&who, &44, MechanicDetails {
+			owner: who,
+			locked: bvec![],
+			data: MechanicData::BuyNfa,
+			timeout_id: Some(timeout_id),
+		});
+		// add timeout records 3
+		Timeouts::<Test>::insert((
+			&timeout_id,
+			&who,
+			&44
+		), ());
+		assert_eq!(Timeouts::<Test>::contains_key((&timeout_id, &who, &nonce)), true);
+		assert_eq!(Mechanics::<Test>::contains_key(&who, &nonce), true);
+		assert_eq!(Timeouts::<Test>::contains_key((&timeout_id, &who, &nonce)), true);
+		assert_eq!(Mechanics::<Test>::contains_key(&who, &nonce), true);
+		assert_eq!(Timeouts::<Test>::contains_key((&timeout_id_2, &33, &44)), true);
+		assert_eq!(Mechanics::<Test>::contains_key(&who, &nonce), true);
+		
+		run_to_block(timeout_id);
+		assert_eq!(Timeouts::<Test>::contains_key((&timeout_id, &who, &nonce)), false);
+		assert_eq!(Mechanics::<Test>::contains_key(&who, &nonce), false);
+		assert_eq!(Timeouts::<Test>::contains_key((&timeout_id, &who, &nonce)), false);
+		assert_eq!(Mechanics::<Test>::contains_key(&who, &nonce), false);
+		assert_eq!(Timeouts::<Test>::contains_key((&timeout_id_2, &33, &44)), true);
+		assert_eq!(Mechanics::<Test>::contains_key(&33, &44), true);
+
+		run_to_block(timeout_id_2);
+		assert_eq!(Timeouts::<Test>::contains_key((&timeout_id_2, &33, &44)), false);
+		assert_eq!(Mechanics::<Test>::contains_key(&33, &44), false);
 	});
 }
 

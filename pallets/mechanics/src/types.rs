@@ -1,4 +1,4 @@
-use pallet_support::{AssetId, DefaultListLengthLimit, BETTOR_MAX_NUMBER_OF_ROUNDS, IndexOf};
+use pallet_support::{DefaultListLengthLimit, BETTOR_MAX_NUMBER_OF_ROUNDS, IndexOf, LockedAccet};
 use scale_info::TypeInfo;
 use codec::{Decode, Encode, MaxEncodedLen};
 
@@ -25,8 +25,7 @@ pub enum Mechanic {
     Bet,
 }
 
-#[derive(Clone, Encode, Decode, TypeInfo, MaxEncodedLen)]
-#[cfg_attr(test, derive(Debug, PartialEq))]
+#[derive(Clone, Encode, Decode, TypeInfo, MaxEncodedLen, PartialEq, RuntimeDebug)]
 /// The details of the active mechanic
 pub(crate) struct MechanicDetails<AccountId, BlockNumber> {
 	/// Owner of the mechanic
@@ -34,7 +33,7 @@ pub(crate) struct MechanicDetails<AccountId, BlockNumber> {
 	/// Mechain timeout id
 	pub timeout_id: Option<BlockNumber>,
 	/// List of assets locked by mechanic
-	pub locked: BoundedVec<AssetId, DefaultListLengthLimit>,
+	pub locked: BoundedVec<LockedAccet, DefaultListLengthLimit>,
 	// store a type of mechanic with data
 	pub data: MechanicData,
 }
@@ -50,8 +49,7 @@ impl<AccountId, BlockNumber> MechanicDetails<AccountId, BlockNumber> {
 	}
 }
 
-#[derive(Clone, Encode, Decode, TypeInfo, MaxEncodedLen)]
-#[cfg_attr(test, derive(Debug, PartialEq))]
+#[derive(Clone, Encode, Decode, TypeInfo, MaxEncodedLen, RuntimeDebug, PartialEq)]
 pub(crate) enum MechanicData {
 	/// Data of the BuyNfa mechanic. Stub - no data needed
 	BuyNfa,
@@ -110,6 +108,14 @@ impl From<&MechanicUpgradePayload> for Mechanic {
 pub enum EventMechanicStopReason {
 	/// Needs a mechanical upgrade
 	UpgradeNeeded,
+}
+
+/// Actions that are performed with the assets at the time of the destruction of the mechanics
+pub(crate) enum AssetAction {
+	/// All assets will be released and available to the user
+	Release,
+	/// All assets will be burned
+	Burn
 }
 
 pub(crate) type MechanicDetailsOf<T> = MechanicDetails<AccountIdOf<T>, BlockNumberFor<T>>;

@@ -216,3 +216,10 @@ pub enum AssetId {
   Fa(FungibleAssetId),
   Nfa(NonFungibleClassId, NonFungibleAssetId),
 }
+
+#[derive(Copy, Clone, Encode, Decode, TypeInfo, MaxEncodedLen, PartialEq, RuntimeDebug)]
+/// Represent a locked FA with amount or NFA asset id
+pub enum LockedAccet {
+  Fa(FungibleAssetId, FungibleAssetBalance),
+  Nfa(NonFungibleClassId, NonFungibleAssetId),
+}

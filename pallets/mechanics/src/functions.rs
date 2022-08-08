@@ -1,7 +1,7 @@
 //! Functions for the Mechnics pallet.
 use sp_std::vec::Vec;
 
-use pallet_support::{Locker, bettor::{BettorOutcome, Bettor, BettorWinning, DrawOutcomeResult, OutcomeResult}, DefaultListLengthLimit, misc::cumsum_owned, AssetId, DispatchResultAs, LockResultOf};
+use pallet_support::{Locker, bettor::{BettorOutcome, Bettor, BettorWinning, DrawOutcomeResult, OutcomeResult}, DefaultListLengthLimit, misc::cumsum_owned, DispatchResultAs, LockResultOf, LockedAccet};
 use pallet_support::traits::NonFungibleAssets;
 use pallet_support::traits::FungibleAssets;
 
@@ -15,7 +15,7 @@ impl<T: Config> Pallet<T> {
 
   /// Calculates the block when mechanic should be destroyed
   pub(crate) fn calc_timeout_block() -> BlockNumberFor<T> {
-    let block_number =  <frame_system::Pallet<T>>::block_number();
+    let block_number = <frame_system::Pallet<T>>::block_number();
     T::MechanicsLifeTime::get().saturating_add(block_number)
   }
 
@@ -50,7 +50,7 @@ impl<T: Config> Pallet<T> {
   }
 
   /// Drop mechanic if it exist and clear timeout
-  pub(crate) fn drop_mechanic(id: &MechanicIdOf<T>) -> DispatchResult {
+  pub(crate) fn drop_mechanic(id: &MechanicIdOf<T>, asset_action: AssetAction) -> DispatchResult {
     let mechanic = Mechanics::<T>::take(&id.account_id, &id.nonce);
     if let Some(mechanic) = mechanic {
       if let Some(timeout_id) = mechanic.timeout_id {
@@ -61,8 +61,20 @@ impl<T: Config> Pallet<T> {
         let origin = Locker::Mechanic(id.clone());
         let who = id.account_id.clone();
         match lock {
-          AssetId::Nfa(class_id, asset_id) => T::NonFungibleAssets::clear_lock(&who, &origin, &class_id, &asset_id)?,
-          AssetId::Fa(_asset_id) => todo!("Create a lock methods for FA"),
+          LockedAccet::Nfa(class_id, asset_id) => {
+            match asset_action {
+              AssetAction::Release => T::NonFungibleAssets::clear_lock(&who, &origin, &class_id, &asset_id)?,
+              AssetAction::Burn => T::NonFungibleAssets::burn(class_id, asset_id, None)?,
+            }
+          },
+          LockedAccet::Fa(asset_id, amount) => {
+            match asset_action {
+              AssetAction::Release => todo!("Create an clear_lock method for FA"),
+              AssetAction::Burn => {
+                let _ = T::FungibleAssets::burn_from(asset_id, &who, amount)?;
+              },
+            }
+          },
         }
       }
       
@@ -75,7 +87,7 @@ impl<T: Config> Pallet<T> {
   /// Don't use it on one's own
   pub(crate) fn try_lock(
     id: &MechanicIdOf<T>,
-    asset_id: AssetId,
+    asset_id: LockedAccet,
   ) -> DispatchResult {
     Mechanics::<T>::try_mutate(&id.account_id, &id.nonce, | maybe_mechanic | -> DispatchResult {
       match maybe_mechanic {
@@ -95,7 +107,7 @@ impl<T: Config> Pallet<T> {
   /// Don't use it on one's own
   pub(crate) fn _clear_lock(
     id: &MechanicIdOf<T>,
-    asset_id: AssetId,
+    asset_id: LockedAccet,
   ) -> DispatchResult {
     Mechanics::<T>::try_mutate(&id.account_id, &id.nonce, | maybe_mechanic | -> DispatchResult {
       match maybe_mechanic {
@@ -120,7 +132,7 @@ impl<T: Config> Pallet<T> {
   ) -> DispatchResultAs<LockResultOf<T>> {
     let origin = Locker::Mechanic(id.clone());
     let lock_result = T::NonFungibleAssets::try_lock(who, origin.clone(), &class_id, &asset_id)?;
-    Self::try_lock(id, AssetId::Nfa(class_id, asset_id)).map_err(|e| {
+    Self::try_lock(id, LockedAccet::Nfa(class_id, asset_id)).map_err(|e| {
       // rollback if something goes wrong
       let _ = T::NonFungibleAssets::clear_lock(who, &origin, &class_id, &asset_id);
       e
@@ -139,7 +151,7 @@ impl<T: Config> Pallet<T> {
   ) -> DispatchResult {
     let origin = Locker::Mechanic(id.clone());
     let _ = T::NonFungibleAssets::clear_lock(who, &origin, &class_id, &asset_id);
-    let res = Self::_clear_lock(id, AssetId::Nfa(class_id, asset_id));
+    let res = Self::_clear_lock(id, LockedAccet::Nfa(class_id, asset_id));
     debug_assert!(res.is_ok(), "clear_lock rise error, but shouldn't");
     Ok(())
   }
@@ -182,14 +194,14 @@ impl<T: Config> Pallet<T> {
     });
 
     let _ = Self::try_lock_nfa(&mechanic_id, who, *class_id, *asset_id).map_err(|err| {
-      let _ = Self::drop_mechanic(&mechanic_id);
+      let _ = Self::drop_mechanic(&mechanic_id, AssetAction::Release);
       err
     })?;
     let class_details = T::NonFungibleAssets::get_class(class_id)?;
     // we need to check can it acceptable to this mechanic
     Self::can_use_mechanic(&Mechanic::Bet, &class_details).map_err(|err| {
       // clean the lock
-      let _ = Self::drop_mechanic(&mechanic_id);
+      let _ = Self::drop_mechanic(&mechanic_id, AssetAction::Release);
       err
     })?;
     if let Some(bettor) = class_details.bettor {
@@ -219,9 +231,9 @@ impl<T: Config> Pallet<T> {
     }
     let bet_asset = mechanic.locked[0];
     let (class_id, asset_id) = match bet_asset {
-      AssetId::Nfa(class_id, asset_id) => (class_id, asset_id),
+      LockedAccet::Nfa(class_id, asset_id) => (class_id, asset_id),
       // expect only NFA Bettor
-      AssetId::Fa(_) => return Err(Error::<T>::Internal.into()),
+      LockedAccet::Fa(_, _) => return Err(Error::<T>::Internal.into()),
     };
     let class_details = T::NonFungibleAssets::get_class(&class_id)?;
 
@@ -398,7 +410,7 @@ impl<T: Config> Pallet<T> {
       },
     };
     // drop mechanic
-    Self::drop_mechanic(mechanic_id)?;
+    Self::drop_mechanic(mechanic_id, AssetAction::Burn)?;
     // emit Finished event
     Self::deposit_event(Event::Finished { id: mechanic_id.nonce, owner: mechanic_id.account_id.clone() });
     Ok(())
@@ -485,5 +497,22 @@ impl<T: Config> Pallet<T> {
     }
 
     Ok(())
+  }
+
+  /// Drop all mechanics by timeout.
+  /// 
+  /// Returns weight and count of dropped mechanics
+  pub(crate) fn process_mechanic_timeouts() -> (Weight, u32) {
+    let mut mechanics_count = 0;
+    let curr_block = <frame_system::Pallet<T>>::block_number();
+    for (mechanic_id, _) in Timeouts::<T>::drain_prefix((curr_block,)) {
+      let id = MechanicId {
+        account_id: mechanic_id.0,
+        nonce: mechanic_id.1,
+      };
+      let _ = Self::drop_mechanic(&id, AssetAction::Burn);
+      mechanics_count = mechanics_count.saturating_add(1);
+    };
+    (0, mechanics_count)
   }
 }

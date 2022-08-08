@@ -32,7 +32,8 @@ use sp_runtime::{
 use frame_support:: {
 	traits::{
 		Randomness,
-	}
+	},
+	log,
 };
 
 #[frame_support::pallet]
@@ -118,6 +119,21 @@ pub mod pallet {
 		IncompatibleData,
 		/// The signing account has no permission to do the operation.
 		NoPermission,
+	}
+
+	// Implement the pallet hooks.
+	#[pallet::hooks]
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		fn on_initialize(_n: BlockNumberFor<T>) -> Weight {
+			// All assets which need to be top upped (which stoded in TopUpQueue) must be processed
+			let (weight, count) = Self::process_mechanic_timeouts();
+			log::info!("🧹 Timeouted mechanics dropped [mechanics: {}, weigth: {}]", &count, &weight);
+			
+			weight
+		}
+
+		// can implement also: on_finalize, on_runtime_upgrade, offchain_worker, ...
+		// see `Hooks` trait
 	}
 
 	// Dispatchable functions allows users to interact with the pallet and invoke state changes.
