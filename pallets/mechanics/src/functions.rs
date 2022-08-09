@@ -208,7 +208,7 @@ impl<T: Config> Pallet<T> {
       // no results exist for the first time played asset
       let outcomes =  Vec::new();
       
-      Self::play_bet_round(who, mechanic_id, class_id, asset_id, &bettor, outcomes)?;
+      Self::play_bet_round(who, mechanic_id, &bettor, outcomes)?;
     };
     Ok(())
   }
@@ -230,7 +230,7 @@ impl<T: Config> Pallet<T> {
       return Err(Error::<T>::Internal.into())
     }
     let bet_asset = mechanic.locked[0];
-    let (class_id, asset_id) = match bet_asset {
+    let (class_id, _) = match bet_asset {
       LockedAccet::Nfa(class_id, asset_id) => (class_id, asset_id),
       // expect only NFA Bettor
       LockedAccet::Fa(_, _) => return Err(Error::<T>::Internal.into()),
@@ -245,7 +245,7 @@ impl<T: Config> Pallet<T> {
       Vec::new()
     };
     if let Some(bettor) = class_details.bettor {
-      Self::play_bet_round(who, mechanic_id, &class_id, &asset_id, &bettor, outcomes)?;
+      Self::play_bet_round(who, mechanic_id, &bettor, outcomes)?;
     } else {
       debug_assert!(false, "an asset whitout the bettor can't be present here");
       return Err(Error::<T>::Internal.into())
@@ -258,8 +258,6 @@ impl<T: Config> Pallet<T> {
   pub(crate) fn play_bet_round(
     who: &T::AccountId,
     mechanic_id: MechanicIdOf<T>,
-    class_id: &NonFungibleClassId,
-    asset_id: &NonFungibleAssetId,
     bettor: &Bettor,
     outcomes: Vec<u32>,
   ) -> DispatchResult {
@@ -272,10 +270,10 @@ impl<T: Config> Pallet<T> {
     // trying to determine the final result
     if let Some(bet_result) = Self::try_finalize_bet(&outcomes, bettor.rounds, &bettor.outcomes) {
       // finish mechanic
-      Self::do_bet_result_processing(&mechanic_id, who, *class_id, *asset_id, bettor, bet_result)?;
+      Self::do_bet_result_processing(&mechanic_id, who, bettor, bet_result)?;
     } else if played_rounds == bettor.rounds as usize {
       // the bet was completed, but the winner was not found, i.e. draw
-      Self::do_bet_result_processing(&mechanic_id, who, *class_id, *asset_id, bettor, BetResult::Draw)?;
+      Self::do_bet_result_processing(&mechanic_id, who, bettor, BetResult::Draw)?;
     } else {
       debug_assert!(bettor.rounds > 1, "bettor cannot have one round here");
       // save results to mechanic data for future uses
@@ -366,8 +364,6 @@ impl<T: Config> Pallet<T> {
   pub(crate) fn do_bet_result_processing(
     mechanic_id: &MechanicIdOf<T>,
     who: &T::AccountId,
-    class_id: NonFungibleClassId,
-    asset_id: NonFungibleAssetId,
     bettor: &Bettor,
     result: BetResult,
   ) -> DispatchResult {

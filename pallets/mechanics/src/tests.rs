@@ -793,8 +793,8 @@ fn do_bet_result_processing_win_nfa() {
 
 		let who = 222;
 		let mechanic_id: MechanicIdOf<Test> = MechanicId::<<Test as frame_system::Config>::AccountId, <Test as frame_system::Config>::Index>::from_account_id::<Test>(&who);
-		let class_id = 22;
-		let asset_id = 33;
+		let _class_id = 22;
+		let _asset_id = 33;
 		let bettor: Bettor = Bettor {
 			// with odd block numbers the bettor will lose
 			// with even - win
@@ -820,7 +820,7 @@ fn do_bet_result_processing_win_nfa() {
 		let result = BetResult::Won;
 		
 		System::reset_events();
-		assert_ok!(MechanicsModule::do_bet_result_processing(&mechanic_id, &who, class_id, asset_id, &bettor, result));
+		assert_ok!(MechanicsModule::do_bet_result_processing(&mechanic_id, &who, &bettor, result));
 		// should mint nfa(10,) burn nfa(22,33), drop mechanic, deposit event
 
 		assert_eq!(
@@ -843,8 +843,8 @@ fn do_bet_result_processing_lose() {
 
 		let who = 222;
 		let mechanic_id: MechanicIdOf<Test> = MechanicId::<<Test as frame_system::Config>::AccountId, <Test as frame_system::Config>::Index>::from_account_id::<Test>(&who);
-		let class_id = 23;
-		let asset_id = 34;
+		let _class_id = 23;
+		let _asset_id = 34;
 		let bettor: Bettor = Bettor {
 			// with odd block numbers the bettor will lose
 			// with even - win
@@ -870,7 +870,7 @@ fn do_bet_result_processing_lose() {
 		let result = BetResult::Lost;
 		
 		System::reset_events();
-		assert_ok!(MechanicsModule::do_bet_result_processing(&mechanic_id, &who, class_id, asset_id, &bettor, result));
+		assert_ok!(MechanicsModule::do_bet_result_processing(&mechanic_id, &who, &bettor, result));
 		// should burn nfa(23,34), drop mechanic, deposit event
 
 		assert_eq!(
@@ -893,8 +893,8 @@ fn do_bet_result_processing_draw_win() {
 
 		let who = 222;
 		let mechanic_id: MechanicIdOf<Test> = MechanicId::<<Test as frame_system::Config>::AccountId, <Test as frame_system::Config>::Index>::from_account_id::<Test>(&who);
-		let class_id = 24;
-		let asset_id = 35;
+		let _class_id = 24;
+		let _asset_id = 35;
 		let bettor: Bettor = Bettor {
 			// with odd block numbers the bettor will lose
 			// with even - win
@@ -920,7 +920,7 @@ fn do_bet_result_processing_draw_win() {
 		let result = BetResult::Draw;
 		
 		System::reset_events();
-		assert_ok!(MechanicsModule::do_bet_result_processing(&mechanic_id, &who, class_id, asset_id, &bettor, result));
+		assert_ok!(MechanicsModule::do_bet_result_processing(&mechanic_id, &who, &bettor, result));
 		// should min nfa(11,) burn nfa(24,35), drop mechanic, deposit event
 
 		assert_eq!(
@@ -943,8 +943,8 @@ fn do_bet_result_processing_draw_lose() {
 
 		let who = 222;
 		let mechanic_id: MechanicIdOf<Test> = MechanicId::<<Test as frame_system::Config>::AccountId, <Test as frame_system::Config>::Index>::from_account_id::<Test>(&who);
-		let class_id = 25;
-		let asset_id = 36;
+		let _class_id = 25;
+		let _asset_id = 36;
 		let bettor: Bettor = Bettor {
 			// with odd block numbers the bettor will lose
 			// with even - win
@@ -970,7 +970,7 @@ fn do_bet_result_processing_draw_lose() {
 		let result = BetResult::Draw;
 		
 		System::reset_events();
-		assert_ok!(MechanicsModule::do_bet_result_processing(&mechanic_id, &who, class_id, asset_id, &bettor, result));
+		assert_ok!(MechanicsModule::do_bet_result_processing(&mechanic_id, &who, &bettor, result));
 		// should burn nfa(25,36), drop mechanic, deposit event
 
 		assert_eq!(
@@ -993,8 +993,8 @@ fn do_bet_result_processing_draw_keep() {
 
 		let who = 222;
 		let mechanic_id: MechanicIdOf<Test> = MechanicId::<<Test as frame_system::Config>::AccountId, <Test as frame_system::Config>::Index>::from_account_id::<Test>(&who);
-		let class_id = 26;
-		let asset_id = 37;
+		let _class_id = 26;
+		let _asset_id = 37;
 		let bettor: Bettor = Bettor {
 			// with odd block numbers the bettor will lose
 			// with even - win
@@ -1020,7 +1020,7 @@ fn do_bet_result_processing_draw_keep() {
 		let result = BetResult::Draw;
 		
 		System::reset_events();
-		assert_ok!(MechanicsModule::do_bet_result_processing(&mechanic_id, &who, class_id, asset_id, &bettor, result));
+		assert_ok!(MechanicsModule::do_bet_result_processing(&mechanic_id, &who, &bettor, result));
 		// should drop mechanic, deposit event
 
 		assert_eq!(
@@ -1361,14 +1361,14 @@ fn play_bet_round_single_round_win() {
 		let _n = System::account_nonce(who);
 		System::inc_account_nonce(who);
 		let mechanic_id = MechanicsModule::get_mechanic_id(&who);
-		let class_id = 8;
-		let asset_id = 8;
+		let _class_id = 8;
+		let _asset_id = 8;
 		let outcomes = Vec::new();
 		System::set_block_number(2); // rnd(2) % total_outcomes(2) = 0; 0 = win
 		System::reset_events();
 
 		// should mint Nfa(14), drop mechanic, deposit event
-		assert_ok!(MechanicsModule::play_bet_round(&who, mechanic_id.clone(), &class_id, &asset_id, &bettor, outcomes));
+		assert_ok!(MechanicsModule::play_bet_round(&who, mechanic_id.clone(), &bettor, outcomes));
 
 		assert_eq!(Mechanics::<Test>::contains_key(&mechanic_id.account_id, &mechanic_id.nonce), false);
 
@@ -1415,14 +1415,14 @@ fn play_bet_round_single_round_lose() {
 		let _n = System::account_nonce(who);
 		System::inc_account_nonce(who);
 		let mechanic_id = MechanicsModule::get_mechanic_id(&who);
-		let class_id = 9;
-		let asset_id = 9;
+		let _class_id = 9;
+		let _asset_id = 9;
 		let outcomes = Vec::new();
 		System::set_block_number(3); // rnd(3) % total_outcomes(2) = 1; 1 = lose
 		System::reset_events();
 
 		// should mint Nfa(15), drop mechanic, deposit event
-		assert_ok!(MechanicsModule::play_bet_round(&who, mechanic_id.clone(), &class_id, &asset_id, &bettor, outcomes));
+		assert_ok!(MechanicsModule::play_bet_round(&who, mechanic_id.clone(), &bettor, outcomes));
 
 		assert_eq!(Mechanics::<Test>::contains_key(&mechanic_id.account_id, &mechanic_id.nonce), false);
 
@@ -1472,14 +1472,14 @@ fn play_bet_round_single_round_draw_keep() {
 		let _n = System::account_nonce(who);
 		System::inc_account_nonce(who);
 		let mechanic_id = MechanicsModule::get_mechanic_id(&who);
-		let class_id = 31;
-		let asset_id = 31;
+		let _class_id = 31;
+		let _asset_id = 31;
 		let outcomes = Vec::new();
 		System::set_block_number(2); // rnd(2) % total_outcomes(3) = 2; 2 = draw
 		System::reset_events();
 
 		// should deposit event
-		assert_ok!(MechanicsModule::play_bet_round(&who, mechanic_id.clone(), &class_id, &asset_id, &bettor, outcomes));
+		assert_ok!(MechanicsModule::play_bet_round(&who, mechanic_id.clone(), &bettor, outcomes));
 
 		assert_eq!(Mechanics::<Test>::contains_key(&mechanic_id.account_id, &mechanic_id.nonce), false);
 
@@ -1529,14 +1529,14 @@ fn play_bet_round_single_round_draw_lose() {
 		let _n = System::account_nonce(who);
 		System::inc_account_nonce(who);
 		let mechanic_id = MechanicsModule::get_mechanic_id(&who);
-		let class_id = 32;
-		let asset_id = 32;
+		let _class_id = 32;
+		let _asset_id = 32;
 		let outcomes = Vec::new();
 		System::set_block_number(2); // rnd(2) % total_outcomes(3) = 2; 2 = draw
 		System::reset_events();
 
 		// should burn Nfa(18), deposit event
-		assert_ok!(MechanicsModule::play_bet_round(&who, mechanic_id.clone(), &class_id, &asset_id, &bettor, outcomes));
+		assert_ok!(MechanicsModule::play_bet_round(&who, mechanic_id.clone(), &bettor, outcomes));
 
 		assert_eq!(Mechanics::<Test>::contains_key(&mechanic_id.account_id, &mechanic_id.nonce), false);
 
@@ -1586,14 +1586,14 @@ fn play_bet_round_single_round_draw_win() {
 		let _n = System::account_nonce(who);
 		System::inc_account_nonce(who);
 		let mechanic_id = MechanicsModule::get_mechanic_id(&who);
-		let class_id = 33;
-		let asset_id = 33;
+		let _class_id = 33;
+		let _asset_id = 33;
 		let outcomes = Vec::new();
 		System::set_block_number(2); // rnd(2) % total_outcomes(3) = 2; 2 = draw
 		System::reset_events();
 
 		// should burn Nfa(18), deposit event
-		assert_ok!(MechanicsModule::play_bet_round(&who, mechanic_id.clone(), &class_id, &asset_id, &bettor, outcomes));
+		assert_ok!(MechanicsModule::play_bet_round(&who, mechanic_id.clone(), &bettor, outcomes));
 
 		assert_eq!(Mechanics::<Test>::contains_key(&mechanic_id.account_id, &mechanic_id.nonce), false);
 
@@ -1640,14 +1640,14 @@ fn play_bet_round_three_rounds_win_at_second_round() {
 		let _n = System::account_nonce(who);
 		System::inc_account_nonce(who);
 		let mechanic_id = MechanicsModule::get_mechanic_id(&who);
-		let class_id = 30;
-		let asset_id = 30;
+		let _class_id = 30;
+		let _asset_id = 30;
 		let outcomes = Vec::new();
 		System::set_block_number(2); // rnd(2) % total_outcomes(2) = 0; 0 = win
 		System::reset_events();
 
 		// at first round should only save result to mechanic
-		assert_ok!(MechanicsModule::play_bet_round(&who, mechanic_id.clone(), &class_id, &asset_id, &bettor, outcomes));
+		assert_ok!(MechanicsModule::play_bet_round(&who, mechanic_id.clone(), &bettor, outcomes));
 		assert_eq!(Mechanics::<Test>::contains_key(&mechanic_id.account_id, &mechanic_id.nonce), true);
 		let m = Mechanics::<Test>::get(&mechanic_id.account_id, &mechanic_id.nonce).unwrap();
 		if let MechanicData::Bet(data) = m.data {
@@ -1677,7 +1677,7 @@ fn play_bet_round_three_rounds_win_at_second_round() {
 		System::set_block_number(2); // rnd(4) % total_outcomes(2) = 0; 0 = win
 		System::reset_events();
 
-		assert_ok!(MechanicsModule::play_bet_round(&who, mechanic_id.clone(), &class_id, &asset_id, &bettor, outcomes));
+		assert_ok!(MechanicsModule::play_bet_round(&who, mechanic_id.clone(), &bettor, outcomes));
 		assert_eq!(Mechanics::<Test>::contains_key(&mechanic_id.account_id, &mechanic_id.nonce), false);
 
 		// after second, t.e. final round, mechanic must clean a timeout
