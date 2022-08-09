@@ -85,7 +85,7 @@ impl<T: Config> Pallet<T> {
 			// decrease class intances counter
 			Classes::<T>::try_mutate(&class_id, |maybe_class_details| -> DispatchResult {
 				let class_details = maybe_class_details.as_mut().ok_or(Error::<T>::UnknownClass)?;
-				class_details.instances = class_details.instances.checked_sub(1).ok_or(ArithmeticError::Overflow)?;
+				class_details.instances = class_details.instances.checked_sub(1).ok_or(ArithmeticError::Underflow)?;
 				Ok(())
 			})?;
 
