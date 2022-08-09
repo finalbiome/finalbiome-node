@@ -397,20 +397,19 @@ impl<T: Config> Pallet<T> {
             },
           }
         }
-        // burn bettor asset
-        T::NonFungibleAssets::burn(class_id, asset_id, None)?;
+        // drop mechanic with burning bettor asset
+        Self::drop_mechanic(mechanic_id, AssetAction::Burn)?;
       },
       BetResult::Lost => {
-        // burn bettor asset
-        T::NonFungibleAssets::burn(class_id, asset_id, None)?;
-
+        // drop mechanic with burning bettor asset
+        Self::drop_mechanic(mechanic_id, AssetAction::Burn)?;
       },
       BetResult::Draw => {
-        // nothing to do ?
+        // drop mechanic but not burning bettor asset
+        Self::drop_mechanic(mechanic_id, AssetAction::Release)?;
       },
     };
     // drop mechanic
-    Self::drop_mechanic(mechanic_id, AssetAction::Burn)?;
     // emit Finished event
     Self::deposit_event(Event::Finished { id: mechanic_id.nonce, owner: mechanic_id.account_id.clone() });
     Ok(())
