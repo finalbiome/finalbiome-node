@@ -82,6 +82,13 @@ impl<T: Config> Pallet<T> {
 			Accounts::<T>::remove((&asset_details.owner, &class_id, &asset_id));
 			// Remove attributes for an instance
 			Attributes::<T>::remove_prefix(&asset_id, None);
+			// decrease class intances counter
+			Classes::<T>::try_mutate(&class_id, |maybe_class_details| -> DispatchResult {
+				let class_details = maybe_class_details.as_mut().ok_or(Error::<T>::UnknownClass)?;
+				class_details.instances = class_details.instances.checked_sub(1).ok_or(ArithmeticError::Overflow)?;
+				Ok(())
+			})?;
+
 			Self::deposit_event(Event::Burned { class_id, asset_id, owner: asset_details.owner });
 			Ok(())
 		})

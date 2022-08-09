@@ -282,6 +282,7 @@ fn do_burn_no_attributes() {
 		System::reset_events();
 		assert_ok!(NonFungibleAssets::do_burn(nfa_id, id, Some(&acc)));
 		assert_eq!(Accounts::<Test>::contains_key((&acc, &nfa_id, &id)), false);
+		assert_eq!(Classes::<Test>::get(nfa_id).unwrap().instances, 0);
 
 
 		assert_eq!(
@@ -332,6 +333,8 @@ fn do_burn_with_attributes() {
 		assert_ok!(NonFungibleAssets::do_burn(nfa_id, id, Some(&acc)));
 		assert_eq!(Accounts::<Test>::contains_key((&acc, &nfa_id, &id)), false);
 		assert_eq!(Attributes::<Test>::contains_key(&id, a.key), false);
+		assert_eq!(Classes::<Test>::get(nfa_id).unwrap().instances, 0);
+
 
 
 		assert_eq!(
@@ -372,6 +375,8 @@ fn do_burn_not_owner() {
 		System::reset_events();
 		assert_noop!(NonFungibleAssets::do_burn(nfa_id, id, Some(&33)), Error::<Test>::NoPermission);
 		assert_eq!(Accounts::<Test>::contains_key((&acc, &nfa_id, &id)), true);
+		assert_eq!(Classes::<Test>::get(nfa_id).unwrap().instances, 1);
+
 	});
 }
 
