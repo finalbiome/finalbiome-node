@@ -204,24 +204,27 @@ pub trait Config: frame_system::Config<Index = Index> {
 			}
 			// filling attrs for created classes
 			for (class_id, key, value, max_value) in &self.num_attributes {
-				assert!(Classes::<T>::contains_key(&class_id), "Class id doesn't exist");
+				assert!(Classes::<T>::contains_key(class_id), "Class id doesn't exist");
 
-				let attr_val: AttributeValue = (*value, *max_value).try_into().unwrap();
-				let attr_key: AttributeKey = key.clone().try_into().unwrap();
-				ClassAttributes::<T>::insert(
-					*class_id, attr_key,
-					attr_val,
-				);
+				let value: AttributeValue = (*value, *max_value).try_into().unwrap();
+				let key: AttributeKey = key.clone().try_into().unwrap();
+				let attr: Attribute = Attribute {
+					key,
+					value,
+				};
+				Pallet::<T>::do_create_attribute(*class_id, None, attr).unwrap();
 			}
 			for (class_id, key, value) in &self.text_attributes {
 				assert!(Classes::<T>::contains_key(&class_id), "Class id doesn't exist");
 
-				let attr_val: AttributeValue = value.clone().try_into().unwrap();
-				let attr_key: AttributeKey = key.clone().try_into().unwrap();
-				ClassAttributes::<T>::insert(
-					*class_id, attr_key,
-					attr_val,
-				);
+				let value: AttributeValue = value.clone().try_into().unwrap();
+				let key: AttributeKey = key.clone().try_into().unwrap();
+
+				let attr: Attribute = Attribute {
+					key,
+					value,
+				};
+				Pallet::<T>::do_create_attribute(*class_id, None, attr).unwrap();
 			}
 			// filling charact. purchased 
 			for (class_id, fa_id, price, attributes) in &self.characteristics_purchased {
