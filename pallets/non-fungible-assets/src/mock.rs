@@ -7,7 +7,7 @@ use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
 };
 
-use support;
+use pallet_support;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -31,7 +31,7 @@ impl system::Config for Test {
 	type DbWeight = ();
 	type Origin = Origin;
 	type Call = Call;
-	type Index = u64;
+	type Index = u32;
 	type BlockNumber = u64;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
@@ -53,22 +53,58 @@ impl system::Config for Test {
 
 /// Mock of fungible-assets-pallet impl
 pub struct FAPallet {}
-impl support::FungibleAssets for FAPallet {
-	type AssetId = u32;
-	type Balance = u64;
+impl pallet_support::traits::FungibleAssets<u64> for FAPallet {
+	fn can_withdraw(
+		_asset: pallet_support::FungibleAssetId,
+		_who: &u64,
+		_amount: pallet_support::FungibleAssetBalance,
+	) -> frame_support::traits::tokens::WithdrawConsequence<pallet_support::FungibleAssetBalance> {
+		todo!()
+	}
+
+	fn burn_from(
+    _asset: pallet_support::FungibleAssetId, 
+    _who: &u64, 
+    _amount: pallet_support::FungibleAssetBalance
+  ) -> pallet_support::DispatchResultAs<pallet_support::FungibleAssetBalance> {
+		todo!()
+	}
+	
+	fn inc_references(_asset: &pallet_support::FungibleAssetId) -> sp_runtime::DispatchResult {
+		Ok(())
+	}
+	fn dec_references(_asset: &pallet_support::FungibleAssetId) -> sp_runtime::DispatchResult {
+		Ok(())
+	}
+	fn mint_into(_asset: pallet_support::FungibleAssetId, _who: &u64, _amount: pallet_support::FungibleAssetBalance) -> sp_runtime::DispatchResult {
+		todo!()
+	}
 }
 
 impl pallet_non_fungible_assets::Config for Test {
 	type Event = Event;
-	type ClassNameLimit = ConstU32<8>;
 	type CreateOrigin = AsEnsureOriginWithArg<frame_system::EnsureSigned<u64>>;
-	type BettorOutcomeNameLimit = ConstU32<8>;
 	type FungibleAssets = FAPallet;
 }
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let storage = system::GenesisConfig::default().build_storage::<Test>().unwrap();
+	// let config: pallet_fungible_assets::GenesisConfig<Test> = pallet_fungible_assets::GenesisConfig {
+	// 	// assets: asset_id, organization_id, name, top_upped_speed, cup_global, cup_local
+	// 	assets: vec![
+	// 		(0, 2, "asset01".into(), None, None, None),
+	// 		(1, 2, "asset02".into(), Some(5), None, Some(20)),
+	// 	],
+	// 	// account_balances: account_id, asset_id, balance
+	// 	accounts: vec![
+	// 		(1, 0, 1_000),
+	// 		(3, 1, 20),
+	// 		(4, 1, 5),
+	// 		(5, 0, 10_000),
+	// 	],
+	// };
+	// config.assimilate_storage(&mut storage).unwrap();
 	let mut ext: sp_io::TestExternalities = storage.into();
 	ext.execute_with(|| {
 		System::set_block_number(1);

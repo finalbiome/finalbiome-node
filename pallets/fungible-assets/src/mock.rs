@@ -32,7 +32,7 @@ impl system::Config for Test {
 	type Origin = Origin;
 	type Call = Call;
 	type Index = u64;
-	type BlockNumber = u64;
+	type BlockNumber = BlockNumber;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
 	type AccountId = u64;
@@ -53,7 +53,6 @@ impl system::Config for Test {
 
 impl pallet_fungible_assets::Config for Test {
 	type Event = Event;
-	type Balance = u64;
 	// type CreateOrigin = frame_system::EnsureRoot<u64>;
 	type CreateOrigin = AsEnsureOriginWithArg<frame_system::EnsureSigned<u64>>;
 	type OrganizationId = u64;

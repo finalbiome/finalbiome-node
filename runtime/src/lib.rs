@@ -48,7 +48,8 @@ pub use pallet_template;
 pub use pallet_organization_identity;
 pub use pallet_fungible_assets;
 pub use pallet_non_fungible_assets;
-pub use support;
+pub use pallet_mechanics;
+pub use pallet_support;
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -64,7 +65,7 @@ pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::Account
 pub type Balance = u128;
 
 /// Index of a transaction in the chain.
-pub type Index = u32;
+pub type Index = pallet_support::Index;
 
 /// A hash of some data used by the chain.
 pub type Hash = sp_core::H256;
@@ -282,7 +283,6 @@ impl pallet_organization_identity::Config for Runtime {
 
 impl pallet_fungible_assets::Config for Runtime {
 	type Event = Event;
-	type Balance = Balance;
 	// type CreateOrigin = pallet_organization_identity::EnsureOrganization<Runtime>;
 	type CreateOrigin = pallet_organization_identity::EnsureMemberOfOrganization<Runtime>;
 	type OrganizationId = AccountId;
@@ -293,10 +293,18 @@ impl pallet_fungible_assets::Config for Runtime {
 
 impl pallet_non_fungible_assets::Config for Runtime {
 	type Event = Event;
-	type ClassNameLimit = ConstU32<32>;
 	type CreateOrigin = pallet_organization_identity::EnsureMemberOfOrganization<Runtime>;
-	type BettorOutcomeNameLimit = ConstU32<32>;
-	type FungibleAssets = pallet_fungible_assets::Pallet<Runtime>;
+	type FungibleAssets = FungibleAssets;
+}
+
+impl pallet_mechanics::Config for Runtime {
+	type Event = Event;
+	type FungibleAssets = FungibleAssets;
+	type NonFungibleAssets = NonFungibleAssets;
+	type Randomness = RandomnessCollectiveFlip;
+	type AssetsListLimit = ConstU32<64>;
+	type MechanicsLifeTime = ConstU32<60>;
+	type ExecuteOrigin = pallet_organization_identity::EnsureUser<Runtime>;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -314,11 +322,11 @@ construct_runtime!(
 		Balances: pallet_balances,
 		TransactionPayment: pallet_transaction_payment,
 		Sudo: pallet_sudo,
-		// Include the custom logic from the pallet-template in the runtime.
 		TemplateModule: pallet_template,
 		OrganizationIdentity: pallet_organization_identity,
 		FungibleAssets: pallet_fungible_assets,
 		NonFungibleAssets: pallet_non_fungible_assets,
+		Mechanics: pallet_mechanics,
 	}
 );
 
@@ -367,6 +375,7 @@ mod benches {
 		[pallet_organization_identity, OrganizationIdentity]
 		[pallet_fungible_assets, FungibleAssets]
 		[pallet_non_fungible_assets, NonFungibleAssets]
+		[pallet_mechanics, Mechanics]
 	);
 }
 

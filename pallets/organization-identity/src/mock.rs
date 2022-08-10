@@ -55,7 +55,13 @@ impl pallet_organization_identity::Config for Test {
 	type MaxMembers = frame_support::traits::ConstU8<3>;
 }
 
-// Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
+	let storage = system::GenesisConfig::default().build_storage::<Test>().unwrap();
+	let mut ext: sp_io::TestExternalities = storage.into();
+	ext.execute_with(|| {
+		System::set_block_number(1);
+		// System::on_initialize(1);
+		// NonFungibleAssets::on_initialize(1);
+	});
+	ext
 }

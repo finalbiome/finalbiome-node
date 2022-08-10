@@ -269,12 +269,13 @@ fn create_fa_top_up() {
 #[test]
 fn next_step_topup() {
 	new_test_ext().execute_with(|| {
-		let fa = AssetDetails::<u64, u64, NameLimit<Test>> {
+		let fa = AssetDetails::<u64, NameLimit<Test>> {
 			accounts: 1,
 			cup_global: None,
 			name: br"fa name".to_vec().try_into().unwrap(),
 			owner: 2,
 			supply: 100,
+			references: 0,
 			top_upped: Some(TopUppedFA {speed: 5}),
 			cup_local: Some(CupFA {amount: 20}),
 		};
@@ -286,23 +287,25 @@ fn next_step_topup() {
 		assert_eq!(fa.next_step_topup(20), TopUpConsequence::None);
 		assert_eq!(fa.next_step_topup(0), TopUpConsequence::TopUp(5));
 
-		let fa = AssetDetails::<u64, u64, NameLimit<Test>> {
+		let fa = AssetDetails::<u64, NameLimit<Test>> {
 			accounts: 1,
 			cup_global: None,
 			name: br"fa name".to_vec().try_into().unwrap(),
 			owner: 2,
 			supply: 100,
+			references: 0,
 			top_upped: None,
 			cup_local: Some(CupFA {amount: 20}),
 		};
 		assert_eq!(fa.next_step_topup(10), TopUpConsequence::None);
 
-		let fa = AssetDetails::<u64, u64, NameLimit<Test>> {
+		let fa = AssetDetails::<u64, NameLimit<Test>> {
 			accounts: 1,
 			cup_global: None,
 			name: br"fa name".to_vec().try_into().unwrap(),
 			owner: 2,
 			supply: 100,
+			references: 0,
 			top_upped: Some(TopUppedFA {speed: 5}),
 			cup_local: Some(CupFA {amount: 3}),
 		};
@@ -426,6 +429,70 @@ fn increase_balance_straight_forward() {
 }
 
 #[test]
+fn do_mint_straight_forward() {
+	new_test_ext().execute_with(|| {
+		// create asset
+		let fa_id = get_next_fa_id();
+		assert_ok!(FungibleAssets::create(
+			Origin::signed(1),
+			2,
+			br"fa name".to_vec(),
+			None,
+			None,
+			None,
+		));
+		assert_ok!(
+			FungibleAssets::do_mint(fa_id, &1, 100)
+		);
+		let fa = Assets::<Test>::get(fa_id).unwrap();
+		assert_eq!(fa.supply, 100);
+		assert_eq!(fa.accounts, 1);
+		let acc = Accounts::<Test>::get(1, fa_id).unwrap();
+		assert_eq!(acc.balance, 100);
+		assert_eq!(acc.reason, ExistenceReason::Sufficient);
+		// add another one and deposit it for the same acc
+		let fa_id = get_next_fa_id();
+		assert_ok!(FungibleAssets::create(
+			Origin::signed(1),
+			2,
+			br"fa name2".to_vec(),
+			None,
+			None,
+			None,
+		));
+		assert_ok!(
+			FungibleAssets::do_mint(fa_id, &1, 200)
+		);
+		let fa = Assets::<Test>::get(fa_id).unwrap();
+		assert_eq!(fa.supply, 200);
+		assert_eq!(fa.accounts, 1);
+		let acc = Accounts::<Test>::get(1, fa_id).unwrap();
+		assert_eq!(acc.balance, 200);
+		assert_eq!(acc.reason, ExistenceReason::Sufficient);
+		// add the same fa to the same acc
+		assert_ok!(
+			FungibleAssets::do_mint(fa_id-1, &1, 300)
+		);
+		let fa = Assets::<Test>::get(fa_id-1).unwrap();
+		assert_eq!(fa.supply, 400);
+		assert_eq!(fa.accounts, 1);
+		let acc = Accounts::<Test>::get(1, fa_id-1).unwrap();
+		assert_eq!(acc.balance, 400);
+		assert_eq!(acc.reason, ExistenceReason::Sufficient);
+		// add fa to other acc
+		assert_ok!(
+			FungibleAssets::do_mint(fa_id-1, &3, 1000)
+		);
+		let fa = Assets::<Test>::get(fa_id-1).unwrap();
+		assert_eq!(fa.supply, 1400);
+		assert_eq!(fa.accounts, 2);
+		let acc = Accounts::<Test>::get(3, fa_id-1).unwrap();
+		assert_eq!(acc.balance, 1000);
+		assert_eq!(acc.reason, ExistenceReason::Sufficient);
+	})
+}
+
+#[test]
 fn increase_balance_event() {
 	new_test_ext().execute_with(|| {
 		System::reset_events();
@@ -433,6 +500,33 @@ fn increase_balance_event() {
 		let acc_id = 99;
 		assert_ok!(
 			FungibleAssets::increase_balance(fa_id, &acc_id, 100)
+		);
+		assert_eq!(
+			System::events(),
+			vec![
+				EventRecord {
+					phase: Phase::Initialization,
+					event: SysEvent::NewAccount { account: acc_id }.into(),
+					topics: vec![],
+				},
+				EventRecord {
+					phase: Phase::Initialization,
+					event: FaEvent::Issued { asset_id: fa_id, owner: acc_id, total_supply: 100 }.into(),
+					topics: vec![],
+				},
+			]
+		);
+	})
+}
+
+#[test]
+fn do_mint_event() {
+	new_test_ext().execute_with(|| {
+		System::reset_events();
+		let fa_id = 0;
+		let acc_id = 99;
+		assert_ok!(
+			FungibleAssets::do_mint(fa_id, &acc_id, 100)
 		);
 		assert_eq!(
 			System::events(),
@@ -850,5 +944,30 @@ fn process_top_up_in_progress() {
 		assert_eq!(TopUpQueue::<Test>::contains_key(&id, &1100), false);
 		assert_eq!(TopUpQueue::<Test>::contains_key(&id, &1200), false);
 
+	})
+}
+
+#[test]
+fn inc_dec_references_worked() {
+	new_test_ext().execute_with(|| {
+		// create several accounts with balances
+		let id = 1; // it's top upped asset with speed of 5 and limit 20
+		assert_ok!(FungibleAssets::inc_references(&id));
+		assert_eq!(Assets::<Test>::get(id).unwrap().references, 1);
+		assert_ok!(FungibleAssets::inc_references(&id));
+		assert_eq!(Assets::<Test>::get(id).unwrap().references, 2);
+		assert_ok!(FungibleAssets::dec_references(&id));
+		assert_eq!(Assets::<Test>::get(id).unwrap().references, 1);
+		assert_ok!(FungibleAssets::dec_references(&id));
+		assert_eq!(Assets::<Test>::get(id).unwrap().references, 0);
+	})
+}
+#[test]
+fn dec_references_err() {
+	new_test_ext().execute_with(|| {
+		// create several accounts with balances
+		let id = 1; // it's top upped asset with speed of 5 and limit 20
+		assert_eq!(Assets::<Test>::get(id).unwrap().references, 0);
+		assert_noop!(FungibleAssets::dec_references(&id), ArithmeticError::Underflow);
 	})
 }

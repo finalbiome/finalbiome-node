@@ -1,12 +1,16 @@
 [workspace]
 members = [
     "node",
-    "pallets/template",
     "pallets/organization-identity",
     "pallets/fungible-assets",
     "pallets/non-fungible-assets",
+    "pallets/mechanics",
     "pallets/support",
+    "pallets/template",
     "runtime",
 ]
 [profile.release]
 panic = "unwind"
+incremental = true
+debug = 1
+lto = "off"

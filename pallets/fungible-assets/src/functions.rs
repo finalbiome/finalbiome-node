@@ -5,8 +5,8 @@ use super::*;
 impl<T: Config> Pallet<T> {
 
  /// Generate next id for new asset
-  pub(super) fn get_next_asset_id() -> Result<AssetId, DispatchError> {
-		NextAssetId::<T>::try_mutate(|id| -> Result<AssetId, DispatchError> {
+  pub(super) fn get_next_asset_id() -> DispatchResultAs<AssetId> {
+		NextAssetId::<T>::try_mutate(|id| -> DispatchResultAs<AssetId> {
 			let current_id = *id;
 			*id = id.checked_add(One::one()).ok_or(Error::<T>::NoAvailableAssetId)?;
 			Ok(current_id)
@@ -16,9 +16,9 @@ impl<T: Config> Pallet<T> {
   /// Reads O(0), Writes(1)
   pub(super) fn new_account(
     who: &T::AccountId,
-    asset_details: &mut AssetDetails<T::AccountId, T::Balance, NameLimit<T>>,
-    maybe_deposit: Option<T::Balance>,
-  ) -> Result<ExistenceReason<T::Balance>, DispatchError> {
+    asset_details: &mut AssetDetails<T::AccountId, NameLimit<T>>,
+    maybe_deposit: Option<AssetBalance>,
+  ) -> DispatchResultAs<ExistenceReason> {
     let accounts = asset_details.accounts.checked_add(1).ok_or(ArithmeticError::Overflow)?;
     let result = if let Some(deposit) = maybe_deposit {
       ExistenceReason::DepositHeld(deposit)
@@ -35,7 +35,7 @@ impl<T: Config> Pallet<T> {
 	pub fn maybe_balance(
 		id: AssetId,
 		who: impl sp_std::borrow::Borrow<T::AccountId>,
-	) -> Option<T::Balance> {
+	) -> Option<AssetBalance> {
 		Accounts::<T>::get(who.borrow(), id).map(|a| a.balance)
 	}
 
@@ -43,18 +43,18 @@ impl<T: Config> Pallet<T> {
   pub(super) fn can_increase(
 		id: AssetId,
 		who: &T::AccountId,
-		amount: T::Balance,
+		amount: AssetBalance,
 	) -> DepositConsequence {
     use DepositConsequence::*;
 		let details = match Assets::<T>::get(id) {
 			Some(details) => details,
 			None => return UnknownAsset,
 		};
-		if details.supply.checked_add(&amount).is_none() {
+		if details.supply.checked_add(amount).is_none() {
 			return Overflow
 		}
 		if let Some(balance) = Self::maybe_balance(id, who) {
-			if balance.checked_add(&amount).is_none() {
+			if balance.checked_add(amount).is_none() {
 				return Overflow
 			}
 		}
@@ -64,24 +64,24 @@ impl<T: Config> Pallet<T> {
   pub(super) fn can_decrease(
     id: AssetId,
 		who: &T::AccountId,
-		amount: T::Balance,
-  ) ->  WithdrawConsequence<T::Balance> {
+		amount: AssetBalance,
+  ) ->  WithdrawConsequence<AssetBalance> {
     use WithdrawConsequence::*;
     let details = match Assets::<T>::get(id) {
 			Some(details) => details,
 			None => return UnknownAsset,
 		};
-    if details.supply.checked_sub(&amount).is_none() {
+    if details.supply.checked_sub(amount).is_none() {
 			return Underflow
 		}
     if let Some(balance) = Self::maybe_balance(id, who) {
-      if balance.checked_sub(&amount).is_none() {
-        return NoFunds
+      if balance.checked_sub(amount).is_none() {
+        NoFunds
       } else {
-        return Success
+        Success
       }
     } else {
-      return NoFunds
+      NoFunds
     }
   }
 
@@ -90,9 +90,9 @@ impl<T: Config> Pallet<T> {
   pub(super) fn prep_debit(
     id: AssetId,
 		target: &T::AccountId,
-		amount: T::Balance,
+		amount: AssetBalance,
     max_allowed: bool,
-  ) -> Result<T::Balance, DispatchError> {
+  ) -> DispatchResultAs<AssetBalance> {
     let _ = Assets::<T>::get(id).ok_or(TokenError::UnknownAsset)?;
     let account = Accounts::<T>::get(target, id ).ok_or(Error::<T>::NoAccount)?;
     let actual = if max_allowed {
@@ -110,7 +110,7 @@ impl<T: Config> Pallet<T> {
   pub(super) fn increase_balance(
     id: AssetId,
 		beneficiary: &T::AccountId,
-		amount: T::Balance,
+		amount: AssetBalance,
   ) -> DispatchResult {
     if amount.is_zero() {
 			return Ok(())
@@ -128,7 +128,7 @@ impl<T: Config> Pallet<T> {
 					},
           maybe_account @ None => {
             *maybe_account = Some(
-              AssetAccountOf::<T> {
+              AssetAccount {
                 balance: amount,
                 reason: Self::new_account(beneficiary, details, None)?,
               }
@@ -153,15 +153,15 @@ impl<T: Config> Pallet<T> {
   pub(super) fn decrease_balance(
     id: AssetId,
 		target: &T::AccountId,
-		amount: T::Balance,
+		amount: AssetBalance,
     max_allowed: bool,
-  ) -> Result<T::Balance, DispatchError> {
+  ) -> DispatchResultAs<AssetBalance> {
     if amount.is_zero() {
 			return Ok(amount)
 		}
     let actual = Self::prep_debit(id, target, amount, max_allowed)?;
 
-    let mut target_topup: TopUpConsequence<T::Balance> = TopUpConsequence::None;
+    let mut target_topup: TopUpConsequence = TopUpConsequence::None;
 
     Assets::<T>::try_mutate(id, |maybe_details| -> DispatchResult {
       let details = maybe_details.as_mut().ok_or(TokenError::UnknownAsset)?;
@@ -205,7 +205,7 @@ impl<T: Config> Pallet<T> {
     };
     // let mut tu = current_topupped.into_inner();
     if let Err(index) = current_topupped.binary_search(id) {
-      match current_topupped.try_insert(index, id.clone()) {
+      match current_topupped.try_insert(index, *id) {
         Ok(_) => <TopUppedAssets<T>>::put(current_topupped),
         Err(_) => return Err(Error::<T>::MaxTopUppedAssetsReached.into())
       };
@@ -241,7 +241,7 @@ impl<T: Config> Pallet<T> {
 
     // loop over all assets, retrieve accounts that have a demand for these assets
     // and replenish their balance
-    let mut next_topup: Vec<(AssetId, T::AccountId, TopUpConsequence<T::Balance>)> = Vec::new();
+    let mut next_topup: Vec<(AssetId, T::AccountId, TopUpConsequence)> = Vec::new();
     for id in assets.iter() {
       reads.saturating_accrue(1);
       for (target, topup) in TopUpQueue::<T>::drain_prefix(&id) {
@@ -273,4 +273,45 @@ impl<T: Config> Pallet<T> {
 
     T::DbWeight::get().reads_writes(reads, writes)
   }
+
+  /// Increment the references counter on an asset.
+	pub fn inc_references(asset: &AssetId) -> DispatchResult {
+    Assets::<T>::try_mutate(asset, |maybe_details| -> DispatchResult {
+      let details = maybe_details.as_mut().ok_or(TokenError::UnknownAsset)?;
+      details.references = details.references.checked_add(1).ok_or(ArithmeticError::Overflow)?;
+      Ok(())
+    })?;
+    Ok(())
+	}
+
+  /// Decrement the references counter on an asset.
+  pub fn dec_references(asset: &AssetId) -> DispatchResult {
+    Assets::<T>::try_mutate(asset, |maybe_details| -> DispatchResult {
+      let details = maybe_details.as_mut().ok_or(TokenError::UnknownAsset)?;
+      if details.references == 0 {
+        // Logic error - cannot decrement beyond zero.
+        log::error!(
+          target: "fungible-assets",
+          "Logic error: Unexpected underflow in reducing references",
+        );
+      }
+      details.references = details.references.checked_sub(1).ok_or(ArithmeticError::Underflow)?;
+      Ok(())
+    })?;
+    Ok(())
+  }
+
+
+	/// Increases the asset `id` balance of `beneficiary` by `amount`.
+	///
+	/// This alters the registered supply of the asset and emits an event.
+	///
+	/// Will return an error or will increase the amount by exactly `amount`.
+	pub(super) fn do_mint(
+		id: AssetId,
+		beneficiary: &T::AccountId,
+		amount: AssetBalance,
+	) -> DispatchResult {
+		Self::increase_balance(id, beneficiary, amount)
+	}
 }
