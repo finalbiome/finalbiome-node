@@ -19,43 +19,11 @@ impl<T: Config> Pallet<T> {
     T::MechanicsLifeTime::get().saturating_add(block_number)
   }
 
-  /// Set a timeout record for the given mechanic
-  /// 
-  /// Also create empty mechnic details if it doesn't exist
-  pub(crate) fn _set_mechanic_timeout(id: &MechanicIdOf<T>) -> DispatchResult {
-    let life_time_block = Self::calc_timeout_block();
-    let mut should_set_timeout = true;
-    Mechanics::<T>::try_mutate(&id.account_id, &id.nonce, | maybe_mechanic | -> DispatchResult {
-      match maybe_mechanic {
-        Some(ref mut mechanic) => {
-          if mechanic.timeout_id.is_none() {
-            mechanic.timeout_id = Some(life_time_block);
-          } else {
-            should_set_timeout = false;
-          }
-        },
-        None => return Err(Error::<T>::MechanicsNotAvailable.into()),
-      }
-      Ok(())
-    })?;
-    // set a timeout for mechanic if not already set
-    if should_set_timeout {
-      Timeouts::<T>::insert((
-        &life_time_block,
-        &id.account_id,
-        &id.nonce
-      ), ());
-    }
-    Ok(())
-  }
-
   /// Drop mechanic if it exist and clear timeout
   pub(crate) fn drop_mechanic(id: &MechanicIdOf<T>, asset_action: AssetAction) -> DispatchResult {
     let mechanic = Mechanics::<T>::take(&id.account_id, &id.nonce);
     if let Some(mechanic) = mechanic {
-      if let Some(timeout_id) = mechanic.timeout_id {
-        Timeouts::<T>::remove((&timeout_id, &id.account_id, &id.nonce));
-      };
+      Timeouts::<T>::remove(mechanic.get_tiomeout_strorage_key(id.nonce));
       // clear all locks for this mechanic
       for lock in mechanic.locked {
         let origin = Locker::Mechanic(id.clone());
@@ -186,12 +154,9 @@ impl<T: Config> Pallet<T> {
     let mechanic_id = Self::get_mechanic_id(who);
 
     // create the mechanic data
-    Mechanics::<T>::insert(&mechanic_id.account_id, &mechanic_id.nonce, MechanicDetails {
-      owner: mechanic_id.account_id.clone(),
-      data: MechanicData::Bet(MechanicDataBet {outcomes: [].to_vec().try_into().expect("zero cannot exceed the limit")}),
-      timeout_id: Default::default(),
-      locked: Default::default(),
-    });
+    let data = MechanicData::Bet(MechanicDataBet::default());
+    let mechanic = MechanicDetailsBuilder::build::<T>(mechanic_id.account_id.clone(), data);
+    Mechanics::<T>::insert(&mechanic_id.account_id, &mechanic_id.nonce, mechanic);
 
     let _ = Self::try_lock_nfa(&mechanic_id, who, *class_id, *asset_id).map_err(|err| {
       let _ = Self::drop_mechanic(&mechanic_id, AssetAction::Release);
@@ -421,21 +386,9 @@ impl<T: Config> Pallet<T> {
           mechanic.data = data;
         },
         maybe_mechanic @ None => {
-          let mut new_mechanic: MechanicDetailsOf<T> = MechanicDetails {
-            owner: id.account_id.clone(),
-            data,
-            timeout_id: Default::default(),
-			      locked: Default::default(),
-          };
-          // for the new machanic we should set the timeout
-          let timeout = Self::calc_timeout_block();
-          new_mechanic.timeout_id = Some(timeout);
-          Timeouts::<T>::insert((
-            &timeout,
-            &id.account_id,
-            &id.nonce
-          ), ());
-          *maybe_mechanic = Some(new_mechanic);
+          let mechanic = MechanicDetailsBuilder::build::<T>(id.account_id.clone(), data);
+          Timeouts::<T>::insert(mechanic.get_tiomeout_strorage_key(id.nonce), ());
+          *maybe_mechanic = Some(mechanic);
         },
       }
       Ok(())

@@ -10,14 +10,7 @@ use sp_runtime::{
 };
 // use frame_support_test::TestRandomness;
 
-macro_rules! bvec {
-	($str:tt) => {
-		$str.to_vec().try_into().unwrap()
-	};
-	($( $x:tt )*) => {
-		vec![$( $x )*].try_into().unwrap()
-	};
-}
+use super::bvec;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;

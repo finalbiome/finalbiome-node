@@ -2,7 +2,7 @@ use crate::{
 	mock::*,
 	Event as MechanicsEvent,
 	Error,
-	Timeouts, MechanicId, MechanicDetails, MechanicData, MechanicDetailsOf, Mechanics, BetResult, Mechanic, MechanicUpgradeData, MechanicUpgradePayload, MechanicUpgradeDataOf, EventMechanicStopReason, AssetAction,
+	Timeouts, MechanicId, MechanicData, Mechanics, BetResult, Mechanic, MechanicUpgradeData, MechanicUpgradePayload, MechanicUpgradeDataOf, EventMechanicStopReason, AssetAction, MechanicDetailsBuilder,
 };
 use frame_support::{assert_noop, assert_ok, BoundedVec, };
 use frame_system::{EventRecord, Phase};
@@ -14,7 +14,7 @@ use pallet_support::{
 	AssetCharacteristic, purchased::{Purchased, Offer}, ClassDetailsOf, types_nfa::ClassDetails, LockedAccet,
 };
 
-
+#[macro_export]
 macro_rules! bvec {
 	($str:tt) => {
 		$str.to_vec().try_into().unwrap()
@@ -44,113 +44,6 @@ fn mechanic_id_from_account() {
 }
 
 #[test]
-fn set_timeout_no_mechanic() {
-	new_test_ext().execute_with(|| {
-		let acc = 222;
-		System::inc_account_nonce(acc);
-		System::set_block_number(2);
-		let b = System::block_number();
-
-		let id = MechanicsModule::get_mechanic_id(&acc);
-		Mechanics::<Test>::insert(&id.account_id, &id.nonce, MechanicDetails {
-			owner: acc,
-			locked: bvec![],
-			data: MechanicData::BuyNfa,
-			timeout_id: None,
-		});
-		assert_ok!(MechanicsModule::_set_mechanic_timeout(&id));
-		assert_eq!(Timeouts::<Test>::contains_key(
-			(
-				&b+20,
-				&id.account_id,
-				&id.nonce,
-			)), true);
-		let m: MechanicDetailsOf<Test> = MechanicDetails {
-			owner: acc,
-			timeout_id: Some(b+20),
-			locked: [].to_vec().try_into().unwrap(),
-			data: MechanicData::BuyNfa,
-		};
-		assert_eq!(Mechanics::<Test>::get(&id.account_id, &id.nonce)
-			, Some(m));
-	});
-}
-
-#[test]
-fn set_timeout_mechanic_exists_no_timeout() {
-	new_test_ext().execute_with(|| {
-		let acc = 222;
-		System::inc_account_nonce(acc);
-		System::set_block_number(2);
-		let b = System::block_number();
-		
-		let id = MechanicsModule::get_mechanic_id(&acc);
-
-		let m: MechanicDetailsOf<Test> = MechanicDetails {
-			owner: acc,
-			timeout_id: None,
-			locked: [].to_vec().try_into().unwrap(),
-			data: MechanicData::BuyNfa,
-		};
-		Mechanics::<Test>::insert(&id.account_id, &id.nonce, m);
-
-		assert_ok!(MechanicsModule::_set_mechanic_timeout(&id));
-		assert_eq!(Timeouts::<Test>::contains_key(
-			(
-				&b+20,
-				&id.account_id,
-				&id.nonce,
-			)), true);
-		
-		let m1: MechanicDetailsOf<Test> = MechanicDetails {
-				owner: acc,
-				timeout_id: Some(b+20),
-				locked: [].to_vec().try_into().unwrap(),
-				data: MechanicData::BuyNfa,
-			};
-		assert_eq!(Mechanics::<Test>::get(&id.account_id, &id.nonce)
-			, Some(m1));
-	});
-}
-
-#[test]
-fn set_timeout_mechanic_exists_has_timeout() {
-	new_test_ext().execute_with(|| {
-		let acc = 222;
-		System::inc_account_nonce(acc);
-		System::set_block_number(2);
-		let b = System::block_number();
-		
-		let id = MechanicsModule::get_mechanic_id(&acc);
-
-		let m: MechanicDetailsOf<Test> = MechanicDetails {
-			owner: acc,
-			timeout_id: Some(b+10),
-			locked: [].to_vec().try_into().unwrap(),
-			data: MechanicData::BuyNfa,
-		};
-		Mechanics::<Test>::insert(&id.account_id, &id.nonce, m);
-
-		assert_ok!(MechanicsModule::_set_mechanic_timeout(&id));
-		assert_eq!(Timeouts::<Test>::contains_key(
-			(
-				&b+20,
-				&id.account_id,
-				&id.nonce,
-			)), false);
-		
-		let m1: MechanicDetailsOf<Test> = MechanicDetails {
-				owner: acc,
-				timeout_id: Some(b+10),
-				locked: [].to_vec().try_into().unwrap(),
-				data: MechanicData::BuyNfa,
-			};
-		assert_eq!(Mechanics::<Test>::get(&id.account_id, &id.nonce)
-			, Some(m1));
-	});
-}
-
-#[test]
 fn drop_mechanic_none_mechanic() {
 	new_test_ext().execute_with(|| {
 		let acc = 222;
@@ -165,59 +58,21 @@ fn drop_mechanic_none_mechanic() {
 }
 
 #[test]
-fn drop_mechanic_no_timeout() {
-	new_test_ext().execute_with(|| {
-		let acc = 222;
-		System::inc_account_nonce(acc);
-		System::set_block_number(2);
-		let _b = System::block_number();
-		
-		let id = MechanicsModule::get_mechanic_id(&acc);
-
-		let m: MechanicDetailsOf<Test> = MechanicDetails {
-			owner: acc,
-			timeout_id: None,
-			locked: [].to_vec().try_into().unwrap(),
-			data: MechanicData::BuyNfa,
-		};
-		Mechanics::<Test>::insert(&id.account_id, &id.nonce, m);
-
-		assert_ok!(MechanicsModule::drop_mechanic(&id, AssetAction::Release));
-		assert_eq!(Mechanics::<Test>::contains_key(&id.account_id, &id.nonce), false);
-	});
-}
-
-#[test]
 fn drop_mechanic_with_timeout() {
 	new_test_ext().execute_with(|| {
 		let acc = 222;
 		System::inc_account_nonce(acc);
 		System::set_block_number(2);
-		let b = System::block_number();
 		
 		let id = MechanicsModule::get_mechanic_id(&acc);
-		Mechanics::<Test>::insert(&id.account_id, &id.nonce, MechanicDetails {
-			owner: 1,
-			locked: bvec![],
-			data: MechanicData::BuyNfa,
-			timeout_id: None,
-		});
-		assert_ok!(MechanicsModule::_set_mechanic_timeout(&id));
-		assert_eq!(Timeouts::<Test>::contains_key(
-			(
-				&b+20,
-				&id.account_id,
-				&id.nonce,
-			)), true);
+		let details = MechanicDetailsBuilder::build::<Test>(acc, MechanicData::BuyNfa);
+		let timeout_key = details.get_tiomeout_strorage_key(id.nonce);
+		Mechanics::<Test>::insert(&id.account_id, &id.nonce, details);
+		Timeouts::<Test>::insert(timeout_key, ());
 
 		assert_ok!(MechanicsModule::drop_mechanic(&id, AssetAction::Release));
 		assert_eq!(Mechanics::<Test>::contains_key(&id.account_id, &id.nonce), false);
-		assert_eq!(Timeouts::<Test>::contains_key(
-			(
-				&b+20,
-				&id.account_id,
-				&id.nonce,
-			)), false);
+		assert_eq!(Timeouts::<Test>::contains_key(timeout_key), false);
 	});
 }
 
@@ -264,9 +119,9 @@ fn do_buy_nfa_worked() {
 #[test]
 fn mechanic_details_default() {
 	new_test_ext().execute_with(|| {
-		let md: MechanicDetailsOf<Test> = MechanicDetails::new(1, MechanicData::BuyNfa);
+		let md = MechanicDetailsBuilder::build::<Test>(1, MechanicData::BuyNfa);
 		assert_eq!(md.owner, 1);
-		assert_eq!(md.timeout_id, None);
+		assert_eq!(md.timeout_id, 21);
 		assert_eq!(md.locked.to_vec(), [].to_vec());
 		assert_eq!(md.data, MechanicData::BuyNfa);
 	});
@@ -381,6 +236,7 @@ fn add_bet_result_first_time() {
 		let acc = 222;
 		let mechanic_id: MechanicIdOf<Test> = MechanicId::<<Test as frame_system::Config>::AccountId, <Test as frame_system::Config>::Index>::from_account_id::<Test>(&acc);
 		let outcomes = [1];
+		System::set_block_number(10);
 		assert_eq!(Mechanics::<Test>::contains_key(&mechanic_id.account_id, &mechanic_id.nonce), false);
 		assert_ok!(MechanicsModule::add_bet_result(&mechanic_id, &outcomes));
 		assert_eq!(Mechanics::<Test>::contains_key(&mechanic_id.account_id, &mechanic_id.nonce), true);
@@ -389,6 +245,8 @@ fn add_bet_result_first_time() {
 			MechanicData::Bet(bet_data) => assert_eq!(bet_data.outcomes.into_inner(), outcomes.to_vec()),
 			_ => assert!(false),
 		}
+		assert_eq!(Timeouts::<Test>::contains_key((&30, &mechanic_id.account_id, &mechanic_id.nonce)), true);
+
 		// second time
 		let outcomes = [1, 3];
 		assert_ok!(MechanicsModule::add_bet_result(&mechanic_id, &outcomes));
@@ -398,6 +256,7 @@ fn add_bet_result_first_time() {
 			MechanicData::Bet(bet_data) => assert_eq!(bet_data.outcomes.into_inner(), outcomes.to_vec()),
 			_ => assert!(false),
 		}
+		assert_eq!(Timeouts::<Test>::contains_key((&30, &mechanic_id.account_id, &mechanic_id.nonce)), true);
 
 	});
 }
@@ -1205,12 +1064,8 @@ fn try_lock_works() {
 		let mut locks = [asset_id.clone()].to_vec();
 
 		assert_eq!(Mechanics::<Test>::contains_key(&id.account_id, &id.nonce), false);
-		Mechanics::<Test>::insert(&id.account_id, &id.nonce, MechanicDetails {
-			owner: 1,
-			locked: bvec![],
-			data: MechanicData::BuyNfa,
-			timeout_id: None,
-		});
+		let details = MechanicDetailsBuilder::build::<Test>(1, MechanicData::BuyNfa);
+		Mechanics::<Test>::insert(&id.account_id, &id.nonce, details);
 		assert_ok!(MechanicsModule::try_lock(&id, asset_id.clone()));
 		assert_eq!(Mechanics::<Test>::contains_key(&id.account_id, &id.nonce), true);
 
@@ -1244,12 +1099,8 @@ fn clear_lock_works() {
 		let asset_id_2: LockedAccet = LockedAccet::Nfa(2, 3);
 		let locks = [asset_id.clone(), asset_id_2.clone()].to_vec();
 
-		Mechanics::<Test>::insert(&id.account_id, &id.nonce, MechanicDetails {
-			owner: 1,
-			locked: bvec![],
-			data: MechanicData::BuyNfa,
-			timeout_id: None,
-		});
+		let details = MechanicDetailsBuilder::build::<Test>(1, MechanicData::BuyNfa);
+		Mechanics::<Test>::insert(&id.account_id, &id.nonce, details);
 		assert_ok!(MechanicsModule::try_lock(&id, asset_id.clone()));
 		assert_ok!(MechanicsModule::try_lock(&id, asset_id_2.clone()));
 		assert_eq!(Mechanics::<Test>::contains_key(&id.account_id, &id.nonce), true);
@@ -1287,12 +1138,8 @@ fn try_lock_nfa_works() {
 		let asset_id = 3;
 
 		assert_eq!(Mechanics::<Test>::contains_key(&id.account_id, &id.nonce), false);
-		Mechanics::<Test>::insert(&id.account_id, &id.nonce, MechanicDetails {
-			owner: 1,
-			locked: bvec![],
-			data: MechanicData::BuyNfa,
-			timeout_id: None,
-		});
+		let details = MechanicDetailsBuilder::build::<Test>(1, MechanicData::BuyNfa);
+		Mechanics::<Test>::insert(&id.account_id, &id.nonce, details);
 		assert_ok!(MechanicsModule::try_lock_nfa(&id, &who, class_id, asset_id));
 		assert_eq!(Mechanics::<Test>::contains_key(&id.account_id, &id.nonce), true);
 
@@ -1312,12 +1159,8 @@ fn crear_lock_nfa_works() {
 		let locks = [LockedAccet::Nfa(4, 5)].to_vec();
 
 		assert_eq!(Mechanics::<Test>::contains_key(&id.account_id, &id.nonce), false);
-		Mechanics::<Test>::insert(&id.account_id, &id.nonce, MechanicDetails {
-			owner: 1,
-			locked: bvec![],
-			data: MechanicData::BuyNfa,
-			timeout_id: None,
-		});
+		let details = MechanicDetailsBuilder::build::<Test>(1, MechanicData::BuyNfa);
+		Mechanics::<Test>::insert(&id.account_id, &id.nonce, details);
 		assert_ok!(MechanicsModule::try_lock_nfa(&id, &who, class_id, asset_id));
 		assert_eq!(Mechanics::<Test>::contains_key(&id.account_id, &id.nonce), true);
 
@@ -1656,11 +1499,7 @@ fn play_bet_round_three_rounds_win_at_second_round() {
 			assert!(false)
 		}
 		// after first round mechanic must have timeout
-		if let Some(id) = m.timeout_id {
-			assert_eq!(Timeouts::<Test>::contains_key((id, &mechanic_id.account_id, &mechanic_id.nonce)), true);
-		} else {
-			assert!(false)
-		}
+		assert_eq!(Timeouts::<Test>::contains_key((m.timeout_id, &mechanic_id.account_id, &mechanic_id.nonce)), true);
 
 		assert_eq!(
 			System::events(),
@@ -1681,11 +1520,7 @@ fn play_bet_round_three_rounds_win_at_second_round() {
 		assert_eq!(Mechanics::<Test>::contains_key(&mechanic_id.account_id, &mechanic_id.nonce), false);
 
 		// after second, t.e. final round, mechanic must clean a timeout
-		if let Some(id) = m.timeout_id {
-			assert_eq!(Timeouts::<Test>::contains_key((id, &mechanic_id.account_id, &mechanic_id.nonce)), false);
-		} else {
-			assert!(false)
-		}
+		assert_eq!(Timeouts::<Test>::contains_key((m.timeout_id, &mechanic_id.account_id, &mechanic_id.nonce)), false);
 
 		assert_eq!(
 			System::events(),
@@ -1904,12 +1739,8 @@ fn do_upgrade_mechanic_wrong_owner() {
 			mechanic_id: MechanicId { account_id: who, nonce: 3 },
 			payload: MechanicUpgradePayload::Bet,
 		};
-		Mechanics::<Test>::insert(&who, &3, MechanicDetails {
-			owner: 2,
-			locked: bvec![],
-			data: MechanicData::BuyNfa,
-			timeout_id: None,
-		});
+		let details = MechanicDetailsBuilder::build::<Test>(2, MechanicData::BuyNfa);
+		Mechanics::<Test>::insert(&who, &3, details);
 		assert_noop!(MechanicsModule::do_upgrade(&who, upgrage_data), Error::<Test>::NoPermission);
 	});
 }
@@ -1922,12 +1753,8 @@ fn do_upgrade_mechanic_incompatible_data() {
 			mechanic_id: MechanicId { account_id: who, nonce: 3 },
 			payload: MechanicUpgradePayload::Bet,
 		};
-		Mechanics::<Test>::insert(&who, &3, MechanicDetails {
-			owner: who,
-			locked: bvec![],
-			data: MechanicData::BuyNfa,
-			timeout_id: None,
-		});
+		let details = MechanicDetailsBuilder::build::<Test>(who, MechanicData::BuyNfa);
+		Mechanics::<Test>::insert(&who, &3, details);
 		assert_noop!(MechanicsModule::do_upgrade(&who, upgrage_data), Error::<Test>::IncompatibleData);
 	});
 }
@@ -1939,12 +1766,9 @@ fn process_mechanic_timeouts_dropped() {
 		let nonce = 3;
 		let timeout_id = 15;
 		// add mechanic with timeout
-		Mechanics::<Test>::insert(&who, &nonce, MechanicDetails {
-			owner: who,
-			locked: bvec![],
-			data: MechanicData::BuyNfa,
-			timeout_id: Some(timeout_id),
-		});
+		let mut details = MechanicDetailsBuilder::build::<Test>(who, MechanicData::BuyNfa);
+		details.timeout_id = timeout_id;
+		Mechanics::<Test>::insert(&who, &nonce, details);
 		// add timeout records
 		Timeouts::<Test>::insert((
 			&timeout_id,
@@ -1977,12 +1801,9 @@ fn process_mechanic_timeouts_lifecycle() {
 		let timeout_id = 15;
 		let timeout_id_2 = 150;
 		// add mechanic with timeout
-		Mechanics::<Test>::insert(&who, &nonce, MechanicDetails {
-			owner: who,
-			locked: bvec![],
-			data: MechanicData::BuyNfa,
-			timeout_id: Some(timeout_id),
-		});
+		let mut details = MechanicDetailsBuilder::build::<Test>(who, MechanicData::BuyNfa);
+		details.timeout_id = timeout_id;
+		Mechanics::<Test>::insert(&who, &nonce, details);
 		// add timeout records
 		Timeouts::<Test>::insert((
 			&timeout_id,
@@ -1990,12 +1811,9 @@ fn process_mechanic_timeouts_lifecycle() {
 			&nonce
 		), ());
 		// add mechanic with timeout 2
-		Mechanics::<Test>::insert(&33, &44, MechanicDetails {
-			owner: who,
-			locked: bvec![],
-			data: MechanicData::BuyNfa,
-			timeout_id: Some(timeout_id_2),
-		});
+		let mut details_2 = MechanicDetailsBuilder::build::<Test>(who, MechanicData::BuyNfa);
+		details_2.timeout_id = timeout_id_2;
+		Mechanics::<Test>::insert(&33, &44, details_2);
 		// add timeout records 2
 		Timeouts::<Test>::insert((
 			&timeout_id_2,
@@ -2003,12 +1821,9 @@ fn process_mechanic_timeouts_lifecycle() {
 			&44
 		), ());
 		// add mechanic with timeout 3
-		Mechanics::<Test>::insert(&who, &44, MechanicDetails {
-			owner: who,
-			locked: bvec![],
-			data: MechanicData::BuyNfa,
-			timeout_id: Some(timeout_id),
-		});
+		let mut details_3 = MechanicDetailsBuilder::build::<Test>(who, MechanicData::BuyNfa);
+		details_3.timeout_id = timeout_id;
+		Mechanics::<Test>::insert(&who, &44, details_3);
 		// add timeout records 3
 		Timeouts::<Test>::insert((
 			&timeout_id,

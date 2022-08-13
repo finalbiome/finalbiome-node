@@ -31,21 +31,32 @@ pub(crate) struct MechanicDetails<AccountId, BlockNumber> {
 	/// Owner of the mechanic
 	pub owner: AccountId,
 	/// Mechain timeout id
-	pub timeout_id: Option<BlockNumber>,
+	pub timeout_id: BlockNumber,
 	/// List of assets locked by mechanic
 	pub locked: BoundedVec<LockedAccet, DefaultListLengthLimit>,
 	// store a type of mechanic with data
 	pub data: MechanicData,
 }
-impl<AccountId, BlockNumber> MechanicDetails<AccountId, BlockNumber> {
-	#[cfg(test)]
-	pub fn new(owner: AccountId, data: MechanicData) -> Self {
-		Self { 
+impl<AccountId, BlockNumber> MechanicDetails<AccountId, BlockNumber> 
+where AccountId: Clone, BlockNumber: Copy {
+	/// Returns a storage key for the [Pallet::Timeouts] storage
+	pub fn get_tiomeout_strorage_key(&self, nonce: Index) -> (BlockNumber, AccountId, Index) {
+		(self.timeout_id, self.owner.clone(), nonce)
+	}
+}
+
+/// Build a Mechanic Details data.  \
+/// Used for construction new mechanic data struct.
+pub(crate) struct MechanicDetailsBuilder {}
+impl MechanicDetailsBuilder {
+	pub fn build<T: pallet::Config>(owner: T::AccountId, data: MechanicData) -> MechanicDetailsOf<T> {
+		let timeout_id = Pallet::<T>::calc_timeout_block();
+		MechanicDetails {
 			owner,
-			timeout_id: Default::default(),
+			timeout_id,
 			locked: Default::default(),
 			data,
-		 }
+		}
 	}
 }
 
@@ -66,7 +77,7 @@ impl From<&MechanicData> for Mechanic {
 }
 
 
-#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
+#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen, Default)]
 /// Data for the Bet machanic hold results of the outcomes of rounds played.
 pub(crate) struct MechanicDataBet {
 	/// Each index of `outcomes` represent the played round and a value - index of the dropped variant in the bettor respectively
