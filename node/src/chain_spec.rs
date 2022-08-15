@@ -72,8 +72,8 @@ pub fn development_config() -> Result<ChainSpec, String> {
 				],
 				// Organization accounts
 				vec![
-					(get_account_id_from_seed::<sr25519::Public>("Eve"), br"Eve Org".to_vec()),
-					(get_account_id_from_seed::<sr25519::Public>("Oscar"), br"Oscar Org".to_vec()),
+					(get_account_id_from_seed::<sr25519::Public>("Eve"), br"WoW".to_vec()),
+					(get_account_id_from_seed::<sr25519::Public>("Oscar"), br"Skyrim".to_vec()),
 				],
 				// Organization Members
 				vec![
@@ -83,8 +83,8 @@ pub fn development_config() -> Result<ChainSpec, String> {
 				],
 				// Fungible Assets
 				vec![
-					(0, get_account_id_from_seed::<sr25519::Public>("Eve"), br"ass01".to_vec(), None, None, None),
-					(1, get_account_id_from_seed::<sr25519::Public>("Eve"), br"ass02".to_vec(), Some(5), None, Some(2000)),
+					(0, get_account_id_from_seed::<sr25519::Public>("Eve"), br"Gold".to_vec(), None, None, None),
+					(1, get_account_id_from_seed::<sr25519::Public>("Eve"), br"Energy".to_vec(), Some(5), None, Some(2000)),
 				],
 				// Balances of Fungible Assets
 				vec![
@@ -159,8 +159,8 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 				],
 				// Organization accounts
 				vec![
-					(get_account_id_from_seed::<sr25519::Public>("Eve"), br"Eve Org".to_vec()),
-					(get_account_id_from_seed::<sr25519::Public>("Oscar"), br"Oscar Org".to_vec()),
+					(get_account_id_from_seed::<sr25519::Public>("Eve"), br"WoW".to_vec()),
+					(get_account_id_from_seed::<sr25519::Public>("Oscar"), br"Skyrim".to_vec()),
 				],
 				// Organization Members
 				vec![
@@ -170,8 +170,8 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 				],
 				// Fungible Assets
 				vec![
-					(0, get_account_id_from_seed::<sr25519::Public>("Eve"), br"ass01".to_vec(), None, None, None),
-					(1, get_account_id_from_seed::<sr25519::Public>("Eve"), br"ass02".to_vec(), Some(5), None, Some(2000)),
+					(0, get_account_id_from_seed::<sr25519::Public>("Eve"), br"Gold".to_vec(), None, None, None),
+					(1, get_account_id_from_seed::<sr25519::Public>("Eve"), br"Energy".to_vec(), Some(5), None, Some(2000)),
 				],
 				// Balances of Fungible Assets
 				vec![
