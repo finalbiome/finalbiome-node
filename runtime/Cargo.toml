@@ -2,7 +2,7 @@
 name = "finalbiome-node-runtime"
 version = "1.0.0-dev"
 description = "A FinalBiome runtime"
-authors = ["Substrate DevHub <https://github.com/FinalBiome>"]
+authors = ["FinalBiome Devs <https://github.com/finalbiome>"]
 homepage = "https://finalbiome.net/"
 edition = "2021"
 license = "Unlicense"

@@ -2,7 +2,7 @@
 name = "pallet-support"
 version = "1.0.0-dev"
 description = "Support code for FinalBiome."
-authors = ["FinalBiome DevHub <https://github.com/FinalBiome>"]
+authors = ["FinalBiome Devs <https://github.com/finalbiome>"]
 homepage = "https://finalbiome.net/"
 edition = "2021"
 license = "Apache-2.0"

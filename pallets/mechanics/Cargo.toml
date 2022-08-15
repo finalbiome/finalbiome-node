@@ -2,7 +2,7 @@
 name = "pallet-mechanics"
 version = "1.0.0-dev"
 description = "Mechanics provides interaction methods with FA and NFA."
-authors = ["Substrate DevHub <https://github.com/FinalBiome>"]
+authors = ["FinalBiome Devs <https://github.com/finalbiome>"]
 homepage = "https://finalbiome.net/"
 edition = "2021"
 license = "Apache-2.0"

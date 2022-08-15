@@ -2,7 +2,7 @@
 name = "pallet-organization-identity"
 version = "1.0.0-dev"
 description = "The Organization Identity Pallet provides functionality for registering and managing organization data."
-authors = ["Substrate DevHub <https://github.com/FinalBiome>"]
+authors = ["FinalBiome Devs <https://github.com/finalbiome>"]
 homepage = "https://finalbiome.net/"
 edition = "2021"
 license = "Apache-2.0"
