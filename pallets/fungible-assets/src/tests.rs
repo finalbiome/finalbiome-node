@@ -49,9 +49,7 @@ fn check_test_genesis_data() {
 		let tua = TopUppedAssets::<Test>::get();
 		assert_eq!(tua.len(), 1);
 		assert_eq!(tua.contains(&1), true);
-		// TopUpQueue should include acc 4
-		let tuq = TopUpQueue::<Test>::get(&1, &4).unwrap();
-		assert_eq!(tuq, TopUpConsequence::TopUp(5));
+		assert_eq!(TopUpQueue::<Test>::contains_key(&1, &4), true);
 	})
 }
 
@@ -804,20 +802,21 @@ fn decrease_balance_topup_check() {
 			Accounts::<Test>::get(target, id).unwrap().balance,
 			acc_balance - amount // 17
 		);
-		assert_eq!(TopUpQueue::<Test>::get(id, target).is_none(), false);
-		assert_eq!(TopUpQueue::<Test>::get(id, target).unwrap(), TopUpConsequence::TopUpFinal(3));
+		assert_eq!(TopUpQueue::<Test>::contains_key(id, target), true);
 
 		assert_eq!(
 			FungibleAssets::decrease_balance(id, &target, 15, max_allowed),
 			Ok(15)
 		);
-		assert_eq!(TopUpQueue::<Test>::get(id, target).unwrap(), TopUpConsequence::TopUp(5));
+		assert_eq!(TopUpQueue::<Test>::contains_key(id, target), true);
+
 
 		assert_eq!(
 			FungibleAssets::decrease_balance(id, &target, 1000, true),
 			Ok(2)
 		);
-		assert_eq!(TopUpQueue::<Test>::get(id, target).unwrap(), TopUpConsequence::TopUp(5));
+		assert_eq!(TopUpQueue::<Test>::contains_key(id, target), true);
+
 
 	})
 }
@@ -888,7 +887,7 @@ fn top_upped_asset_remove_from_queue() {
 		assert_eq!(TopUppedAssets::<Test>::get().len(), 1);
 		// add fake record to TopUpQueue and check removing
 		assert_eq!(true, TopUppedAssets::<Test>::get().contains(&1));
-		TopUpQueue::<Test>::insert(&1, &3, TopUpConsequence::TopUpFinal(10));
+		TopUpQueue::<Test>::insert(&1, &3, ());
 
 		assert_eq!(TopUpQueue::<Test>::get(&1, &3).is_some(), true);
 		_ = TopUpQueue::<Test>::get(&1, &3).unwrap();
@@ -906,16 +905,15 @@ fn process_top_upped_assets() {
 		assert_ok!(FungibleAssets::increase_balance(id, &1100, 17));
 		assert_ok!(FungibleAssets::increase_balance(id, &1200, 1));
 		// add it to queue
-		TopUpQueue::<Test>::insert(&id, &1100, TopUpConsequence::TopUpFinal(3));
-		TopUpQueue::<Test>::insert(&id, &1200, TopUpConsequence::TopUp(15));
+		TopUpQueue::<Test>::insert(&id, &1100, ());
+		TopUpQueue::<Test>::insert(&id, &1200, ());
 
 		assert_eq!(FungibleAssets::process_top_upped_assets(), 0);
 
 		assert_eq!(Accounts::<Test>::get(1100, id).unwrap().balance, 20);
-		assert_eq!(Accounts::<Test>::get(1200, id).unwrap().balance, 16);
+		assert_eq!(Accounts::<Test>::get(1200, id).unwrap().balance, 6);
 		assert_eq!(TopUpQueue::<Test>::contains_key(&id, &1100), false);
 		assert_eq!(TopUpQueue::<Test>::contains_key(&id, &1200), true);
-		assert_eq!(TopUpQueue::<Test>::get(&id, &1200).unwrap(), TopUpConsequence::TopUpFinal(4));
 	})
 }
 
@@ -927,17 +925,17 @@ fn process_top_up_in_progress() {
 		assert_ok!(FungibleAssets::increase_balance(id, &1100, 17));
 		assert_ok!(FungibleAssets::increase_balance(id, &1200, 1));
 		// add it to queue
-		TopUpQueue::<Test>::insert(&id, &1100, TopUpConsequence::TopUpFinal(3));
-		TopUpQueue::<Test>::insert(&id, &1200, TopUpConsequence::TopUp(15));
+		TopUpQueue::<Test>::insert(&id, &1100, ());
+		TopUpQueue::<Test>::insert(&id, &1200, ());
 
 		run_to_block(System::block_number() + 1);
 
 		assert_eq!(Accounts::<Test>::get(1100, id).unwrap().balance, 20);
-		assert_eq!(Accounts::<Test>::get(1200, id).unwrap().balance, 16);
+		assert_eq!(Accounts::<Test>::get(1200, id).unwrap().balance, 6);
 		assert_eq!(TopUpQueue::<Test>::contains_key(&id, &1100), false);
 		assert_eq!(TopUpQueue::<Test>::contains_key(&id, &1200), true);
 
-		run_to_block(System::block_number() + 1);
+		run_to_block(System::block_number() + 5);
 
 		assert_eq!(Accounts::<Test>::get(1100, id).unwrap().balance, 20);
 		assert_eq!(Accounts::<Test>::get(1200, id).unwrap().balance, 20);
@@ -969,5 +967,29 @@ fn dec_references_err() {
 		let id = 1; // it's top upped asset with speed of 5 and limit 20
 		assert_eq!(Assets::<Test>::get(id).unwrap().references, 0);
 		assert_noop!(FungibleAssets::dec_references(&id), ArithmeticError::Underflow);
+	})
+}
+
+#[test]
+fn increase_balance_topup_check() {
+	new_test_ext().execute_with(|| {
+		let id = 1; // asset with top up 5 up to 20
+		let beneficiary = 333; // account has no fa 1
+		let amount = 3; // total suply 20
+		
+		assert_eq!(TopUpQueue::<Test>::get(id, beneficiary).is_none(), true);
+		assert_eq!(Accounts::<Test>::get(beneficiary, id).is_none(), true);
+		assert_ok!(FungibleAssets::increase_balance(id, &beneficiary, amount));
+
+		assert_eq!(Accounts::<Test>::get(beneficiary, id).unwrap().balance, amount);
+		assert_eq!(TopUpQueue::<Test>::get(id, beneficiary).is_none(), true);
+
+
+		assert_ok!(FungibleAssets::increase_balance(id, &beneficiary, 15));
+		assert_eq!(TopUpQueue::<Test>::get(id, beneficiary).is_none(), true);
+
+
+		assert_ok!(FungibleAssets::increase_balance(id, &beneficiary, 15));
+		assert_eq!(TopUpQueue::<Test>::get(id, beneficiary).is_none(), true);
 	})
 }

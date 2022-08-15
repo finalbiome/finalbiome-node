@@ -182,12 +182,10 @@ impl<T: Config> Pallet<T> {
       })?;
       Ok(())
     })?;
-    // Put an account to the queue for top upped of the balance
-    match target_topup {
-      TopUpConsequence::TopUp(topup) => TopUpQueue::<T>::insert(&id, &target, TopUpConsequence::TopUp(topup)),
-      TopUpConsequence::TopUpFinal(topup) => TopUpQueue::<T>::insert(&id, &target, TopUpConsequence::TopUpFinal(topup)),
-      TopUpConsequence::None => (),
-    };
+    // Put an account to the queue for top upped of the balance if it needed
+    if target_topup != TopUpConsequence::None {
+      TopUpQueue::<T>::insert(&id, &target, ());
+    }
 
     Self::deposit_event(Event::Burned { asset_id: id, owner: target.clone(), balance: actual });
     Ok(actual)
@@ -230,6 +228,8 @@ impl<T: Config> Pallet<T> {
   }
 
   /// Top up all assets which have demand.
+  /// 
+  /// TODO: unwrap all `unwrap`s
   pub fn process_top_upped_assets() -> Weight {
     let mut reads: Weight = 1;
     let mut writes: Weight = 0;
@@ -241,11 +241,18 @@ impl<T: Config> Pallet<T> {
 
     // loop over all assets, retrieve accounts that have a demand for these assets
     // and replenish their balance
-    let mut next_topup: Vec<(AssetId, T::AccountId, TopUpConsequence)> = Vec::new();
+    let mut next_topup: Vec<(AssetId, T::AccountId)> = Vec::new();
+
     for id in assets.iter() {
       reads.saturating_accrue(1);
-      for (target, topup) in TopUpQueue::<T>::drain_prefix(&id) {
-        match topup {
+      let details = Assets::<T>::get(&id).unwrap();
+      
+      for (target, _) in TopUpQueue::<T>::drain_prefix(&id) {
+        reads.saturating_accrue(2); // drain + get details
+        let account = Accounts::<T>::get(&target, &id).unwrap();
+        let target_topup = details.next_step_topup(account.balance);
+
+        match target_topup {
           TopUpConsequence::TopUpFinal(amount) => {
             Self::increase_balance(*id, &target, amount).unwrap();
             reads.saturating_accrue(3);
@@ -253,12 +260,8 @@ impl<T: Config> Pallet<T> {
           },
           TopUpConsequence::TopUp(amount) => {
             Self::increase_balance(*id, &target, amount).unwrap();
-            // it's not final top up. So, calculates next topup amount and stores it in the queue
-            let account = Accounts::<T>::get(&target, &id).unwrap();
-            let details = Assets::<T>::get(&id).unwrap();
-            let target_topup = details.next_step_topup(account.balance);
-            next_topup.push((*id, target, target_topup));
-            reads.saturating_accrue(5);
+            next_topup.push((*id, target));
+            reads.saturating_accrue(3);
             writes.saturating_accrue(2);
           },
           TopUpConsequence:: None => (),
@@ -266,8 +269,8 @@ impl<T: Config> Pallet<T> {
       }
     }
     // add to queue all unfinished top ups
-    for (id, target, topup) in next_topup {
-      TopUpQueue::<T>::insert(&id, &target, topup);
+    for (id, target) in next_topup {
+      TopUpQueue::<T>::insert(&id, &target, ());
       writes.saturating_accrue(1);
     };
 

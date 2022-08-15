@@ -132,15 +132,14 @@ pub mod pallet {
 		StorageValue<_, WeakBoundedVec<AssetId, T::MaxTopUppedAssets>, ValueQuery>;
 
 	#[pallet::storage]
-	/// Accounts with assets which need to top upped in next block.
-	/// Value contains amount to top up
+	/// Accounts with assets which maybe need to top upped in next block.
 	pub(super) type TopUpQueue<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
 		AssetId,
 		Blake2_128Concat,
 		T::AccountId,
-		TopUpConsequence,
+		(),
 	>;
 
 	
@@ -215,11 +214,9 @@ pub mod pallet {
 				// add accounts to top up queue, if needed
 				let details = Assets::<T>::get(&asset_id).unwrap();
 				let target_topup = details.next_step_topup(*balance);
-				match target_topup {
-					TopUpConsequence::TopUp(topup) => TopUpQueue::<T>::insert(&asset_id, &account_id, TopUpConsequence::TopUp(topup)),
-					TopUpConsequence::TopUpFinal(topup) => TopUpQueue::<T>::insert(&asset_id, &account_id, TopUpConsequence::TopUpFinal(topup)),
-					TopUpConsequence::None => (),
-				};
+				if target_topup != TopUpConsequence::None {
+					TopUpQueue::<T>::insert(&asset_id, &account_id, ());
+				}
 			};
 		}
 	}
