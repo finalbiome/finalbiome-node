@@ -1590,6 +1590,7 @@ fn do_bet_asset_one_round_work() {
 		// should mint Nfa(20), drop mechanic, deposit event
 
 		assert_eq!(Mechanics::<Test>::contains_key(&inner_id.account_id, &inner_id.nonce), false);
+		assert_eq!(Timeouts::<Test>::contains_key((22, &inner_id.account_id, &inner_id.nonce)), false);
 
 		assert_eq!(
 			System::events(),
@@ -1611,12 +1612,13 @@ fn do_bet_next_round_two_rounds_work() {
 		let who = 117;
 		let _n = System::account_nonce(who);
 		System::inc_account_nonce(who);
-		let inner_id = MechanicsModule::get_mechanic_id(&who);
 		
 		let class_id = 35;
 		let asset_id = 35;
-
+		
 		System::set_block_number(2); // rnd(2) % total_outcomes(2) = 0; 0 = win
+		let inner_id = MechanicsModule::get_mechanic_id(&who);
+		let timeout_id: <Test as frame_system::Config>::BlockNumber = inner_id.nonce as u64 + 21;
 		System::reset_events();
 		assert_ok!(MechanicsModule::do_bet(&who, &class_id, &asset_id));
 		assert_eq!(
@@ -1631,6 +1633,8 @@ fn do_bet_next_round_two_rounds_work() {
 		);
 		// at first round should save mechanic
 		assert_eq!(Mechanics::<Test>::contains_key(&inner_id.account_id, &inner_id.nonce), true);
+		// and set the timeout
+		assert_eq!(Timeouts::<Test>::contains_key((timeout_id, &inner_id.account_id, &inner_id.nonce)), true);
 
 		System::set_block_number(3); // rnd(3) % total_outcomes(2) = 1; 1 = lose
 		System::reset_events();
@@ -1660,6 +1664,7 @@ fn do_do_upgrade_bet_two_rounds_work() {
 		let _n = System::account_nonce(who);
 		System::inc_account_nonce(who);
 		let inner_id = MechanicsModule::get_mechanic_id(&who);
+		let timeout_id: <Test as frame_system::Config>::BlockNumber = inner_id.nonce as u64 + 21;
 		
 		let class_id = 36;
 		let asset_id = 36;
@@ -1680,7 +1685,8 @@ fn do_do_upgrade_bet_two_rounds_work() {
 		
 		// at first round should save mechanic
 		assert_eq!(Mechanics::<Test>::contains_key(&inner_id.account_id, &inner_id.nonce), true);
-
+		// and set the timeout
+		assert_eq!(Timeouts::<Test>::contains_key((timeout_id, &inner_id.account_id, &inner_id.nonce)), true);
 
 		// NEXT round by upgrade mechanic
 		System::set_block_number(3); // rnd(3) % total_outcomes(2) = 1; 1 = lose
@@ -1693,6 +1699,7 @@ fn do_do_upgrade_bet_two_rounds_work() {
 		// final result = draw
 		// should burn nfa, drop mechanic, deposit event
 		assert_eq!(Mechanics::<Test>::contains_key(&inner_id.account_id, &inner_id.nonce), false);
+		assert_eq!(Timeouts::<Test>::contains_key((timeout_id, &inner_id.account_id, &inner_id.nonce)), false);
 
 		assert_eq!(
 			System::events(),

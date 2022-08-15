@@ -156,7 +156,9 @@ impl<T: Config> Pallet<T> {
     // create the mechanic data
     let data = MechanicData::Bet(MechanicDataBet::default());
     let mechanic = MechanicDetailsBuilder::build::<T>(mechanic_id.account_id.clone(), data);
+    let timeout_key = mechanic.get_tiomeout_strorage_key(mechanic_id.nonce);
     Mechanics::<T>::insert(&mechanic_id.account_id, &mechanic_id.nonce, mechanic);
+    Timeouts::<T>::insert(timeout_key, ());
 
     let _ = Self::try_lock_nfa(&mechanic_id, who, *class_id, *asset_id).map_err(|err| {
       let _ = Self::drop_mechanic(&mechanic_id, AssetAction::Release);
