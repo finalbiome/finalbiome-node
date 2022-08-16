@@ -327,3 +327,46 @@ fn onboarding_works() {
 	})
 }
 
+#[test]
+fn onboarding_works_with_empty_airdrops() {
+	new_test_ext().execute_with(|| {
+
+		// Create org id 1
+		assert_ok!(OrganizationIdentity::create_organization(Origin::signed(1), br"some name".to_vec()));
+		assert_eq!(Organizations::<Test>::contains_key(&1), true);
+		assert_eq!(Organizations::<Test>::get(&1).unwrap().onboarding_assets, None);
+		assert_ok!(OrganizationIdentity::add_member(Origin::signed(1), 2));
+
+
+		// add assets
+		let assets: OnboardingAssets = None;
+
+		assert_ok!(OrganizationIdentity::do_set_onboarding_assets(&1, assets.clone()));
+		assert_eq!(Organizations::<Test>::get(&1).unwrap().onboarding_assets, assets);
+
+		assert_noop!(OrganizationIdentity::onboarding(Origin::none(), 333), sp_runtime::traits::BadOrigin);
+		assert_noop!(OrganizationIdentity::onboarding(Origin::signed(2), 333), sp_runtime::traits::BadOrigin);
+
+
+
+		System::reset_events();
+
+		assert_ok!(OrganizationIdentity::onboarding(Origin::signed(333), 1));
+
+		assert_eq!(
+			System::events(),
+			vec![
+				EventRecord {
+					phase: Phase::Initialization,
+					event: OrgEvent::Onboard(1, 333).into(),
+					topics: vec![],
+				},
+			]
+		);
+
+		assert_noop!(OrganizationIdentity::onboarding(Origin::signed(333), 1), Error::<Test>::AlreadyOnboarded);
+
+
+	})
+}
+

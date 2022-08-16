@@ -32,9 +32,10 @@ impl<T: Config> Pallet<T> {
         };
       }
 
-      // Set user as onboarded to the game
-      UsersOf::<T>::insert(organization_id, target, ());
     }
+    
+    // Set user as onboarded to the game
+    UsersOf::<T>::insert(organization_id, target, ());
 
     Ok(().into())
   }
