@@ -1,6 +1,19 @@
-use crate::{mock::*, Error, Organizations, Members};
+use crate::{mock::*, Error, Organizations, UsersOf, Members, AirDropAsset, OnboardingAssets, Event as OrgEvent};
+use pallet_support::Attribute;
 use frame_support::{assert_noop, assert_ok};
 use frame_system::{ensure_signed};
+use frame_system::{EventRecord, Phase};
+use sp_runtime::DispatchError;
+
+#[macro_export]
+macro_rules! bvec {
+	($str:tt) => {
+		$str.to_vec().try_into().unwrap()
+	};
+	($( $x:tt )*) => {
+		vec![$( $x )*].try_into().unwrap()
+	};
+}
 
 #[test]
 fn create_organization_works() {
@@ -121,3 +134,196 @@ fn remove_member_works() {
 		assert_eq!(OrganizationIdentity::member_count(1), 1u8);
 	})
 }
+
+#[test]
+fn do_set_onboarding_assets_works() {
+	new_test_ext().execute_with(|| {
+		assert_noop!(OrganizationIdentity::do_set_onboarding_assets(&1, None), Error::<Test>::NotOrganization);
+
+		// Create org id 1
+		assert_ok!(OrganizationIdentity::create_organization(Origin::signed(1), br"some name".to_vec()));
+		assert_eq!(Organizations::<Test>::contains_key(&1), true);
+		assert_eq!(Organizations::<Test>::get(&1).unwrap().onboarding_assets, None);
+
+		// add assets
+		let assets: OnboardingAssets = Some(
+			bvec![
+				AirDropAsset::Fa(1, 100),
+				AirDropAsset::Nfa(1, bvec![
+					Attribute {
+						key: bvec!(br"a"),
+						value: 10.try_into().unwrap(),
+					},
+					Attribute {
+						key: bvec!(br"b"),
+						value: "t".try_into().unwrap(),
+					},
+				])
+			],
+		);
+		assert_ok!(OrganizationIdentity::do_set_onboarding_assets(&1, assets.clone()));
+		assert_eq!(Organizations::<Test>::get(&1).unwrap().onboarding_assets, assets);
+
+		assert_ok!(OrganizationIdentity::do_set_onboarding_assets(&1, None));
+		assert_eq!(Organizations::<Test>::get(&1).unwrap().onboarding_assets, None);
+	})
+}
+
+#[test]
+fn set_onboarding_assets_works() {
+	new_test_ext().execute_with(|| {
+		assert_noop!(OrganizationIdentity::set_onboarding_assets(Origin::none(), 1, None), sp_runtime::traits::BadOrigin);
+
+		// Create org id 1
+		assert_ok!(OrganizationIdentity::create_organization(Origin::signed(1), br"some name".to_vec()));
+		// only member can update an organization
+		assert_noop!(OrganizationIdentity::set_onboarding_assets(Origin::signed(2), 1, None), Error::<Test>::NotMember);
+	
+		assert_ok!(OrganizationIdentity::add_member(Origin::signed(1), 2));
+		assert_ok!(OrganizationIdentity::set_onboarding_assets(Origin::signed(2), 1, None));
+
+		// add assets
+		let assets: OnboardingAssets = Some(
+			bvec![
+				AirDropAsset::Fa(1, 100),
+				AirDropAsset::Nfa(1, bvec![
+					Attribute {
+						key: bvec!(br"a"),
+						value: 10.try_into().unwrap(),
+					},
+					Attribute {
+						key: bvec!(br"b"),
+						value: "t".try_into().unwrap(),
+					},
+				])
+			],
+		);
+		System::reset_events();
+		assert_ok!(OrganizationIdentity::set_onboarding_assets(Origin::signed(2), 1, assets.clone()));
+
+		assert_eq!(
+			System::events(),
+			vec![
+				EventRecord {
+					phase: Phase::Initialization,
+					event: OrgEvent::UpdatedOrganization(1).into(),
+					topics: vec![],
+				},
+			]
+		);
+	})
+}
+
+#[test]
+fn do_airdrop_fa_works() {
+	new_test_ext().execute_with(|| {
+		assert_ok!(OrganizationIdentity::do_airdrop_fa(&10, 10, 100));
+		assert_noop!(OrganizationIdentity::do_airdrop_fa(&10, 11, 100), DispatchError::Other("mock_do_airdrop_fa_works"));
+	})
+}
+
+#[test]
+fn do_airdrop_nfa_works() {
+	new_test_ext().execute_with(|| {
+		assert_ok!(OrganizationIdentity::do_airdrop_nfa(&10, 10, bvec![]));
+		assert_noop!(OrganizationIdentity::do_airdrop_nfa(&10, 11, bvec![]), DispatchError::Other("mock_do_airdrop_nfa_works"));
+		assert_noop!(OrganizationIdentity::do_airdrop_nfa(&10, 12, bvec![]), DispatchError::Other("mock_do_airdrop_nfa_works_2"));
+	})
+}
+
+#[test]
+fn do_onboarding_works() {
+	new_test_ext().execute_with(|| {
+
+		// Create org id 1
+		assert_ok!(OrganizationIdentity::create_organization(Origin::signed(1), br"some name".to_vec()));
+		assert_eq!(Organizations::<Test>::contains_key(&1), true);
+		assert_eq!(Organizations::<Test>::get(&1).unwrap().onboarding_assets, None);
+
+		// add assets
+		let assets: OnboardingAssets = Some(
+			bvec![
+				AirDropAsset::Fa(12, 100),
+				AirDropAsset::Nfa(13, bvec![
+					Attribute {
+						key: bvec!(br"a"),
+						value: 10.try_into().unwrap(),
+					},
+					Attribute {
+						key: bvec!(br"b"),
+						value: "t".try_into().unwrap(),
+					},
+				])
+			],
+		);
+
+		assert_ok!(OrganizationIdentity::do_set_onboarding_assets(&1, assets.clone()));
+		assert_eq!(Organizations::<Test>::get(&1).unwrap().onboarding_assets, assets);
+		assert_eq!(UsersOf::<Test>::contains_key(&1, &333), false);
+
+
+
+		assert_ok!(OrganizationIdentity::do_onboarding(&1, &333));
+		assert_eq!(UsersOf::<Test>::contains_key(&1, &333), true);
+
+		
+	})
+}
+
+#[test]
+fn onboarding_works() {
+	new_test_ext().execute_with(|| {
+
+		// Create org id 1
+		assert_ok!(OrganizationIdentity::create_organization(Origin::signed(1), br"some name".to_vec()));
+		assert_eq!(Organizations::<Test>::contains_key(&1), true);
+		assert_eq!(Organizations::<Test>::get(&1).unwrap().onboarding_assets, None);
+		assert_ok!(OrganizationIdentity::add_member(Origin::signed(1), 2));
+
+
+		// add assets
+		let assets: OnboardingAssets = Some(
+			bvec![
+				AirDropAsset::Fa(12, 100),
+				AirDropAsset::Nfa(13, bvec![
+					Attribute {
+						key: bvec!(br"a"),
+						value: 10.try_into().unwrap(),
+					},
+					Attribute {
+						key: bvec!(br"b"),
+						value: "t".try_into().unwrap(),
+					},
+				])
+			],
+		);
+
+		assert_ok!(OrganizationIdentity::do_set_onboarding_assets(&1, assets.clone()));
+		assert_eq!(Organizations::<Test>::get(&1).unwrap().onboarding_assets, assets);
+
+		assert_noop!(OrganizationIdentity::onboarding(Origin::none(), 333), sp_runtime::traits::BadOrigin);
+		assert_noop!(OrganizationIdentity::onboarding(Origin::signed(2), 333), sp_runtime::traits::BadOrigin);
+
+
+
+		System::reset_events();
+
+		assert_ok!(OrganizationIdentity::onboarding(Origin::signed(333), 1));
+
+		assert_eq!(
+			System::events(),
+			vec![
+				EventRecord {
+					phase: Phase::Initialization,
+					event: OrgEvent::Onboard(1, 333).into(),
+					topics: vec![],
+				},
+			]
+		);
+
+		assert_noop!(OrganizationIdentity::onboarding(Origin::signed(333), 1), Error::<Test>::AlreadyOnboarded);
+
+
+	})
+}
+

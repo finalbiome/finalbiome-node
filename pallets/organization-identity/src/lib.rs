@@ -13,22 +13,34 @@ use sp_std::vec::Vec;
 use frame_support::{traits::{EnsureOrigin, EnsureOriginWithArg}};
 use frame_system::RawOrigin;
 use frame_system::pallet_prelude::*;
+use frame_support::pallet_prelude::*;
 
 mod types;
 pub use types::*;
+
+mod functions;
 
 pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
+	use frame_support::error::BadOrigin;
+
 	use super::*;
-	use frame_support::pallet_prelude::*;
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		/// Connector to fungible assets instances.
+		type FungibleAssets: pallet_support::traits::FungibleAssets<Self::AccountId>;
+		/// Connector to non-fungible assets instances.
+		type NonFungibleAssets: pallet_support::traits::NonFungibleAssets<Self::AccountId, Self::Index>;
+		/// The origin which may onboard to the game.
+		/// 
+		/// Onboarding can only be used by a regular user, neither the organization nor any of its members can onboard into the gamse
+		type ExecuteOrigin: frame_support::traits::EnsureOrigin<Self::Origin, Success = Self::AccountId> ;
 		/// The maximum length of an organization's name stored on-chain.
 		#[pallet::constant]
 		type StringLimit: Get<u32>;
@@ -65,9 +77,22 @@ pub mod pallet {
 	pub(super) type MembersOf<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
-		OrganizationIdOf<T>, // account_id of the organization
+		OrganizationIdOf<T>, // account id of the organization
 		Blake2_128Concat,
 		T::AccountId, // account id of the member
+		()
+	>;
+
+	#[pallet::storage]
+	/// Users of organizations.
+	/// 
+	/// Stores users who has been onboarded into the game
+	pub(super) type UsersOf<T: Config> = StorageDoubleMap<
+		_,
+		Blake2_128Concat,
+		OrganizationIdOf<T>, // account id of the organization
+		Blake2_128Concat,
+		T::AccountId, // account id of the user
 		()
 	>;
 
@@ -139,10 +164,14 @@ pub mod pallet {
 		SomethingStored(u32, T::AccountId),
 		/// An organization has been created. [organization_name, who]
 		CreatedOrganization(Vec<u8>, T::AccountId),
+		/// An asset class has been updated.
+		UpdatedOrganization(OrganizationIdOf<T>),
 		/// An member was added to an organization. [organization, member]
 		MemberAdded(OrganizationIdOf<T>, T::AccountId),
 		/// An member was removed from organization. [organization, member]
-		MemberRemoved(OrganizationIdOf<T>, T::AccountId)
+		MemberRemoved(OrganizationIdOf<T>, T::AccountId),
+		/// Assets for the game has been airdropped.
+		Onboard(OrganizationIdOf<T>, T::AccountId),
 	}
 
 	// Errors inform users that something went wrong.
@@ -164,8 +193,10 @@ pub mod pallet {
 		MembershipLimitReached,
 		/// Cannot add organization as an organization's member.
 		InvalidMember,
-		/// Member not exits&
+		/// Member not exits.
 		NotMember,
+		/// Account has already been onboarded.
+		AlreadyOnboarded,
 	}
 
 	#[pallet::call]
@@ -299,6 +330,44 @@ pub mod pallet {
 
 			Ok(().into())
 		}
+	
+		/// Set assets which will be airdroped at game onboarding
+		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(3,2))]
+		pub fn set_onboarding_assets(
+			origin: OriginFor<T>,
+			organization_id: T::AccountId,
+			assets: OnboardingAssets
+		) -> DispatchResultWithPostInfo {
+			let member = ensure_signed(origin)?;
+			// only member can update an organization
+			ensure!(MembersOf::<T>::contains_key(&organization_id, &member), Error::<T>::NotMember);
+
+			Self::do_set_onboarding_assets(&organization_id, assets)?;
+			
+			Self::deposit_event(Event::UpdatedOrganization(organization_id));
+			Ok(().into())
+		}
+
+		/// Onboirding to game
+		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(3,2))]
+		pub fn onboarding(
+			origin: OriginFor<T>,
+			organization_id: T::AccountId,
+		) -> DispatchResultWithPostInfo {
+			// Only a regular user can execute mechanic
+			let account = T::ExecuteOrigin::ensure_origin(origin)?;
+			// Neither the organization nor the member can't onboard to the game
+			ensure!(!Self::is_member_or_organization(&account), BadOrigin);
+			// Users who are already onboarded are not allowed
+			ensure!(!Self::is_user_of_organization(&account, &organization_id), Error::<T>::AlreadyOnboarded);
+			
+
+			Self::do_onboarding(&organization_id, &account)?;
+
+			Self::deposit_event(Event::Onboard(organization_id, account));
+
+			Ok(().into())
+		}
 	}
 }
 
@@ -309,7 +378,11 @@ impl<T: Config> Pallet<T> {
 	}
 	/// Returns true if account is a member of any organization or organization
 	fn is_member_or_organization(account: &T::AccountId) -> bool {
-		Members::<T>::contains_key(&account)
+		Members::<T>::contains_key(account)
+	}
+	/// Returns true if account is a user of given organization
+	fn is_user_of_organization(account: &T::AccountId, organization: &T::AccountId) -> bool {
+		UsersOf::<T>::contains_key(organization, account)
 	}
 }
 

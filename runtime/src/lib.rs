@@ -277,6 +277,9 @@ impl pallet_template::Config for Runtime {
 
 impl pallet_organization_identity::Config for Runtime {
 	type Event = Event;
+	type FungibleAssets = FungibleAssets;
+	type NonFungibleAssets = NonFungibleAssets;
+	type ExecuteOrigin = pallet_organization_identity::EnsureUser<Runtime>;
 	type StringLimit = ConstU32<36>;
 	type MaxMembers = ConstU8<3>;
 }
