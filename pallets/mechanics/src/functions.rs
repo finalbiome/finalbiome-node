@@ -129,7 +129,7 @@ impl<T: Config> Pallet<T> {
     who: &T::AccountId,
     class_id: &NonFungibleClassId,
     offer_id: &u32,
-  ) -> DispatchResult {
+  ) -> DispatchResultAs<NonFungibleAssetId> {
     // checking availability of that mechanic for the nfa class
     let (fa, price, attributes) = T::NonFungibleAssets::get_offer(class_id, offer_id)?;
     // check fa balances
@@ -140,7 +140,7 @@ impl<T: Config> Pallet<T> {
     T::NonFungibleAssets::set_attributes(&asset_id, attributes)?;
     // withdraw
     T::FungibleAssets::burn_from(fa, who, price)?;
-    Ok(())
+    Ok(asset_id)
   }
 
   /// Process a bet mechanic the first time. \
@@ -237,10 +237,10 @@ impl<T: Config> Pallet<T> {
     // trying to determine the final result
     if let Some(bet_result) = Self::try_finalize_bet(&outcomes, bettor.rounds, &bettor.outcomes) {
       // finish mechanic
-      Self::do_bet_result_processing(&mechanic_id, who, bettor, bet_result)?;
+      Self::do_bet_result_processing(&mechanic_id, who, bettor, bet_result, outcomes)?;
     } else if played_rounds == bettor.rounds as usize {
       // the bet was completed, but the winner was not found, i.e. draw
-      Self::do_bet_result_processing(&mechanic_id, who, bettor, BetResult::Draw)?;
+      Self::do_bet_result_processing(&mechanic_id, who, bettor, BetResult::Draw, outcomes)?;
     } else {
       debug_assert!(bettor.rounds > 1, "bettor cannot have one round here");
       // save results to mechanic data for future uses
@@ -333,6 +333,7 @@ impl<T: Config> Pallet<T> {
     who: &T::AccountId,
     bettor: &Bettor,
     result: BetResult,
+    outcomes: Vec<u32>
   ) -> DispatchResult {
 
     let result = match result {
@@ -374,7 +375,14 @@ impl<T: Config> Pallet<T> {
     };
     // drop mechanic
     // emit Finished event
-    Self::deposit_event(Event::Finished { id: mechanic_id.nonce, owner: mechanic_id.account_id.clone() });
+    let outcomes: MechanicDataBetOutcomes = outcomes.to_vec().try_into().expect("the number of values cannot exceed the number of rounds");
+    let result:EventMechanicResult = Some(EventMechanicResultData::Bet(
+      EventMechanicResultDataBet {
+        outcomes,
+        result,
+      }
+    ));
+    Self::deposit_event(Event::Finished { id: mechanic_id.nonce, owner: mechanic_id.account_id.clone(), result });
     Ok(())
   }
 

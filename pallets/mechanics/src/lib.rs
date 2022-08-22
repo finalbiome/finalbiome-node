@@ -99,9 +99,9 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// Mechanics done.
-		Finished { id: T::Index, owner: T::AccountId },
+		Finished { owner: T::AccountId, id: T::Index, result: EventMechanicResult },
 		/// Mechanics was stopped.
-		Stopped { id: T::Index, owner: T::AccountId, reason: EventMechanicStopReason },
+		Stopped { owner: T::AccountId, id: T::Index, reason: EventMechanicStopReason },
 	}
 
 	// Errors inform users that something went wrong.
@@ -149,8 +149,10 @@ pub mod pallet {
 			let who = T::ExecuteOrigin::ensure_origin(origin)?;
 			// Generate mechanic id
 			let mechanic_id = Self::get_mechanic_id(&who);
-			Self::do_buy_nfa(&who, &class_id, &offer_id)?;
-			Self::deposit_event(Event::Finished { id: mechanic_id.nonce, owner: mechanic_id.account_id });
+			let asset_id = Self::do_buy_nfa(&who, &class_id, &offer_id)?;
+
+			let result: EventMechanicResult = Some(EventMechanicResultData::BuyNfa(asset_id));
+			Self::deposit_event(Event::Finished { id: mechanic_id.nonce, owner: mechanic_id.account_id, result });
 			Ok(())
 		}
 

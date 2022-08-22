@@ -86,7 +86,7 @@ pub(crate) struct MechanicDataBet {
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 /// Results of the bettor round
-pub(crate) enum BetResult {
+pub enum BetResult {
   Won,
   Lost,
   Draw,
@@ -121,6 +121,22 @@ pub enum EventMechanicStopReason {
 	UpgradeNeeded,
 }
 
+#[derive(Clone, PartialEq, RuntimeDebug, Encode, Decode, TypeInfo)]
+pub enum EventMechanicResultData {
+	/// Hold a minted asset id
+	BuyNfa(NonFungibleAssetId),
+	/// Hold a final outcoms of Bet mechanic
+	Bet(EventMechanicResultDataBet),
+}
+
+#[derive(Clone, PartialEq, RuntimeDebug, Encode, Decode, TypeInfo)]
+pub struct EventMechanicResultDataBet {
+	/// Hold a final outcomes of Bet mechanic
+	pub outcomes: MechanicDataBetOutcomes,
+	/// Hold a final result of bettor mechanic
+	pub result: BetResult,
+}
+
 /// Actions that are performed with the assets at the time of the destruction of the mechanics
 pub(crate) enum AssetAction {
 	/// All assets will be released and available to the user
@@ -134,3 +150,8 @@ pub(crate) type MechanicDetailsOf<T> = MechanicDetails<AccountIdOf<T>, BlockNumb
 pub(crate) type MechanicDataBetOutcomes = BoundedVec<u32, ConstU32<BETTOR_MAX_NUMBER_OF_ROUNDS>>;
 
 pub(crate) type MechanicUpgradeDataOf<T> = MechanicUpgradeData<AccountIdOf<T>, IndexOf<T>>;
+
+/// Type of data that hold a result of finished mechanic.
+/// 
+/// This is necessary because the mechanic resets all internal data when it finished.
+pub(crate) type EventMechanicResult = Option<EventMechanicResultData>;

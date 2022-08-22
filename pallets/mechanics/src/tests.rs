@@ -2,7 +2,7 @@ use crate::{
 	mock::*,
 	Event as MechanicsEvent,
 	Error,
-	Timeouts, MechanicId, MechanicData, Mechanics, BetResult, Mechanic, MechanicUpgradeData, MechanicUpgradePayload, MechanicUpgradeDataOf, EventMechanicStopReason, AssetAction, MechanicDetailsBuilder,
+	Timeouts, MechanicId, MechanicData, Mechanics, BetResult, Mechanic, MechanicUpgradeData, MechanicUpgradePayload, MechanicUpgradeDataOf, EventMechanicStopReason, AssetAction, MechanicDetailsBuilder, EventMechanicResultData, EventMechanicResultDataBet,
 };
 use frame_support::{assert_noop, assert_ok, BoundedVec, };
 use frame_system::{EventRecord, Phase};
@@ -677,9 +677,11 @@ fn do_bet_result_processing_win_nfa() {
 		};
 		assert!(bettor.is_valid()); // bettor must be valid
 		let result = BetResult::Won;
+
+		let some_outcomes = vec![1, 2, 3];
 		
 		System::reset_events();
-		assert_ok!(MechanicsModule::do_bet_result_processing(&mechanic_id, &who, &bettor, result));
+		assert_ok!(MechanicsModule::do_bet_result_processing(&mechanic_id, &who, &bettor, result.clone(), some_outcomes));
 		// should mint nfa(10,) burn nfa(22,33), drop mechanic, deposit event
 
 		assert_eq!(
@@ -687,7 +689,14 @@ fn do_bet_result_processing_win_nfa() {
 			vec![
 				EventRecord {
 					phase: Phase::Initialization,
-					event: MechanicsEvent::Finished { id: mechanic_id.nonce, owner: mechanic_id.account_id }.into(),
+					event: MechanicsEvent::Finished {
+						id: mechanic_id.nonce,
+						owner: mechanic_id.account_id,
+						result: Some(EventMechanicResultData::Bet(EventMechanicResultDataBet {
+							outcomes: bvec![1, 2, 3],
+							result: result,
+						}))
+					}.into(),
 					topics: vec![],
 				},
 			]
@@ -727,9 +736,10 @@ fn do_bet_result_processing_lose() {
 		};
 		assert!(bettor.is_valid()); // bettor must be valid
 		let result = BetResult::Lost;
+		let some_outcomes = vec![1, 2, 3];
 		
 		System::reset_events();
-		assert_ok!(MechanicsModule::do_bet_result_processing(&mechanic_id, &who, &bettor, result));
+		assert_ok!(MechanicsModule::do_bet_result_processing(&mechanic_id, &who, &bettor, result.clone(), some_outcomes));
 		// should burn nfa(23,34), drop mechanic, deposit event
 
 		assert_eq!(
@@ -737,7 +747,14 @@ fn do_bet_result_processing_lose() {
 			vec![
 				EventRecord {
 					phase: Phase::Initialization,
-					event: MechanicsEvent::Finished { id: mechanic_id.nonce, owner: mechanic_id.account_id }.into(),
+					event: MechanicsEvent::Finished {
+							id: mechanic_id.nonce,
+							owner: mechanic_id.account_id,
+							result: Some(EventMechanicResultData::Bet(EventMechanicResultDataBet {
+								outcomes: bvec![1, 2, 3],
+								result: result,
+							}))
+						}.into(),
 					topics: vec![],
 				},
 			]
@@ -773,13 +790,16 @@ fn do_bet_result_processing_draw_win() {
 				BettorWinning::Nfa(11)
 			],
 			rounds: 2,
-			draw_outcome: DrawOutcomeResult::Lose,
+			draw_outcome: DrawOutcomeResult::Win,
 		};
 		assert!(bettor.is_valid()); // bettor must be valid
 		let result = BetResult::Draw;
+
+		let some_outcomes = vec![1, 2, 3];
+
 		
 		System::reset_events();
-		assert_ok!(MechanicsModule::do_bet_result_processing(&mechanic_id, &who, &bettor, result));
+		assert_ok!(MechanicsModule::do_bet_result_processing(&mechanic_id, &who, &bettor, result.clone(), some_outcomes));
 		// should min nfa(11,) burn nfa(24,35), drop mechanic, deposit event
 
 		assert_eq!(
@@ -787,7 +807,14 @@ fn do_bet_result_processing_draw_win() {
 			vec![
 				EventRecord {
 					phase: Phase::Initialization,
-					event: MechanicsEvent::Finished { id: mechanic_id.nonce, owner: mechanic_id.account_id }.into(),
+					event: MechanicsEvent::Finished {
+						id: mechanic_id.nonce,
+						owner: mechanic_id.account_id,
+						result: Some(EventMechanicResultData::Bet(EventMechanicResultDataBet {
+							outcomes: bvec![1, 2, 3],
+							result: BetResult::Won,
+						}))
+					}.into(),
 					topics: vec![],
 				},
 			]
@@ -827,9 +854,10 @@ fn do_bet_result_processing_draw_lose() {
 		};
 		assert!(bettor.is_valid()); // bettor must be valid
 		let result = BetResult::Draw;
+		let some_outcomes = vec![1, 2, 3];
 		
 		System::reset_events();
-		assert_ok!(MechanicsModule::do_bet_result_processing(&mechanic_id, &who, &bettor, result));
+		assert_ok!(MechanicsModule::do_bet_result_processing(&mechanic_id, &who, &bettor, result.clone(), some_outcomes));
 		// should burn nfa(25,36), drop mechanic, deposit event
 
 		assert_eq!(
@@ -837,7 +865,14 @@ fn do_bet_result_processing_draw_lose() {
 			vec![
 				EventRecord {
 					phase: Phase::Initialization,
-					event: MechanicsEvent::Finished { id: mechanic_id.nonce, owner: mechanic_id.account_id }.into(),
+					event: MechanicsEvent::Finished {
+						id: mechanic_id.nonce,
+						owner: mechanic_id.account_id,
+						result: Some(EventMechanicResultData::Bet(EventMechanicResultDataBet {
+							outcomes: bvec![1, 2, 3],
+							result: BetResult::Lost,
+						}))
+					}.into(),
 					topics: vec![],
 				},
 			]
@@ -877,9 +912,10 @@ fn do_bet_result_processing_draw_keep() {
 		};
 		assert!(bettor.is_valid()); // bettor must be valid
 		let result = BetResult::Draw;
+		let some_outcomes = vec![1, 2, 3];
 		
 		System::reset_events();
-		assert_ok!(MechanicsModule::do_bet_result_processing(&mechanic_id, &who, &bettor, result));
+		assert_ok!(MechanicsModule::do_bet_result_processing(&mechanic_id, &who, &bettor, result.clone(), some_outcomes));
 		// should drop mechanic, deposit event
 
 		assert_eq!(
@@ -887,7 +923,14 @@ fn do_bet_result_processing_draw_keep() {
 			vec![
 				EventRecord {
 					phase: Phase::Initialization,
-					event: MechanicsEvent::Finished { id: mechanic_id.nonce, owner: mechanic_id.account_id }.into(),
+					event: MechanicsEvent::Finished {
+						id: mechanic_id.nonce,
+						owner: mechanic_id.account_id,
+						result: Some(EventMechanicResultData::Bet(EventMechanicResultDataBet {
+							outcomes: bvec![1, 2, 3],
+							result: result,
+						}))
+					}.into(),
 					topics: vec![],
 				},
 			]
@@ -1220,7 +1263,14 @@ fn play_bet_round_single_round_win() {
 			vec![
 				EventRecord {
 					phase: Phase::Initialization,
-					event: MechanicsEvent::Finished { id: mechanic_id.nonce, owner: mechanic_id.account_id }.into(),
+					event: MechanicsEvent::Finished {
+						id: mechanic_id.nonce,
+						owner: mechanic_id.account_id,
+						result: Some(EventMechanicResultData::Bet(EventMechanicResultDataBet {
+							outcomes: bvec![0,],
+							result: BetResult::Won,
+						}))
+					}.into(),
 					topics: vec![],
 				},
 			]
@@ -1274,7 +1324,14 @@ fn play_bet_round_single_round_lose() {
 			vec![
 				EventRecord {
 					phase: Phase::Initialization,
-					event: MechanicsEvent::Finished { id: mechanic_id.nonce, owner: mechanic_id.account_id }.into(),
+					event: MechanicsEvent::Finished {
+						id: mechanic_id.nonce,
+						owner: mechanic_id.account_id,
+						result: Some(EventMechanicResultData::Bet(EventMechanicResultDataBet {
+							outcomes: bvec![1,],
+							result: BetResult::Lost,
+						}))
+					}.into(),
 					topics: vec![],
 				},
 			]
@@ -1331,7 +1388,14 @@ fn play_bet_round_single_round_draw_keep() {
 			vec![
 				EventRecord {
 					phase: Phase::Initialization,
-					event: MechanicsEvent::Finished { id: mechanic_id.nonce, owner: mechanic_id.account_id }.into(),
+					event: MechanicsEvent::Finished {
+						id: mechanic_id.nonce,
+						owner: mechanic_id.account_id,
+						result: Some(EventMechanicResultData::Bet(EventMechanicResultDataBet {
+							outcomes: bvec![2,],
+							result: BetResult::Draw,
+						}))
+					}.into(),
 					topics: vec![],
 				},
 			]
@@ -1388,7 +1452,14 @@ fn play_bet_round_single_round_draw_lose() {
 			vec![
 				EventRecord {
 					phase: Phase::Initialization,
-					event: MechanicsEvent::Finished { id: mechanic_id.nonce, owner: mechanic_id.account_id }.into(),
+					event: MechanicsEvent::Finished {
+						id: mechanic_id.nonce,
+						owner: mechanic_id.account_id,
+						result: Some(EventMechanicResultData::Bet(EventMechanicResultDataBet {
+							outcomes: bvec![2,],
+							result: BetResult::Lost,
+						}))
+					}.into(),
 					topics: vec![],
 				},
 			]
@@ -1421,7 +1492,7 @@ fn play_bet_round_single_round_draw_win() {
 				BettorWinning::Nfa(19)
 			],
 			rounds: 1,
-			draw_outcome: DrawOutcomeResult::Lose,
+			draw_outcome: DrawOutcomeResult::Win,
 		};
 		assert!(bettor.is_valid()); // bettor must be valid
 
@@ -1445,7 +1516,14 @@ fn play_bet_round_single_round_draw_win() {
 			vec![
 				EventRecord {
 					phase: Phase::Initialization,
-					event: MechanicsEvent::Finished { id: mechanic_id.nonce, owner: mechanic_id.account_id }.into(),
+					event: MechanicsEvent::Finished {
+						id: mechanic_id.nonce,
+						owner: mechanic_id.account_id,
+						result: Some(EventMechanicResultData::Bet(EventMechanicResultDataBet {
+							outcomes: bvec![2,],
+							result: BetResult::Won,
+						}))
+					}.into(),
 					topics: vec![],
 				},
 			]
@@ -1527,7 +1605,14 @@ fn play_bet_round_three_rounds_win_at_second_round() {
 			vec![
 				EventRecord {
 					phase: Phase::Initialization,
-					event: MechanicsEvent::Finished { id: mechanic_id.nonce, owner: mechanic_id.account_id }.into(),
+					event: MechanicsEvent::Finished {
+						id: mechanic_id.nonce,
+						owner: mechanic_id.account_id,
+						result: Some(EventMechanicResultData::Bet(EventMechanicResultDataBet {
+							outcomes: bvec![0, 0],
+							result: BetResult::Won,
+						}))
+					}.into(),
 					topics: vec![],
 				},
 			]
@@ -1597,7 +1682,14 @@ fn do_bet_asset_one_round_work() {
 			vec![
 				EventRecord {
 					phase: Phase::Initialization,
-					event: MechanicsEvent::Finished { id: inner_id.nonce, owner: inner_id.account_id }.into(),
+					event: MechanicsEvent::Finished {
+						id: inner_id.nonce,
+						owner: inner_id.account_id,
+						result: Some(EventMechanicResultData::Bet(EventMechanicResultDataBet {
+							outcomes: bvec![0,],
+							result: BetResult::Won,
+						}))
+					}.into(),
 					topics: vec![],
 				},
 			]
@@ -1648,7 +1740,14 @@ fn do_bet_next_round_two_rounds_work() {
 			vec![
 				EventRecord {
 					phase: Phase::Initialization,
-					event: MechanicsEvent::Finished { id: inner_id.nonce, owner: inner_id.account_id }.into(),
+					event: MechanicsEvent::Finished {
+						id: inner_id.nonce,
+						owner: inner_id.account_id,
+						result: Some(EventMechanicResultData::Bet(EventMechanicResultDataBet {
+							outcomes: bvec![0, 1],
+							result: BetResult::Lost,
+						}))
+					}.into(),
 					topics: vec![],
 				},
 			]
@@ -1706,7 +1805,14 @@ fn do_do_upgrade_bet_two_rounds_work() {
 			vec![
 				EventRecord {
 					phase: Phase::Initialization,
-					event: MechanicsEvent::Finished { id: inner_id.nonce, owner: inner_id.account_id }.into(),
+					event: MechanicsEvent::Finished {
+						id: inner_id.nonce,
+						owner: inner_id.account_id,
+						result: Some(EventMechanicResultData::Bet(EventMechanicResultDataBet {
+							outcomes: bvec![0u32, 1],
+							result: BetResult::Lost,
+						}))
+					}.into(),
 					topics: vec![],
 				},
 			]
