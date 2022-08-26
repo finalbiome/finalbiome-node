@@ -1,10 +1,8 @@
 use crate::{
   errors::CommonError,
-  types::{
-    CharacteristicBettor,
-    CharacteristicPurchased,
-  }
 };
+
+use self::{bettor::Bettor, purchased::Purchased};
 
 use super::*;
 
@@ -28,3 +26,6 @@ pub enum Characteristic {
   Bettor(CharacteristicBettor),
   Purchased(CharacteristicPurchased),
 }
+
+pub type CharacteristicBettor = Option<Bettor>;
+pub type CharacteristicPurchased = Option<Purchased>;
