@@ -80,25 +80,25 @@ impl system::Config for Test {
 pub struct FAPallet {}
 impl pallet_support::traits::FungibleAssets<u64> for FAPallet {
 fn can_withdraw(
-		asset: u32,
+		asset: FungibleAssetId,
 		_who: &u64,
 		amount: u128,
 	) -> frame_support::traits::tokens::WithdrawConsequence<u128> {
     if amount > 9999 {
 			return frame_support::traits::tokens::WithdrawConsequence::NoFunds
 		}
-		if asset == 333 {
+		if asset == 333.into() {
 			return frame_support::traits::tokens::WithdrawConsequence::UnknownAsset
 		}
 		frame_support::traits::tokens::WithdrawConsequence::Success
   }
 
 fn burn_from(
-	asset_id: u32, 
+	asset_id: FungibleAssetId, 
     _who: &u64, 
     _amount: u128,
   ) -> pallet_support::DispatchResultAs<u128> {
-		if asset_id == 5u32 {
+		if asset_id == 5u32.into() {
 			return Ok(10000u128);
 		}
 		todo!()
@@ -163,12 +163,12 @@ fn mint_into(
 		};
 		let attributes: AttributeList = vec![a1.clone(), a2.clone()].try_into().unwrap();	
 		if class_id == &1u32 && offer_id == &2u32 {
-			return Ok((333, 500, attributes))
+			return Ok((333.into(), 500, attributes))
 		}
 		if class_id == &1u32 && offer_id == &3u32 {
-			return Ok((1, 10000, attributes))
+			return Ok((1.into(), 10000, attributes))
 		}
-		Ok((5, 100, attributes))
+		Ok((5.into(), 100, attributes))
 	}
 
 	fn set_attributes(

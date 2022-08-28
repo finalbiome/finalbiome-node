@@ -35,8 +35,6 @@ use types_nfa::{AssetDetails, ClassDetails};
 #[cfg(test)]
 mod tests;
 
-/// Type of the fungible asset id
-pub type FungibleAssetId = u32;
 /// The units in which we record balances of the fungible assets
 pub type FungibleAssetBalance = u128;
 /// Type of the non-fungible asset id

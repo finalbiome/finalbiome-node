@@ -83,13 +83,13 @@ pub fn development_config() -> Result<ChainSpec, String> {
 				],
 				// Fungible Assets
 				vec![
-					(0, get_account_id_from_seed::<sr25519::Public>("Eve"), br"Gold".to_vec(), None, None, None),
-					(1, get_account_id_from_seed::<sr25519::Public>("Eve"), br"Energy".to_vec(), Some(5), None, Some(2000)),
+					(0.into(), get_account_id_from_seed::<sr25519::Public>("Eve"), br"Gold".to_vec(), None, None, None),
+					(1.into(), get_account_id_from_seed::<sr25519::Public>("Eve"), br"Energy".to_vec(), Some(5), None, Some(2000)),
 				],
 				// Balances of Fungible Assets
 				vec![
-					(get_account_id_from_seed::<sr25519::Public>("Charlie"), 0, 1000),
-					(get_account_id_from_seed::<sr25519::Public>("Dave"), 1, 20),
+					(get_account_id_from_seed::<sr25519::Public>("Charlie"), 0.into(), 1000),
+					(get_account_id_from_seed::<sr25519::Public>("Dave"), 1.into(), 20),
 				],
 				vec![
 					(0, get_account_id_from_seed::<sr25519::Public>("Eve"), br"nfa01".to_vec()),
@@ -104,8 +104,8 @@ pub fn development_config() -> Result<ChainSpec, String> {
 				],
 				vec![
 					// class_id, fa_id, price, attrs [key, num_value, num_max, text_value]
-					(0, 0, 10, vec![(br"attr4".to_vec(), Some(10), None, None)]),
-					(0, 0, 50, vec![(br"attr4".to_vec(), Some(50), None, None)]),
+					(0, 0.into(), 10, vec![(br"attr4".to_vec(), Some(10), None, None)]),
+					(0, 0.into(), 50, vec![(br"attr4".to_vec(), Some(50), None, None)]),
 				],
 				true,
 			)
@@ -170,13 +170,13 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 				],
 				// Fungible Assets
 				vec![
-					(0, get_account_id_from_seed::<sr25519::Public>("Eve"), br"Gold".to_vec(), None, None, None),
-					(1, get_account_id_from_seed::<sr25519::Public>("Eve"), br"Energy".to_vec(), Some(5), None, Some(2000)),
+					(0.into(), get_account_id_from_seed::<sr25519::Public>("Eve"), br"Gold".to_vec(), None, None, None),
+					(1.into(), get_account_id_from_seed::<sr25519::Public>("Eve"), br"Energy".to_vec(), Some(5), None, Some(2000)),
 				],
 				// Balances of Fungible Assets
 				vec![
-					(get_account_id_from_seed::<sr25519::Public>("Charlie"), 0, 1000),
-					(get_account_id_from_seed::<sr25519::Public>("Dave"), 1, 20),
+					(get_account_id_from_seed::<sr25519::Public>("Charlie"), 0.into(), 1000),
+					(get_account_id_from_seed::<sr25519::Public>("Dave"), 1.into(), 20),
 				],
 				vec![
 					(0, get_account_id_from_seed::<sr25519::Public>("Eve"), br"nfa01".to_vec()),
@@ -191,8 +191,8 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 				],
 				vec![
 					// class_id, fa_id, price, attrs [key, num_value, num_max, text_value]
-					(0, 0, 10, vec![(br"attr4".to_vec(), Some(10), None, None)]),
-					(0, 0, 50, vec![(br"attr4".to_vec(), Some(50), None, None)]),
+					(0, 0.into(), 10, vec![(br"attr4".to_vec(), Some(10), None, None)]),
+					(0, 0.into(), 50, vec![(br"attr4".to_vec(), Some(50), None, None)]),
 				],
 				true,
 			)

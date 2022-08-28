@@ -6,10 +6,11 @@ use crate::{
 
 use frame_support::{assert_noop, assert_ok, };
 use sp_runtime::{TokenError};
+use pallet_support::FungibleAssetId;
 
 use frame_system::{EventRecord, Phase};
 
-fn get_next_fa_id() -> u32 {
+fn get_next_fa_id() -> FungibleAssetId {
 	NextAssetId::<Test>::get()
 }
 
@@ -17,7 +18,8 @@ fn get_next_fa_id() -> u32 {
 fn check_test_genesis_data() {
 	new_test_ext().execute_with(|| {
 		// genesis includes two assets with 0 & 1 ids
-		let fa0 = Assets::<Test>::get(0).unwrap();
+		let fa0_id: FungibleAssetId = 0.into();
+		let fa0 = Assets::<Test>::get(fa0_id).unwrap();
 		assert_eq!(fa0.accounts, 2);
 		assert_eq!(fa0.owner, 2);
 		assert_eq!(fa0.name.to_vec(), br"asset01".to_vec());
@@ -25,7 +27,8 @@ fn check_test_genesis_data() {
 		assert_eq!(fa0.top_upped, None);
 		assert_eq!(fa0.cup_global, None);
 		assert_eq!(fa0.cup_local, None);
-		let fa1 = Assets::<Test>::get(1).unwrap();
+		let fa1_id: FungibleAssetId = 1.into();
+		let fa1 = Assets::<Test>::get(fa1_id).unwrap();
 		assert_eq!(fa1.accounts, 2);
 		assert_eq!(fa1.owner, 2);
 		assert_eq!(fa1.name.to_vec(), br"asset02".to_vec());
@@ -35,21 +38,21 @@ fn check_test_genesis_data() {
 		assert_eq!(fa1.cup_local.unwrap().amount, 20);
 
 		// genesis includes two accounts
-		let acc1 = Accounts::<Test>::get(1, 0).unwrap();
-		let acc3 = Accounts::<Test>::get(3, 1).unwrap();
-		let acc4 = Accounts::<Test>::get(4, 1).unwrap();
+		let acc1 = Accounts::<Test>::get(1, FungibleAssetId::from(0)).unwrap();
+		let acc3 = Accounts::<Test>::get(3, FungibleAssetId::from(1)).unwrap();
+		let acc4 = Accounts::<Test>::get(4, FungibleAssetId::from(1)).unwrap();
 		assert_eq!(acc1.balance, 1_000);
 		assert_eq!(acc3.balance, 20);
 		assert_eq!(acc4.balance, 10); // initial 5 and 5 top upped
 
 		// next fa id must be 2
-		assert_eq!(get_next_fa_id(), 2);
+		assert_eq!(get_next_fa_id(), 2.into());
 
 		// TopUppedAssets should includes asset02
 		let tua = TopUppedAssets::<Test>::get();
 		assert_eq!(tua.len(), 1);
-		assert_eq!(tua.contains(&1), true);
-		assert_eq!(TopUpQueue::<Test>::contains_key(&1, &4), true);
+		assert_eq!(tua.contains(&1.into()), true);
+		assert_eq!(TopUpQueue::<Test>::contains_key(&FungibleAssetId::from(1), &4), true);
 	})
 }
 
@@ -335,7 +338,7 @@ fn new_account() {
 fn increase_balance_unknown_asset() {
 	new_test_ext().execute_with(|| {
 		assert_noop!(
-			FungibleAssets::increase_balance(33, &1, 100),
+			FungibleAssets::increase_balance(33.into(), &1, 100),
 			TokenError::UnknownAsset
 		);
 	})
@@ -355,7 +358,7 @@ fn increase_balance_zero() {
 			None,
 		));
 		assert_ok!(
-			FungibleAssets::increase_balance(0, &1, 0)
+			FungibleAssets::increase_balance(0.into(), &1, 0)
 		);
 		let fa = Assets::<Test>::get(fa_id).unwrap();
 		assert_eq!(fa.supply, 0);
@@ -385,6 +388,7 @@ fn increase_balance_straight_forward() {
 		assert_eq!(acc.balance, 100);
 		assert_eq!(acc.reason, ExistenceReason::Sufficient);
 		// add another one and deposit it for the same acc
+		let fa_id_prev = fa_id;
 		let fa_id = get_next_fa_id();
 		assert_ok!(FungibleAssets::create(
 			Origin::signed(1),
@@ -405,22 +409,22 @@ fn increase_balance_straight_forward() {
 		assert_eq!(acc.reason, ExistenceReason::Sufficient);
 		// add the same fa to the same acc
 		assert_ok!(
-			FungibleAssets::increase_balance(fa_id-1, &1, 300)
+			FungibleAssets::increase_balance(fa_id_prev, &1, 300)
 		);
-		let fa = Assets::<Test>::get(fa_id-1).unwrap();
+		let fa = Assets::<Test>::get(fa_id_prev).unwrap();
 		assert_eq!(fa.supply, 400);
 		assert_eq!(fa.accounts, 1);
-		let acc = Accounts::<Test>::get(1, fa_id-1).unwrap();
+		let acc = Accounts::<Test>::get(1, fa_id_prev).unwrap();
 		assert_eq!(acc.balance, 400);
 		assert_eq!(acc.reason, ExistenceReason::Sufficient);
 		// add fa to other acc
 		assert_ok!(
-			FungibleAssets::increase_balance(fa_id-1, &3, 1000)
+			FungibleAssets::increase_balance(fa_id_prev, &3, 1000)
 		);
-		let fa = Assets::<Test>::get(fa_id-1).unwrap();
+		let fa = Assets::<Test>::get(fa_id_prev).unwrap();
 		assert_eq!(fa.supply, 1400);
 		assert_eq!(fa.accounts, 2);
-		let acc = Accounts::<Test>::get(3, fa_id-1).unwrap();
+		let acc = Accounts::<Test>::get(3, fa_id_prev).unwrap();
 		assert_eq!(acc.balance, 1000);
 		assert_eq!(acc.reason, ExistenceReason::Sufficient);
 	})
@@ -449,6 +453,7 @@ fn do_mint_straight_forward() {
 		assert_eq!(acc.balance, 100);
 		assert_eq!(acc.reason, ExistenceReason::Sufficient);
 		// add another one and deposit it for the same acc
+		let fa_id_prev = fa_id;
 		let fa_id = get_next_fa_id();
 		assert_ok!(FungibleAssets::create(
 			Origin::signed(1),
@@ -469,22 +474,22 @@ fn do_mint_straight_forward() {
 		assert_eq!(acc.reason, ExistenceReason::Sufficient);
 		// add the same fa to the same acc
 		assert_ok!(
-			FungibleAssets::do_mint(fa_id-1, &1, 300)
+			FungibleAssets::do_mint(fa_id_prev, &1, 300)
 		);
-		let fa = Assets::<Test>::get(fa_id-1).unwrap();
+		let fa = Assets::<Test>::get(fa_id_prev).unwrap();
 		assert_eq!(fa.supply, 400);
 		assert_eq!(fa.accounts, 1);
-		let acc = Accounts::<Test>::get(1, fa_id-1).unwrap();
+		let acc = Accounts::<Test>::get(1, fa_id_prev).unwrap();
 		assert_eq!(acc.balance, 400);
 		assert_eq!(acc.reason, ExistenceReason::Sufficient);
 		// add fa to other acc
 		assert_ok!(
-			FungibleAssets::do_mint(fa_id-1, &3, 1000)
+			FungibleAssets::do_mint(fa_id_prev, &3, 1000)
 		);
-		let fa = Assets::<Test>::get(fa_id-1).unwrap();
+		let fa = Assets::<Test>::get(fa_id_prev).unwrap();
 		assert_eq!(fa.supply, 1400);
 		assert_eq!(fa.accounts, 2);
-		let acc = Accounts::<Test>::get(3, fa_id-1).unwrap();
+		let acc = Accounts::<Test>::get(3, fa_id_prev).unwrap();
 		assert_eq!(acc.balance, 1000);
 		assert_eq!(acc.reason, ExistenceReason::Sufficient);
 	})
@@ -494,7 +499,7 @@ fn do_mint_straight_forward() {
 fn increase_balance_event() {
 	new_test_ext().execute_with(|| {
 		System::reset_events();
-		let fa_id = 0;
+		let fa_id = 0.into();
 		let acc_id = 99;
 		assert_ok!(
 			FungibleAssets::increase_balance(fa_id, &acc_id, 100)
@@ -521,7 +526,7 @@ fn increase_balance_event() {
 fn do_mint_event() {
 	new_test_ext().execute_with(|| {
 		System::reset_events();
-		let fa_id = 0;
+		let fa_id = 0.into();
 		let acc_id = 99;
 		assert_ok!(
 			FungibleAssets::do_mint(fa_id, &acc_id, 100)
@@ -547,7 +552,7 @@ fn do_mint_event() {
 #[test]
 fn prep_debit_unknown_asset() {
 	new_test_ext().execute_with(|| {
-		let id = 999;
+		let id = 999.into();
 		let target = 10;
 		let amount = 100;
 		let max_allowed = false;
@@ -561,7 +566,7 @@ fn prep_debit_unknown_asset() {
 #[test]
 fn prep_debit_unknown_account() {
 	new_test_ext().execute_with(|| {
-		let id = 0;
+		let id = 0.into();
 		let target = 10;
 		let amount = 100;
 		let max_allowed = false;
@@ -575,7 +580,7 @@ fn prep_debit_unknown_account() {
 #[test]
 fn prep_debit_can_debit() {
 	new_test_ext().execute_with(|| {
-		let id = 0;
+		let id = 0.into();
 		let target = 1; // account has 1000 of fa 0
 		let amount = 100;
 		let max_allowed = false;
@@ -589,7 +594,7 @@ fn prep_debit_can_debit() {
 #[test]
 fn prep_debit_cant_debit() {
 	new_test_ext().execute_with(|| {
-		let id = 0;
+		let id = 0.into();
 		let target = 1; // account has 1000 of fa 0
 		let amount = 10000;
 		let max_allowed = false;
@@ -603,7 +608,7 @@ fn prep_debit_cant_debit() {
 #[test]
 fn prep_debit_cant_debit_more_than_supply() {
 	new_test_ext().execute_with(|| {
-		let id = 0;
+		let id = 0.into();
 		let target = 1; // account has 1000 of fa 0
 		let amount = 12_000; // total suply 11_000
 		let max_allowed = false;
@@ -617,7 +622,7 @@ fn prep_debit_cant_debit_more_than_supply() {
 #[test]
 fn prep_debit_can_debit_allowed_more_than_supply() {
 	new_test_ext().execute_with(|| {
-		let id = 0;
+		let id = 0.into();
 		let target = 1; // account has 1000 of fa 0
 		let amount = 12_000; // total suply 11_000
 		let max_allowed = true;
@@ -631,7 +636,7 @@ fn prep_debit_can_debit_allowed_more_than_supply() {
 #[test]
 fn prep_debit_can_debit_allowed() {
 	new_test_ext().execute_with(|| {
-		let id = 0;
+		let id = 0.into();
 		let target = 1; // account has 1000 of fa 0
 		let amount = 2_000; // total suply 11_000
 		let max_allowed = true;
@@ -645,7 +650,7 @@ fn prep_debit_can_debit_allowed() {
 #[test]
 fn prep_debit_can_debit_allowed_2() {
 	new_test_ext().execute_with(|| {
-		let id = 0;
+		let id = 0.into();
 		let target = 1; // account has 1000 of fa 0
 		let amount = 1_000; // total suply 11_000
 		let max_allowed = true;
@@ -659,7 +664,7 @@ fn prep_debit_can_debit_allowed_2() {
 #[test]
 fn prep_debit_can_debit_allowed_3() {
 	new_test_ext().execute_with(|| {
-		let id = 0;
+		let id = 0.into();
 		let target = 1; // account has 1000 of fa 0
 		let amount = 100; // total suply 11_000
 		let max_allowed = true;
@@ -673,7 +678,7 @@ fn prep_debit_can_debit_allowed_3() {
 #[test]
 fn decrease_balance_unknown_asset() {
 	new_test_ext().execute_with(|| {
-		let id = 20;
+		let id = 20.into();
 		let target = 1; // account has 1000 of fa 0
 		let amount = 100; // total suply 11_000
 		let max_allowed = false;
@@ -687,7 +692,7 @@ fn decrease_balance_unknown_asset() {
 #[test]
 fn decrease_balance_unknown_account() {
 	new_test_ext().execute_with(|| {
-		let id = 0;
+		let id = 0.into();
 		let target = 100;
 		let amount = 100; // total suply 11_000
 		let max_allowed = false;
@@ -701,7 +706,7 @@ fn decrease_balance_unknown_account() {
 #[test]
 fn decrease_balance_no_founds() {
 	new_test_ext().execute_with(|| {
-		let id = 0;
+		let id = 0.into();
 		let target = 1; // account has 1_000 of fa 0
 		let amount = 10_000; // total suply 11_000
 		let max_allowed = false;
@@ -715,7 +720,7 @@ fn decrease_balance_no_founds() {
 #[test]
 fn decrease_balance_common() {
 	new_test_ext().execute_with(|| {
-		let id = 0;
+		let id = 0.into();
 		let target = 1; // account has 1000 of fa 0
 		let amount = 100; // total suply 11_000
 		let max_allowed = false;
@@ -739,7 +744,7 @@ fn decrease_balance_common() {
 #[test]
 fn decrease_balance_max_allowed() {
 	new_test_ext().execute_with(|| {
-		let id = 0;
+		let id = 0.into();
 		let target = 1; // account has 1_000 of fa 0
 		let amount = 100_000; // total suply 11_000
 		let max_allowed = true;
@@ -763,7 +768,7 @@ fn decrease_balance_max_allowed() {
 #[test]
 fn decrease_balance_max_allowed_2() {
 	new_test_ext().execute_with(|| {
-		let id = 0;
+		let id = 0.into();
 		let target = 1; // account has 1_000 of fa 0
 		let amount = 900; // total suply 11_000
 		let max_allowed = true;
@@ -787,7 +792,7 @@ fn decrease_balance_max_allowed_2() {
 #[test]
 fn decrease_balance_topup_check() {
 	new_test_ext().execute_with(|| {
-		let id = 1; // asset with top up
+		let id = 1.into(); // asset with top up
 		let target = 3; // account has 20 of fa 1 and topup speed 5
 		let amount = 3; // total suply 20
 		let max_allowed = false;
@@ -825,7 +830,7 @@ fn decrease_balance_topup_check() {
 fn decrease_balance_event() {
 	new_test_ext().execute_with(|| {
 		System::reset_events();
-		let id = 0;
+		let id = 0.into();
 		let target = 1; // account has 1_000 of fa 0
 		let amount = 900; // total suply 11_000
 		let max_allowed = true;
@@ -849,33 +854,33 @@ fn decrease_balance_event() {
 fn top_upped_asset_manipulations_test() {
 		new_test_ext().execute_with(|| {
 			let curr_len = TopUppedAssets::<Test>::get().len();
-			assert_ok!(FungibleAssets::top_upped_asset_add(&33));
+			assert_ok!(FungibleAssets::top_upped_asset_add(&33.into()));
 			assert_eq!(curr_len + 1, TopUppedAssets::<Test>::get().len());
-			assert_eq!(true, TopUppedAssets::<Test>::get().contains(&33));
+			assert_eq!(true, TopUppedAssets::<Test>::get().contains(&33.into()));
 
-			assert_ok!(FungibleAssets::top_upped_asset_add(&33));
+			assert_ok!(FungibleAssets::top_upped_asset_add(&33.into()));
 			assert_eq!(curr_len + 1, TopUppedAssets::<Test>::get().len());
-			assert_eq!(true, TopUppedAssets::<Test>::get().contains(&33));
-
-			let curr_len = TopUppedAssets::<Test>::get().len();
-			assert_ok!(FungibleAssets::top_upped_asset_add(&34));
-			assert_eq!(curr_len + 1, TopUppedAssets::<Test>::get().len());
-			assert_eq!(true, TopUppedAssets::<Test>::get().contains(&34));
+			assert_eq!(true, TopUppedAssets::<Test>::get().contains(&33.into()));
 
 			let curr_len = TopUppedAssets::<Test>::get().len();
-			FungibleAssets::top_upped_asset_remove(&34);
+			assert_ok!(FungibleAssets::top_upped_asset_add(&34.into()));
+			assert_eq!(curr_len + 1, TopUppedAssets::<Test>::get().len());
+			assert_eq!(true, TopUppedAssets::<Test>::get().contains(&34.into()));
+
+			let curr_len = TopUppedAssets::<Test>::get().len();
+			FungibleAssets::top_upped_asset_remove(&34.into());
 			assert_eq!(curr_len - 1, TopUppedAssets::<Test>::get().len());
-			assert_eq!(false, TopUppedAssets::<Test>::get().contains(&34));
+			assert_eq!(false, TopUppedAssets::<Test>::get().contains(&34.into()));
 
 			let curr_len = TopUppedAssets::<Test>::get().len();
-			FungibleAssets::top_upped_asset_remove(&34);
+			FungibleAssets::top_upped_asset_remove(&34.into());
 			assert_eq!(curr_len, TopUppedAssets::<Test>::get().len());
-			assert_eq!(false, TopUppedAssets::<Test>::get().contains(&34));
+			assert_eq!(false, TopUppedAssets::<Test>::get().contains(&34.into()));
 
 			let curr_len = TopUppedAssets::<Test>::get().len();
-			FungibleAssets::top_upped_asset_remove(&33);
+			FungibleAssets::top_upped_asset_remove(&33.into());
 			assert_eq!(curr_len - 1, TopUppedAssets::<Test>::get().len());
-			assert_eq!(false, TopUppedAssets::<Test>::get().contains(&33));
+			assert_eq!(false, TopUppedAssets::<Test>::get().contains(&33.into()));
 		})
 }
 
@@ -886,13 +891,13 @@ fn top_upped_asset_remove_from_queue() {
 		// in genesis we have one asset with topup
 		assert_eq!(TopUppedAssets::<Test>::get().len(), 1);
 		// add fake record to TopUpQueue and check removing
-		assert_eq!(true, TopUppedAssets::<Test>::get().contains(&1));
-		TopUpQueue::<Test>::insert(&1, &3, ());
-
-		assert_eq!(TopUpQueue::<Test>::get(&1, &3).is_some(), true);
-		_ = TopUpQueue::<Test>::get(&1, &3).unwrap();
-		FungibleAssets::top_upped_asset_remove(&1);
-		assert_eq!(TopUpQueue::<Test>::get(&1, &3).is_none(), true);
+		assert_eq!(true, TopUppedAssets::<Test>::get().contains(&1.into()));
+		TopUpQueue::<Test>::insert(&FungibleAssetId::from(1), &3, ());
+		
+		assert_eq!(TopUpQueue::<Test>::get(&FungibleAssetId::from(1), &3).is_some(), true);
+		_ = TopUpQueue::<Test>::get(&FungibleAssetId::from(1), &3).unwrap();
+		FungibleAssets::top_upped_asset_remove(&FungibleAssetId::from(1));
+		assert_eq!(TopUpQueue::<Test>::get(&FungibleAssetId::from(1), &3).is_none(), true);
 	})
 }
 
@@ -900,7 +905,7 @@ fn top_upped_asset_remove_from_queue() {
 fn process_top_upped_assets() {
 	new_test_ext().execute_with(|| {
 		// create several accounts with balances
-		let id = 1; // it's top upped asset with speed of 5 and limit 20
+		let id = 1.into(); // it's top upped asset with speed of 5 and limit 20
 		assert_ok!(FungibleAssets::increase_balance(id, &1000, 20));
 		assert_ok!(FungibleAssets::increase_balance(id, &1100, 17));
 		assert_ok!(FungibleAssets::increase_balance(id, &1200, 1));
@@ -921,7 +926,7 @@ fn process_top_upped_assets() {
 fn process_top_up_in_progress() {
 	new_test_ext().execute_with(|| {
 		// create several accounts with balances
-		let id = 1; // it's top upped asset with speed of 5 and limit 20
+		let id = 1.into(); // it's top upped asset with speed of 5 and limit 20
 		assert_ok!(FungibleAssets::increase_balance(id, &1100, 17));
 		assert_ok!(FungibleAssets::increase_balance(id, &1200, 1));
 		// add it to queue
@@ -949,7 +954,7 @@ fn process_top_up_in_progress() {
 fn inc_dec_references_worked() {
 	new_test_ext().execute_with(|| {
 		// create several accounts with balances
-		let id = 1; // it's top upped asset with speed of 5 and limit 20
+		let id = 1.into(); // it's top upped asset with speed of 5 and limit 20
 		assert_ok!(FungibleAssets::inc_references(&id));
 		assert_eq!(Assets::<Test>::get(id).unwrap().references, 1);
 		assert_ok!(FungibleAssets::inc_references(&id));
@@ -964,7 +969,7 @@ fn inc_dec_references_worked() {
 fn dec_references_err() {
 	new_test_ext().execute_with(|| {
 		// create several accounts with balances
-		let id = 1; // it's top upped asset with speed of 5 and limit 20
+		let id = 1.into(); // it's top upped asset with speed of 5 and limit 20
 		assert_eq!(Assets::<Test>::get(id).unwrap().references, 0);
 		assert_noop!(FungibleAssets::dec_references(&id), ArithmeticError::Underflow);
 	})
@@ -973,7 +978,7 @@ fn dec_references_err() {
 #[test]
 fn increase_balance_topup_check() {
 	new_test_ext().execute_with(|| {
-		let id = 1; // asset with top up 5 up to 20
+		let id = 1.into(); // asset with top up 5 up to 20
 		let beneficiary = 333; // account has no fa 1
 		let amount = 3; // total suply 20
 		

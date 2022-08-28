@@ -28,7 +28,7 @@ use pallet_support::{
 use sp_runtime::{
 	traits::{
 		Saturating, StaticLookup, Zero,
-		MaybeDisplay, One,
+		MaybeDisplay,
 	},
 	ArithmeticError, TokenError,
 };
@@ -193,11 +193,10 @@ pub mod pallet {
 					&asset_id,
 					()
 				);
-				let id = *asset_id;
+				let mut id = *asset_id;
 				// WARN: assets ids in the genesis config should be monotonically increasing.
 				// TODO: refactor to setting a next id from max id in genesis config.
-				NextAssetId::<T>::put(id.checked_add(One::one()).unwrap());
-				
+				NextAssetId::<T>::put(id.next().unwrap());
 				// region: Top Up Filling
 				// if asset is top upped, add it to top_upped_assets
 				if let Some(top_upped) = top_upped {

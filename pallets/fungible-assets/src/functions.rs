@@ -8,7 +8,8 @@ impl<T: Config> Pallet<T> {
   pub(super) fn get_next_asset_id() -> DispatchResultAs<AssetId> {
 		NextAssetId::<T>::try_mutate(|id| -> DispatchResultAs<AssetId> {
 			let current_id = *id;
-			*id = id.checked_add(One::one()).ok_or(Error::<T>::NoAvailableAssetId)?;
+			// *id = id.checked_add(&One::one()).ok_or(Error::<T>::NoAvailableAssetId)?;
+      *id = id.next().ok_or(Error::<T>::NoAvailableAssetId)?;
 			Ok(current_id)
 		})
 	}
