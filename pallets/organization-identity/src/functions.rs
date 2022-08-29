@@ -1,6 +1,6 @@
 //! Functions for the Organization Identity pallet.
 
-use pallet_support::{FungibleAssetId, FungibleAssetBalance, NonFungibleAssetId, AttributeList};
+use pallet_support::{FungibleAssetId, FungibleAssetBalance, AttributeList, NonFungibleClassId};
 use pallet_support::traits::NonFungibleAssets;
 use pallet_support::traits::FungibleAssets;
 
@@ -51,7 +51,7 @@ impl<T: Config> Pallet<T> {
 
   pub(crate) fn do_airdrop_nfa(
     target: &T::AccountId,
-    class_id: NonFungibleAssetId,
+    class_id: NonFungibleClassId,
     attributes: AttributeList,
   ) -> DispatchResultWithPostInfo {
     // mint nfa

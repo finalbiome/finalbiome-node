@@ -1,7 +1,7 @@
 use finalbiome_node_runtime::{
 	AccountId, AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig, Signature, SudoConfig,
-	SystemConfig, WASM_BINARY, OrganizationIdentityConfig, FungibleAssetsConfig, Balance, NonFungibleAssetsConfig,
-	pallet_fungible_assets::{AssetId as AssetId},
+	SystemConfig, WASM_BINARY, OrganizationIdentityConfig, FungibleAssetsConfig, NonFungibleAssetsConfig,
+	pallet_fungible_assets::{AssetId as AssetId, AssetBalance},
 	pallet_non_fungible_assets::{NonFungibleClassId, GenesisPurchasedClassesConfig},
 };
 
@@ -83,29 +83,29 @@ pub fn development_config() -> Result<ChainSpec, String> {
 				],
 				// Fungible Assets
 				vec![
-					(0, get_account_id_from_seed::<sr25519::Public>("Eve"), br"Gold".to_vec(), None, None, None),
-					(1, get_account_id_from_seed::<sr25519::Public>("Eve"), br"Energy".to_vec(), Some(5), None, Some(2000)),
+					(0.into(), get_account_id_from_seed::<sr25519::Public>("Eve"), br"Gold".to_vec(), None, None, None),
+					(1.into(), get_account_id_from_seed::<sr25519::Public>("Eve"), br"Energy".to_vec(), Some(5.into()), None, Some(2000.into())),
 				],
 				// Balances of Fungible Assets
 				vec![
-					(get_account_id_from_seed::<sr25519::Public>("Charlie"), 0, 1000),
-					(get_account_id_from_seed::<sr25519::Public>("Dave"), 1, 20),
+					(get_account_id_from_seed::<sr25519::Public>("Charlie"), 0.into(), 1000.into()),
+					(get_account_id_from_seed::<sr25519::Public>("Dave"), 1.into(), 20.into()),
 				],
 				vec![
-					(0, get_account_id_from_seed::<sr25519::Public>("Eve"), br"nfa01".to_vec()),
-					(1, get_account_id_from_seed::<sr25519::Public>("Eve"), br"nfa02".to_vec()),
+					(0.into(), get_account_id_from_seed::<sr25519::Public>("Eve"), br"nfa01".to_vec()),
+					(1.into(), get_account_id_from_seed::<sr25519::Public>("Eve"), br"nfa02".to_vec()),
 				],
 				vec![
-					(0, br"atr1".to_vec(), 5u32, Some(10u32)),
-					(0, br"atr2".to_vec(), 20u32, None),
+					(0.into(), br"atr1".to_vec(), 5u32, Some(10u32)),
+					(0.into(), br"atr2".to_vec(), 20u32, None),
 				],
 				vec![
-					(0, br"atr3".to_vec(), br"stone".to_vec()),
+					(0.into(), br"atr3".to_vec(), br"stone".to_vec()),
 				],
 				vec![
 					// class_id, fa_id, price, attrs [key, num_value, num_max, text_value]
-					(0, 0, 10, vec![(br"attr4".to_vec(), Some(10), None, None)]),
-					(0, 0, 50, vec![(br"attr4".to_vec(), Some(50), None, None)]),
+					(0.into(), 0.into(), 10.into(), vec![(br"attr4".to_vec(), Some(10), None, None)]),
+					(0.into(), 0.into(), 50.into(), vec![(br"attr4".to_vec(), Some(50), None, None)]),
 				],
 				true,
 			)
@@ -170,29 +170,29 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 				],
 				// Fungible Assets
 				vec![
-					(0, get_account_id_from_seed::<sr25519::Public>("Eve"), br"Gold".to_vec(), None, None, None),
-					(1, get_account_id_from_seed::<sr25519::Public>("Eve"), br"Energy".to_vec(), Some(5), None, Some(2000)),
+					(0.into(), get_account_id_from_seed::<sr25519::Public>("Eve"), br"Gold".to_vec(), None, None, None),
+					(1.into(), get_account_id_from_seed::<sr25519::Public>("Eve"), br"Energy".to_vec(), Some(5.into()), None, Some(2000.into())),
 				],
 				// Balances of Fungible Assets
 				vec![
-					(get_account_id_from_seed::<sr25519::Public>("Charlie"), 0, 1000),
-					(get_account_id_from_seed::<sr25519::Public>("Dave"), 1, 20),
+					(get_account_id_from_seed::<sr25519::Public>("Charlie"), 0.into(), 1000.into()),
+					(get_account_id_from_seed::<sr25519::Public>("Dave"), 1.into(), 20.into()),
 				],
 				vec![
-					(0, get_account_id_from_seed::<sr25519::Public>("Eve"), br"nfa01".to_vec()),
-					(1, get_account_id_from_seed::<sr25519::Public>("Eve"), br"nfa02".to_vec()),
+					(0.into(), get_account_id_from_seed::<sr25519::Public>("Eve"), br"nfa01".to_vec()),
+					(1.into(), get_account_id_from_seed::<sr25519::Public>("Eve"), br"nfa02".to_vec()),
 				],
 				vec![
-					(0, br"atr1".to_vec(), 5u32, Some(10u32)),
-					(0, br"atr2".to_vec(), 20u32, None),
+					(0.into(), br"atr1".to_vec(), 5u32, Some(10u32)),
+					(0.into(), br"atr2".to_vec(), 20u32, None),
 				],
 				vec![
-					(0, br"atr3".to_vec(), br"stone".to_vec()),
+					(0.into(), br"atr3".to_vec(), br"stone".to_vec()),
 				],
 				vec![
 					// class_id, fa_id, price, attrs [key, num_value, num_max, text_value]
-					(0, 0, 10, vec![(br"attr4".to_vec(), Some(10), None, None)]),
-					(0, 0, 50, vec![(br"attr4".to_vec(), Some(50), None, None)]),
+					(0.into(), 0.into(), 10.into(), vec![(br"attr4".to_vec(), Some(10), None, None)]),
+					(0.into(), 0.into(), 50.into(), vec![(br"attr4".to_vec(), Some(50), None, None)]),
 				],
 				true,
 			)
@@ -219,8 +219,8 @@ fn testnet_genesis(
 	endowed_accounts: Vec<AccountId>,
 	organization_accounts: Vec<(AccountId, Vec<u8>)>,
 	organization_members: Vec<(AccountId, AccountId)>,
-	fungible_assets: Vec<(AssetId, AccountId, Vec<u8>, Option<Balance>, Option<Balance>, Option<Balance>)>,
-	fungible_assets_balances: Vec<(AccountId, AssetId, Balance)>,
+	fungible_assets: Vec<(AssetId, AccountId, Vec<u8>, Option<AssetBalance>, Option<AssetBalance>, Option<AssetBalance>)>,
+	fungible_assets_balances: Vec<(AccountId, AssetId, AssetBalance)>,
 	non_fungible_classes: Vec<(NonFungibleClassId, AccountId, Vec<u8>)>,
 	non_fungible_num_attributes: Vec<(NonFungibleClassId, Vec<u8>, u32, Option<u32>)>,
 	non_fungible_text_attributes: Vec<(NonFungibleClassId, Vec<u8>, Vec<u8>)>,

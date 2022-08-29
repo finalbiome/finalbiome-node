@@ -80,26 +80,26 @@ impl system::Config for Test {
 pub struct FAPallet {}
 impl pallet_support::traits::FungibleAssets<u64> for FAPallet {
 fn can_withdraw(
-		asset: u32,
+		asset: FungibleAssetId,
 		_who: &u64,
-		amount: u128,
-	) -> frame_support::traits::tokens::WithdrawConsequence<u128> {
-    if amount > 9999 {
+		amount: FungibleAssetBalance,
+	) -> frame_support::traits::tokens::WithdrawConsequence<FungibleAssetBalance> {
+    if amount > 9999.into() {
 			return frame_support::traits::tokens::WithdrawConsequence::NoFunds
 		}
-		if asset == 333 {
+		if asset == 333.into() {
 			return frame_support::traits::tokens::WithdrawConsequence::UnknownAsset
 		}
 		frame_support::traits::tokens::WithdrawConsequence::Success
   }
 
 fn burn_from(
-	asset_id: u32, 
+	asset_id: FungibleAssetId, 
     _who: &u64, 
-    _amount: u128,
-  ) -> pallet_support::DispatchResultAs<u128> {
-		if asset_id == 5u32 {
-			return Ok(10000u128);
+    _amount: FungibleAssetBalance,
+  ) -> pallet_support::DispatchResultAs<FungibleAssetBalance> {
+		if asset_id == 5u32.into() {
+			return Ok(10000.into());
 		}
 		todo!()
 	}
@@ -122,29 +122,29 @@ pub struct NFAPallet {}
 impl pallet_support::traits::NonFungibleAssets<u64, u32> for NFAPallet {
 
 fn mint_into(
-    class_id: &u32,
+    class_id: &NonFungibleClassId,
     _who: &u64
-  ) -> DispatchResultAs<u32> {
-			if class_id == &1u32 {
-				return Ok(10u32);
+  ) -> DispatchResultAs<NonFungibleAssetId> {
+			if class_id == &1u32.into() {
+				return Ok(10u32.into());
 			}
-			if class_id == &10u32 { // test do_bet_result_processing_win_nfa
-				return Ok(11u32);
+			if class_id == &10u32.into() { // test do_bet_result_processing_win_nfa
+				return Ok(11u32.into());
 			}
-			if class_id == &11u32 { // test do_bet_result_processing_draw_win
-				return Ok(11u32);
+			if class_id == &11u32.into() { // test do_bet_result_processing_draw_win
+				return Ok(11u32.into());
 			}
-			if class_id == &14u32 { // test play_bet_round_single_round_win
-				return Ok(11u32);
+			if class_id == &14u32.into() { // test play_bet_round_single_round_win
+				return Ok(11u32.into());
 			}
-			if class_id == &16u32 { // test play_bet_round_three_rounds_win_at_second_round
-				return Ok(11u32);
+			if class_id == &16u32.into() { // test play_bet_round_three_rounds_win_at_second_round
+				return Ok(11u32.into());
 			}
-			if class_id == &19u32 { // test play_bet_round_single_round_draw_win
-				return Ok(11u32);
+			if class_id == &19u32.into() { // test play_bet_round_single_round_draw_win
+				return Ok(11u32.into());
 			}
-			if class_id == &20u32 { // test do_bet_asset_one_round_work
-				return Ok(11u32);
+			if class_id == &20u32.into() { // test do_bet_asset_one_round_work
+				return Ok(11u32.into());
 			}
       todo!()
     }
@@ -162,20 +162,20 @@ fn mint_into(
 			value: AttributeValue::Text(br"v1".to_vec().try_into().unwrap())
 		};
 		let attributes: AttributeList = vec![a1.clone(), a2.clone()].try_into().unwrap();	
-		if class_id == &1u32 && offer_id == &2u32 {
-			return Ok((333, 500, attributes))
+		if class_id == &1u32.into() && offer_id == &2u32 {
+			return Ok((333.into(), 500.into(), attributes))
 		}
-		if class_id == &1u32 && offer_id == &3u32 {
-			return Ok((1, 10000, attributes))
+		if class_id == &1u32.into() && offer_id == &3u32 {
+			return Ok((1.into(), 10000.into(), attributes))
 		}
-		Ok((5, 100, attributes))
+		Ok((5.into(), 100.into(), attributes))
 	}
 
 	fn set_attributes(
     asset_id: &pallet_support::NonFungibleAssetId,
     _attributes: pallet_support::AttributeList,
   ) -> frame_support::dispatch::DispatchResult {
-		if asset_id == &10u32 {
+		if asset_id == &10u32.into() {
 			return Ok(());
 		}
 		todo!()
@@ -186,59 +186,59 @@ fn mint_into(
 		class_id: &NonFungibleClassId,
 		asset_id: &NonFungibleAssetId,
 	) -> DispatchResultAs<LockResult<u64, u32>> {
-		if class_id == &2u32 && asset_id == &3u32 { // test try_lock_nfa_works
+		if class_id == &2u32.into() && asset_id == &3u32.into() { // test try_lock_nfa_works
 			let lr:LockResultOf<Test> = LockResult::Locked(AssetDetails {
 				locked: origin,
 				owner: *who,
 			});
 			return Ok(lr);
 		}
-		if class_id == &4u32 && asset_id == &5u32 { // test crear_lock_nfa_works
+		if class_id == &4u32.into() && asset_id == &5u32.into() { // test crear_lock_nfa_works
 			let lr:LockResultOf<Test> = LockResult::Locked(AssetDetails {
 				locked: origin,
 				owner: *who,
 			});
 			return Ok(lr);
 		}
-		if class_id == &5u32 && asset_id == &6u32 { // test do_bet_unexisted_asset
+		if class_id == &5u32.into() && asset_id == &6u32.into() { // test do_bet_unexisted_asset
 			return Err(sp_runtime::DispatchError::Other("mock_error_asset_doesnt_exist"));
 		}
-		if class_id == &6u32 && asset_id == &7u32 { // test crear_lock_nfa_works
+		if class_id == &6u32.into() && asset_id == &7u32.into() { // test crear_lock_nfa_works
 			let lr:LockResultOf<Test> = LockResult::Locked(AssetDetails {
 				locked: origin,
 				owner: *who,
 			});
 			return Ok(lr);
 		}
-		if class_id == &6u32 && asset_id == &8u32 { // test do_bet_unexisted_mechanic
+		if class_id == &6u32.into() && asset_id == &8u32.into() { // test do_bet_unexisted_mechanic
 			let lr:LockResultOf<Test> = LockResult::Locked(AssetDetails {
 				locked: origin,
 				owner: *who,
 			});
 			return Ok(lr);
 		}
-		if class_id == &7u32 && asset_id == &7u32 { // test do_bet_asset_not_bettor
+		if class_id == &7u32.into() && asset_id == &7u32.into() { // test do_bet_asset_not_bettor
 			let lr:LockResultOf<Test> = LockResult::Locked(AssetDetails {
 				locked: origin,
 				owner: *who,
 			});
 			return Ok(lr);
 		}
-		if class_id == &34u32 && asset_id == &34u32 { // test do_bet_asset_one_round_work
+		if class_id == &34u32.into() && asset_id == &34u32.into() { // test do_bet_asset_one_round_work
 			let lr:LockResultOf<Test> = LockResult::Locked(AssetDetails {
 				locked: origin,
 				owner: *who,
 			});
 			return Ok(lr);
 		}
-		if class_id == &35u32 && asset_id == &35u32 { // test do_bet_next_round_two_rounds_work
+		if class_id == &35u32.into() && asset_id == &35u32.into() { // test do_bet_next_round_two_rounds_work
 			let lr:LockResultOf<Test> = LockResult::Locked(AssetDetails {
 				locked: origin,
 				owner: *who,
 			});
 			return Ok(lr);
 		}
-		if class_id == &36u32 && asset_id == &36u32 { // test do_do_upgrade_bet_two_rounds_work
+		if class_id == &36u32.into() && asset_id == &36u32.into() { // test do_do_upgrade_bet_two_rounds_work
 			let lr:LockResultOf<Test> = LockResult::Locked(AssetDetails {
 				locked: origin,
 				owner: *who,
@@ -250,7 +250,7 @@ fn mint_into(
 	fn get_class(
 		class_id: &NonFungibleClassId,
 	) -> DispatchResultAs<ClassDetails<u64>> {
-		if class_id == &6 { // test do_bet_unexisted_mechanic, do_bet_unexisted_mechanic
+		if class_id == &6.into() { // test do_bet_unexisted_mechanic, do_bet_unexisted_mechanic
 			return Ok(ClassDetails {
 				attributes: 0,	
 				name: br"a".to_vec().try_into().unwrap(),
@@ -260,7 +260,7 @@ fn mint_into(
 				owner: 1,
 			})
 		}
-		if class_id == &7 { // test do_bet_asset_not_bettor
+		if class_id == &7.into() { // test do_bet_asset_not_bettor
 			return Ok(ClassDetails {
 				attributes: 0,	
 				name: br"a".to_vec().try_into().unwrap(),
@@ -270,7 +270,7 @@ fn mint_into(
 				owner: 1,
 			})
 		}
-		if class_id == &34 { // test do_bet_asset_one_round_work
+		if class_id == &34.into() { // test do_bet_asset_one_round_work
 			return Ok(ClassDetails {
 				attributes: 0,	
 				name: br"a".to_vec().try_into().unwrap(),
@@ -290,7 +290,7 @@ fn mint_into(
 						},
 					],
 					winnings: bvec![
-						BettorWinning::Nfa(20)
+						BettorWinning::Nfa(20.into())
 					],
 					rounds: 1,
 					draw_outcome: DrawOutcomeResult::Keep,
@@ -300,7 +300,7 @@ fn mint_into(
 				owner: 1,
 			})
 		}
-		if class_id == &35 { // test do_bet_next_round_two_rounds_work
+		if class_id == &35.into() { // test do_bet_next_round_two_rounds_work
 			return Ok(ClassDetails {
 				attributes: 0,	
 				name: br"a".to_vec().try_into().unwrap(),
@@ -320,7 +320,7 @@ fn mint_into(
 						},
 					],
 					winnings: bvec![
-						BettorWinning::Nfa(20)
+						BettorWinning::Nfa(20.into())
 					],
 					rounds: 2,
 					draw_outcome: DrawOutcomeResult::Lose,
@@ -330,7 +330,7 @@ fn mint_into(
 				owner: 1,
 			})
 		}
-		if class_id == &36 { // test do_do_upgrade_bet_two_rounds_work
+		if class_id == &36.into() { // test do_do_upgrade_bet_two_rounds_work
 			return Ok(ClassDetails {
 				attributes: 0,	
 				name: br"a".to_vec().try_into().unwrap(),
@@ -350,7 +350,7 @@ fn mint_into(
 						},
 					],
 					winnings: bvec![
-						BettorWinning::Nfa(20)
+						BettorWinning::Nfa(20.into())
 					],
 					rounds: 2,
 					draw_outcome: DrawOutcomeResult::Lose,
@@ -367,40 +367,40 @@ fn mint_into(
 		asset_id: NonFungibleAssetId,
 		_maybe_check_owner: Option<&u64>,
 	) -> sp_runtime::DispatchResult {
-		if class_id == 22u32 && asset_id == 33u32 { // test do_bet_result_processing_win_nfa
+		if class_id == 22u32.into() && asset_id == 33u32.into() { // test do_bet_result_processing_win_nfa
 			return Ok(());
 		}
-		if class_id == 23u32 && asset_id == 34u32 { // test do_bet_result_processing_lose
+		if class_id == 23u32.into() && asset_id == 34u32.into() { // test do_bet_result_processing_lose
 			return Ok(());
 		}
-		if class_id == 24u32 && asset_id == 35u32 { // test do_bet_result_processing_draw_win
+		if class_id == 24u32.into() && asset_id == 35u32.into() { // test do_bet_result_processing_draw_win
 			return Ok(());
 		}
-		if class_id == 25u32 && asset_id == 36u32 { // test do_bet_result_processing_draw_lose
+		if class_id == 25u32.into() && asset_id == 36u32.into() { // test do_bet_result_processing_draw_lose
 			return Ok(());
 		}
-		if class_id == 8u32 && asset_id == 8u32 { // test play_bet_round_single_round_win
+		if class_id == 8u32.into() && asset_id == 8u32.into() { // test play_bet_round_single_round_win
 			return Ok(());
 		}
-		if class_id == 9u32 && asset_id == 9u32 { // test play_bet_round_single_round_lose
+		if class_id == 9u32.into() && asset_id == 9u32.into() { // test play_bet_round_single_round_lose
 			return Ok(());
 		}
-		if class_id == 30u32 && asset_id == 30u32 { // test play_bet_round_three_rounds_win_at_second_round
+		if class_id == 30u32.into() && asset_id == 30u32.into() { // test play_bet_round_three_rounds_win_at_second_round
 			return Ok(());
 		}
-		if class_id == 32u32 && asset_id == 32u32 { // test play_bet_round_single_round_draw_lose
+		if class_id == 32u32.into() && asset_id == 32u32.into() { // test play_bet_round_single_round_draw_lose
 			return Ok(());
 		}
-		if class_id == 33u32 && asset_id == 33u32 { // test play_bet_round_single_round_draw_win
+		if class_id == 33u32.into() && asset_id == 33u32.into() { // test play_bet_round_single_round_draw_win
 			return Ok(());
 		}
-		if class_id == 34u32 && asset_id == 34u32 { // test do_bet_asset_one_round_work
+		if class_id == 34u32.into() && asset_id == 34u32.into() { // test do_bet_asset_one_round_work
 			return Ok(());
 		}
-		if class_id == 35u32 && asset_id == 35u32 { // test do_bet_next_round_two_rounds_work
+		if class_id == 35u32.into() && asset_id == 35u32.into() { // test do_bet_next_round_two_rounds_work
 			return Ok(());
 		}
-		if class_id == 36u32 && asset_id == 36u32 { // test do_do_upgrade_bet_two_rounds_work
+		if class_id == 36u32.into() && asset_id == 36u32.into() { // test do_do_upgrade_bet_two_rounds_work
 			return Ok(());
 		}
 		todo!()
@@ -411,22 +411,22 @@ fn mint_into(
 		class_id: &NonFungibleClassId,
 		asset_id: &NonFungibleAssetId,
 	) -> sp_runtime::DispatchResult {
-		if class_id == &4 && asset_id == &5 {
+		if class_id == &4.into() && asset_id == &5.into() {
 			return Ok(())
 		}
-		if class_id == &6 && asset_id == &8 { // test do_bet_unexisted_mechanic
+		if class_id == &6.into() && asset_id == &8.into() { // test do_bet_unexisted_mechanic
 			return Ok(())
 		}
-		if class_id == &7 && asset_id == &7 { // test do_bet_asset_not_bettor
+		if class_id == &7.into() && asset_id == &7.into() { // test do_bet_asset_not_bettor
 			return Ok(())
 		}
-		if class_id == &34 && asset_id == &34 { // test do_bet_asset_one_round_work
+		if class_id == &34.into() && asset_id == &34.into() { // test do_bet_asset_one_round_work
 			return Ok(())
 		}
-		if class_id == &35 && asset_id == &35 { // test do_bet_next_round_two_rounds_work
+		if class_id == &35.into() && asset_id == &35.into() { // test do_bet_next_round_two_rounds_work
 			return Ok(())
 		}
-		if class_id == &36 && asset_id == &36 { // test do_do_upgrade_bet_two_rounds_work
+		if class_id == &36.into() && asset_id == &36.into() { // test do_do_upgrade_bet_two_rounds_work
 			return Ok(())
 		}
 		todo!()

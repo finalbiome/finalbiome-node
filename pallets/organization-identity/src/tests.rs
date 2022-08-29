@@ -148,8 +148,8 @@ fn do_set_onboarding_assets_works() {
 		// add assets
 		let assets: OnboardingAssets = Some(
 			bvec![
-				AirDropAsset::Fa(1, 100),
-				AirDropAsset::Nfa(1, bvec![
+				AirDropAsset::Fa(1.into(), 100.into()),
+				AirDropAsset::Nfa(1.into(), bvec![
 					Attribute {
 						key: bvec!(br"a"),
 						value: 10.try_into().unwrap(),
@@ -185,8 +185,8 @@ fn set_onboarding_assets_works() {
 		// add assets
 		let assets: OnboardingAssets = Some(
 			bvec![
-				AirDropAsset::Fa(1, 100),
-				AirDropAsset::Nfa(1, bvec![
+				AirDropAsset::Fa(1.into(), 100.into()),
+				AirDropAsset::Nfa(1.into(), bvec![
 					Attribute {
 						key: bvec!(br"a"),
 						value: 10.try_into().unwrap(),
@@ -217,17 +217,17 @@ fn set_onboarding_assets_works() {
 #[test]
 fn do_airdrop_fa_works() {
 	new_test_ext().execute_with(|| {
-		assert_ok!(OrganizationIdentity::do_airdrop_fa(&10, 10, 100));
-		assert_noop!(OrganizationIdentity::do_airdrop_fa(&10, 11, 100), DispatchError::Other("mock_do_airdrop_fa_works"));
+		assert_ok!(OrganizationIdentity::do_airdrop_fa(&10, 10.into(), 100.into()));
+		assert_noop!(OrganizationIdentity::do_airdrop_fa(&10, 11.into(), 100.into()), DispatchError::Other("mock_do_airdrop_fa_works"));
 	})
 }
 
 #[test]
 fn do_airdrop_nfa_works() {
 	new_test_ext().execute_with(|| {
-		assert_ok!(OrganizationIdentity::do_airdrop_nfa(&10, 10, bvec![]));
-		assert_noop!(OrganizationIdentity::do_airdrop_nfa(&10, 11, bvec![]), DispatchError::Other("mock_do_airdrop_nfa_works"));
-		assert_noop!(OrganizationIdentity::do_airdrop_nfa(&10, 12, bvec![]), DispatchError::Other("mock_do_airdrop_nfa_works_2"));
+		assert_ok!(OrganizationIdentity::do_airdrop_nfa(&10, 10.into(), bvec![]));
+		assert_noop!(OrganizationIdentity::do_airdrop_nfa(&10, 11.into(), bvec![]), DispatchError::Other("mock_do_airdrop_nfa_works"));
+		assert_noop!(OrganizationIdentity::do_airdrop_nfa(&10, 12.into(), bvec![]), DispatchError::Other("mock_do_airdrop_nfa_works_2"));
 	})
 }
 
@@ -243,8 +243,8 @@ fn do_onboarding_works() {
 		// add assets
 		let assets: OnboardingAssets = Some(
 			bvec![
-				AirDropAsset::Fa(12, 100),
-				AirDropAsset::Nfa(13, bvec![
+				AirDropAsset::Fa(12.into(), 100.into()),
+				AirDropAsset::Nfa(13.into(), bvec![
 					Attribute {
 						key: bvec!(br"a"),
 						value: 10.try_into().unwrap(),
@@ -284,8 +284,8 @@ fn onboarding_works() {
 		// add assets
 		let assets: OnboardingAssets = Some(
 			bvec![
-				AirDropAsset::Fa(12, 100),
-				AirDropAsset::Nfa(13, bvec![
+				AirDropAsset::Fa(12.into(), 100.into()),
+				AirDropAsset::Nfa(13.into(), bvec![
 					Attribute {
 						key: bvec!(br"a"),
 						value: 10.try_into().unwrap(),

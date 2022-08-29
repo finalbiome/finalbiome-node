@@ -22,13 +22,16 @@ use pallet_support::{
 	AccountIdOf,
 	DispatchResultAs,
 	FungibleAssetBalance,
+	SaturatingAdd, SaturatingSub,
+	CheckedAdd, CheckedSub,
 };
 
 
 use sp_runtime::{
 	traits::{
-		Saturating, StaticLookup, Zero,
-		MaybeDisplay, One,
+		StaticLookup, Zero,
+		MaybeDisplay,
+		Saturating,
 	},
 	ArithmeticError, TokenError,
 };
@@ -142,10 +145,6 @@ pub mod pallet {
 		(),
 	>;
 
-	
-	#[pallet::storage]
-	pub type Something<T> = StorageValue<_, u32>;
-
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
 		/// Genesis assets: asset_id, organization_id, name, top_upped_speed, cup_global, cup_local
@@ -193,11 +192,10 @@ pub mod pallet {
 					&asset_id,
 					()
 				);
-				let id = *asset_id;
+				let mut id = *asset_id;
 				// WARN: assets ids in the genesis config should be monotonically increasing.
 				// TODO: refactor to setting a next id from max id in genesis config.
-				NextAssetId::<T>::put(id.checked_add(One::one()).unwrap());
-				
+				NextAssetId::<T>::put(id.next().unwrap());
 				// region: Top Up Filling
 				// if asset is top upped, add it to top_upped_assets
 				if let Some(top_upped) = top_upped {
@@ -220,8 +218,6 @@ pub mod pallet {
 			};
 		}
 	}
-
-
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -363,44 +359,5 @@ pub mod pallet {
 			Self::deposit_event(Event::Destroyed { asset_id, owner });
 			Ok(())
 		}
-
-
-		/// An example dispatchable that takes a singles value as a parameter, writes the value to
-		/// storage and emits an event. This function must be dispatched by a signed extrinsic.
-		#[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
-		pub fn do_something(origin: OriginFor<T>, something: u32) -> DispatchResult {
-			// Check that the extrinsic was signed and get the signer.
-			// This function will return an error if the extrinsic is not signed.
-			// https://docs.substrate.io/v3/runtime/origins
-			let who = ensure_signed(origin)?;
-
-			// Update storage.
-			<Something<T>>::put(something);
-
-			// Emit an event.
-			Self::deposit_event(Event::SomethingStored(something, who));
-			// Return a successful DispatchResultWithPostInfo
-			Ok(())
-		}
-
-		/// An example dispatchable that may throw a custom error.
-		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
-		pub fn cause_error(origin: OriginFor<T>) -> DispatchResult {
-			let _who = ensure_signed(origin)?;
-
-			// Read a value from storage.
-			match <Something<T>>::get() {
-				// Return an error if the value has not been set.
-				None => Err(Error::<T>::NoneValue.into()),
-				Some(old) => {
-					// Increment the value read from storage; will error in the event of overflow.
-					let new = old.checked_add(1).ok_or(Error::<T>::StorageOverflow)?;
-					// Update the value in storage with the incremented result.
-					<Something<T>>::put(new);
-					Ok(())
-				},
-			}
-		}
 	}
 }
-

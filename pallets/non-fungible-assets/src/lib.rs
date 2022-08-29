@@ -37,7 +37,7 @@ mod benchmarking;
 
 use sp_runtime::{
 	traits:: {
-		One, Zero,
+		Zero,
 		StaticLookup,
 		Saturating,
 	},
@@ -197,10 +197,10 @@ pub trait Config: frame_system::Config<Index = Index> {
 					class_id,
 					()
 				);
-				let id = *class_id;
+				let mut id = *class_id;
 				// WARN: assets ids in the genesis config should be monotonically increasing.
 				// TODO: refactor to setting a next id from max id in genesis config.
-				NextClassId::<T>::put(id.checked_add(One::one()).unwrap());
+				NextClassId::<T>::put(id.next().unwrap());
 			}
 			// filling attrs for created classes
 			for (class_id, key, value, max_value) in &self.num_attributes {

@@ -9,11 +9,11 @@ use frame_support::{assert_noop, assert_ok};
 use frame_system::{EventRecord, Phase};
 use pallet_support::{Locker, MechanicId};
 
-fn get_next_class_id() -> u32 {
+fn get_next_class_id() -> NonFungibleClassId {
 	NextClassId::<Test>::get()
 }
 
-fn get_next_asset_id() -> u32 {
+fn get_next_asset_id() -> NonFungibleAssetId {
 	NextAssetId::<Test>::get()
 }
 
@@ -27,20 +27,20 @@ fn template_test() {
 #[test]
 fn next_class_id_works() {
 	new_test_ext().execute_with(|| {
-		assert_eq!(NonFungibleAssets::get_next_class_id().unwrap(), 0);
-		assert_eq!(NonFungibleAssets::get_next_class_id().unwrap(), 1);
-		assert_eq!(NonFungibleAssets::get_next_class_id().unwrap(), 2);
-		assert_eq!(NextClassId::<Test>::get(), 3);
+		assert_eq!(NonFungibleAssets::get_next_class_id().unwrap(), 0.into());
+		assert_eq!(NonFungibleAssets::get_next_class_id().unwrap(), 1.into());
+		assert_eq!(NonFungibleAssets::get_next_class_id().unwrap(), 2.into());
+		assert_eq!(NextClassId::<Test>::get(), 3.into());
 	});
 }
 
 #[test]
 fn next_asset_id_works() {
 	new_test_ext().execute_with(|| {
-		assert_eq!(NonFungibleAssets::get_next_asset_id().unwrap(), 0);
-		assert_eq!(NonFungibleAssets::get_next_asset_id().unwrap(), 1);
-		assert_eq!(NonFungibleAssets::get_next_asset_id().unwrap(), 2);
-		assert_eq!(NextAssetId::<Test>::get(), 3);
+		assert_eq!(NonFungibleAssets::get_next_asset_id().unwrap(), 0.into());
+		assert_eq!(NonFungibleAssets::get_next_asset_id().unwrap(), 1.into());
+		assert_eq!(NonFungibleAssets::get_next_asset_id().unwrap(), 2.into());
+		assert_eq!(NextAssetId::<Test>::get(), 3.into());
 	});
 }
 
@@ -115,7 +115,7 @@ fn create_class_created() {
 #[test]
 fn do_destroy_class_unknown_class() {
 	new_test_ext().execute_with(|| {
-		assert_noop!(NonFungibleAssets::do_destroy_class(888, Some(999)), Error::<Test>::UnknownClass);
+		assert_noop!(NonFungibleAssets::do_destroy_class(888.into(), Some(999)), Error::<Test>::UnknownClass);
 	});
 }
 
@@ -216,7 +216,7 @@ fn destroy_class_not_org() {
 #[test]
 fn do_mint_class_unknown_class() {
 	new_test_ext().execute_with(|| {
-		assert_noop!(NonFungibleAssets::do_mint(888, 999), Error::<Test>::UnknownClass);
+		assert_noop!(NonFungibleAssets::do_mint(888.into(), 999), Error::<Test>::UnknownClass);
 	});
 }
 
@@ -383,7 +383,7 @@ fn do_burn_not_owner() {
 #[test]
 fn do_burn_not_exists() {
 	new_test_ext().execute_with(|| {
-		assert_noop!(NonFungibleAssets::do_burn(11, 22, Some(&33)), Error::<Test>::UnknownAsset);
+		assert_noop!(NonFungibleAssets::do_burn(11.into(), 22.into(), Some(&33)), Error::<Test>::UnknownAsset);
 	});
 }
 
@@ -398,7 +398,7 @@ fn do_create_attribute_wrong_attr() {
 			key: br"a_name".to_vec().try_into().unwrap(),
 			value: AttributeValue::Number(nv),
 		};
-		assert_noop!(NonFungibleAssets::do_create_attribute(1, None, a), DispatchError::Other("Attribute numeric value exceeds the maximum value"));
+		assert_noop!(NonFungibleAssets::do_create_attribute(1.into(), None, a), DispatchError::Other("Attribute numeric value exceeds the maximum value"));
 	});
 }
 
@@ -409,7 +409,7 @@ fn do_create_attribute_class_not_exists() {
 			key: br"a_name".to_vec().try_into().unwrap(),
 			value: 100u32.try_into().unwrap()
 		};
-		assert_noop!(NonFungibleAssets::do_create_attribute(1000, None, a), Error::<Test>::UnknownClass);
+		assert_noop!(NonFungibleAssets::do_create_attribute(1000.into(), None, a), Error::<Test>::UnknownClass);
 	});
 }
 
@@ -487,7 +487,7 @@ fn do_create_attribute_already_exists1() {
 #[test]
 fn do_remove_attribute_class_not_exists() {
 	new_test_ext().execute_with(|| {
-		assert_noop!(NonFungibleAssets::do_remove_attribute(1000, None, br"a_name".to_vec().try_into().unwrap()), Error::<Test>::UnknownClass);
+		assert_noop!(NonFungibleAssets::do_remove_attribute(1000.into(), None, br"a_name".to_vec().try_into().unwrap()), Error::<Test>::UnknownClass);
 	});
 }
 
@@ -639,9 +639,9 @@ fn assign_attributes_works() {
 			value: AttributeValue::Text(br"v1".to_vec().try_into().unwrap())
 		};
 		let attributes: AttributeList = vec![a1.clone(), a2.clone()].try_into().unwrap();
-		assert_ok!(NonFungibleAssets::assign_attributes(&20, attributes));
-		assert_eq!(Attributes::<Test>::get(&20, a1.key), Some(a1.value));
-		assert_eq!(Attributes::<Test>::get(&20, a2.key), Some(a2.value));
+		assert_ok!(NonFungibleAssets::assign_attributes(&20.into(), attributes));
+		assert_eq!(Attributes::<Test>::get(&NonFungibleAssetId::from(20), a1.key), Some(a1.value));
+		assert_eq!(Attributes::<Test>::get(&NonFungibleAssetId::from(20), a2.key), Some(a2.value));
 	});
 }
 
@@ -673,7 +673,7 @@ fn set_lock_try_unlock() {
 fn set_lock_unknown_asset() {
 	new_test_ext().execute_with(|| {
 		let origin = Locker::Mechanic(MechanicId {account_id: 1, nonce: 2});
-		assert_noop!(NonFungibleAssets::set_lock(&1, origin, &234, &123), Error::<Test>::UnknownAsset);
+		assert_noop!(NonFungibleAssets::set_lock(&1, origin, &234.into(), &123.into()), Error::<Test>::UnknownAsset);
 	});
 }
 

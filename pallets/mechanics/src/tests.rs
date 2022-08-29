@@ -84,7 +84,7 @@ fn do_buy_nfa_unknown_asset() {
 		// price 99999 - NoFunds
 		// get_offer
 		// class_id == 1 && offer_id == 2 - FA=333, price=500
-		assert_noop!(MechanicsModule::do_buy_nfa(&1, &1, &2), sp_runtime::TokenError::UnknownAsset);
+		assert_noop!(MechanicsModule::do_buy_nfa(&1, &1.into(), &2), sp_runtime::TokenError::UnknownAsset);
 	});
 }
 
@@ -98,7 +98,7 @@ fn do_buy_nfa_no_funds() {
 		// class_id == 1 && offer_id == 2 - FA=333, price=500
 		// class_id == 1 && offer_id == 3 - FA=1, price=10000
 		// else - FA=5, price=100
-		assert_noop!(MechanicsModule::do_buy_nfa(&1, &1, &3), sp_runtime::TokenError::NoFunds);
+		assert_noop!(MechanicsModule::do_buy_nfa(&1, &1.into(), &3), sp_runtime::TokenError::NoFunds);
 	});
 }
 
@@ -112,7 +112,7 @@ fn do_buy_nfa_worked() {
 		// class_id == 1 && offer_id == 2 - FA=333, price=500
 		// class_id == 1 && offer_id == 3 - FA=1, price=10000
 		// else - FA=5, price=100
-		assert_ok!(MechanicsModule::do_buy_nfa(&1, &1, &1));
+		assert_ok!(MechanicsModule::do_buy_nfa(&1, &1.into(), &1));
 	});
 }
 
@@ -670,7 +670,7 @@ fn do_bet_result_processing_win_nfa() {
 				},
 			],
 			winnings: bvec![
-				BettorWinning::Nfa(10)
+				BettorWinning::Nfa(10.into())
 			],
 			rounds: 2,
 			draw_outcome: DrawOutcomeResult::Lose,
@@ -729,7 +729,7 @@ fn do_bet_result_processing_lose() {
 				},
 			],
 			winnings: bvec![
-				BettorWinning::Nfa(666)
+				BettorWinning::Nfa(666.into())
 			],
 			rounds: 2,
 			draw_outcome: DrawOutcomeResult::Lose,
@@ -787,7 +787,7 @@ fn do_bet_result_processing_draw_win() {
 				},
 			],
 			winnings: bvec![
-				BettorWinning::Nfa(11)
+				BettorWinning::Nfa(11.into())
 			],
 			rounds: 2,
 			draw_outcome: DrawOutcomeResult::Win,
@@ -847,7 +847,7 @@ fn do_bet_result_processing_draw_lose() {
 				},
 			],
 			winnings: bvec![
-				BettorWinning::Nfa(12)
+				BettorWinning::Nfa(12.into())
 			],
 			rounds: 2,
 			draw_outcome: DrawOutcomeResult::Lose,
@@ -905,7 +905,7 @@ fn do_bet_result_processing_draw_keep() {
 				},
 			],
 			winnings: bvec![
-				BettorWinning::Nfa(13)
+				BettorWinning::Nfa(13.into())
 			],
 			rounds: 2,
 			draw_outcome: DrawOutcomeResult::Keep,
@@ -959,7 +959,7 @@ fn can_use_mechanic_none() {
 				},
 			],
 			winnings: bvec![
-				BettorWinning::Nfa(13)
+				BettorWinning::Nfa(13.into())
 			],
 			rounds: 2,
 			draw_outcome: DrawOutcomeResult::Keep,
@@ -970,8 +970,8 @@ fn can_use_mechanic_none() {
 			offers: bvec![
 				Offer {
 					attributes: bvec![],
-					price: 100,
-					fa: 0,
+					price: 100.into(),
+					fa: 0.into(),
 				}
 			]
 		};
@@ -1011,7 +1011,7 @@ fn can_use_mechanic_bet() {
 				},
 			],
 			winnings: bvec![
-				BettorWinning::Nfa(13)
+				BettorWinning::Nfa(13.into())
 			],
 			rounds: 2,
 			draw_outcome: DrawOutcomeResult::Keep,
@@ -1022,8 +1022,8 @@ fn can_use_mechanic_bet() {
 			offers: bvec![
 				Offer {
 					attributes: bvec![],
-					price: 100,
-					fa: 0,
+					price: 100.into(),
+					fa: 0.into(),
 				}
 			]
 		};
@@ -1062,7 +1062,7 @@ fn can_use_mechanic_purchased() {
 				},
 			],
 			winnings: bvec![
-				BettorWinning::Nfa(13)
+				BettorWinning::Nfa(13.into())
 			],
 			rounds: 2,
 			draw_outcome: DrawOutcomeResult::Keep,
@@ -1073,8 +1073,8 @@ fn can_use_mechanic_purchased() {
 			offers: bvec![
 				Offer {
 					attributes: bvec![],
-					price: 100,
-					fa: 0,
+					price: 100.into(),
+					fa: 0.into(),
 				}
 			]
 		};
@@ -1103,7 +1103,7 @@ fn try_lock_works() {
 			nonce: 2,
 		};
 
-		let asset_id: LockedAccet = LockedAccet::Nfa(1, 2);
+		let asset_id: LockedAccet = LockedAccet::Nfa(1.into(), 2.into());
 		let mut locks = [asset_id.clone()].to_vec();
 
 		assert_eq!(Mechanics::<Test>::contains_key(&id.account_id, &id.nonce), false);
@@ -1116,7 +1116,7 @@ fn try_lock_works() {
 		assert_eq!(m.locked.to_vec(), locks);
 
 		for i in 1..256 {
-			let asset_id: LockedAccet = LockedAccet::Nfa(1 + i, 2 + i);
+			let asset_id: LockedAccet = LockedAccet::Nfa((1 + i).into(), (2 + i).into());
 			locks.push(asset_id.clone());
 			if i == 255 {
 				assert_noop!(MechanicsModule::try_lock(&id, asset_id.clone()), Error::<Test>::AssetsExceedsAllowable);
@@ -1138,8 +1138,8 @@ fn clear_lock_works() {
 			nonce: 2,
 		};
 
-		let asset_id: LockedAccet = LockedAccet::Nfa(1, 2);
-		let asset_id_2: LockedAccet = LockedAccet::Nfa(2, 3);
+		let asset_id: LockedAccet = LockedAccet::Nfa(1.into(), 2.into());
+		let asset_id_2: LockedAccet = LockedAccet::Nfa(2.into(), 3.into());
 		let locks = [asset_id.clone(), asset_id_2.clone()].to_vec();
 
 		let details = MechanicDetailsBuilder::build::<Test>(1, MechanicData::BuyNfa);
@@ -1152,7 +1152,7 @@ fn clear_lock_works() {
 		assert_eq!(m.locked.to_vec(), locks);
 
 		// ignoring not existed asset
-		let asset_id_3: LockedAccet = LockedAccet::Nfa(3, 4);
+		let asset_id_3: LockedAccet = LockedAccet::Nfa(3.into(), 4.into());
 		assert_ok!(MechanicsModule::_clear_lock(&id, asset_id_3));
 
 		// chreck wrong mechanic
@@ -1177,8 +1177,8 @@ fn try_lock_nfa_works() {
 			nonce: 2,
 		};
 		let who = 1;
-		let class_id = 2;
-		let asset_id = 3;
+		let class_id = 2.into();
+		let asset_id = 3.into();
 
 		assert_eq!(Mechanics::<Test>::contains_key(&id.account_id, &id.nonce), false);
 		let details = MechanicDetailsBuilder::build::<Test>(1, MechanicData::BuyNfa);
@@ -1197,9 +1197,9 @@ fn crear_lock_nfa_works() {
 			nonce: 2,
 		};
 		let who = 1;
-		let class_id = 4;
-		let asset_id = 5;
-		let locks = [LockedAccet::Nfa(4, 5)].to_vec();
+		let class_id = 4.into();
+		let asset_id = 5.into();
+		let locks = [LockedAccet::Nfa(4.into(), 5.into())].to_vec();
 
 		assert_eq!(Mechanics::<Test>::contains_key(&id.account_id, &id.nonce), false);
 		let details = MechanicDetailsBuilder::build::<Test>(1, MechanicData::BuyNfa);
@@ -1236,7 +1236,7 @@ fn play_bet_round_single_round_win() {
 				},
 			],
 			winnings: bvec![
-				BettorWinning::Nfa(14)
+				BettorWinning::Nfa(14.into())
 			],
 			rounds: 1,
 			draw_outcome: DrawOutcomeResult::Keep,
@@ -1297,7 +1297,7 @@ fn play_bet_round_single_round_lose() {
 				},
 			],
 			winnings: bvec![
-				BettorWinning::Nfa(15)
+				BettorWinning::Nfa(15.into())
 			],
 			rounds: 1,
 			draw_outcome: DrawOutcomeResult::Keep,
@@ -1361,7 +1361,7 @@ fn play_bet_round_single_round_draw_keep() {
 				},
 			],
 			winnings: bvec![
-				BettorWinning::Nfa(17)
+				BettorWinning::Nfa(17.into())
 			],
 			rounds: 1,
 			draw_outcome: DrawOutcomeResult::Keep,
@@ -1425,7 +1425,7 @@ fn play_bet_round_single_round_draw_lose() {
 				},
 			],
 			winnings: bvec![
-				BettorWinning::Nfa(18)
+				BettorWinning::Nfa(18.into())
 			],
 			rounds: 1,
 			draw_outcome: DrawOutcomeResult::Lose,
@@ -1489,7 +1489,7 @@ fn play_bet_round_single_round_draw_win() {
 				},
 			],
 			winnings: bvec![
-				BettorWinning::Nfa(19)
+				BettorWinning::Nfa(19.into())
 			],
 			rounds: 1,
 			draw_outcome: DrawOutcomeResult::Win,
@@ -1550,7 +1550,7 @@ fn play_bet_round_three_rounds_win_at_second_round() {
 				},
 			],
 			winnings: bvec![
-				BettorWinning::Nfa(16)
+				BettorWinning::Nfa(16.into())
 			],
 			rounds: 3,
 			draw_outcome: DrawOutcomeResult::Keep,
@@ -1629,8 +1629,8 @@ fn do_bet_unexisted_bet_asset() {
 		System::inc_account_nonce(who);
 		let id = MechanicsModule::get_mechanic_id(&who);
 		
-		let class_id = 5;
-		let asset_id = 6;
+		let class_id = 5.into();
+		let asset_id = 6.into();
 
 		assert_noop!(MechanicsModule::do_bet(&who, &class_id, &asset_id), sp_runtime::DispatchError::Other("mock_error_asset_doesnt_exist"));
 
@@ -1647,8 +1647,8 @@ fn do_bet_asset_not_bettor() {
 		System::inc_account_nonce(who);
 		let inner_id = MechanicsModule::get_mechanic_id(&who);
 		
-		let class_id = 7;
-		let asset_id = 7;
+		let class_id = 7.into();
+		let asset_id = 7.into();
 
 		assert_noop!(MechanicsModule::do_bet(&who, &class_id, &asset_id), Error::<Test>::IncompatibleAsset);
 
@@ -1665,8 +1665,8 @@ fn do_bet_asset_one_round_work() {
 		System::inc_account_nonce(who);
 		let inner_id = MechanicsModule::get_mechanic_id(&who);
 		
-		let class_id = 34;
-		let asset_id = 34;
+		let class_id = 34.into();
+		let asset_id = 34.into();
 
 		System::set_block_number(2); // rnd(2) % total_outcomes(2) = 0; 0 = win
 		System::reset_events();
@@ -1705,8 +1705,8 @@ fn do_bet_next_round_two_rounds_work() {
 		let _n = System::account_nonce(who);
 		System::inc_account_nonce(who);
 		
-		let class_id = 35;
-		let asset_id = 35;
+		let class_id = 35.into();
+		let asset_id = 35.into();
 		
 		System::set_block_number(2); // rnd(2) % total_outcomes(2) = 0; 0 = win
 		let inner_id = MechanicsModule::get_mechanic_id(&who);
@@ -1765,8 +1765,8 @@ fn do_do_upgrade_bet_two_rounds_work() {
 		let inner_id = MechanicsModule::get_mechanic_id(&who);
 		let timeout_id: <Test as frame_system::Config>::BlockNumber = inner_id.nonce as u64 + 21;
 		
-		let class_id = 36;
-		let asset_id = 36;
+		let class_id = 36.into();
+		let asset_id = 36.into();
 
 		System::set_block_number(2); // rnd(2) % total_outcomes(2) = 0; 0 = win
 		System::reset_events();

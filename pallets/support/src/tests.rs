@@ -159,7 +159,7 @@ fn bettor_probs_eq_0() {
       },
     ].try_into().expect("Outcomes vec too big"),
     winnings: vec![
-      BettorWinning::Fa(1, 33),
+      BettorWinning::Fa(1.into(), 33.into()),
     ].try_into().expect("Winnings vec too big"),
     rounds: 1,
     draw_outcome: DrawOutcomeResult::Keep,
@@ -180,7 +180,7 @@ fn bettor_probs_eq_0() {
       },
     ].try_into().expect("Outcomes vec too big"),
     winnings: vec![
-      BettorWinning::Fa(1, 33),
+      BettorWinning::Fa(1.into(), 33.into()),
     ].try_into().expect("Winnings vec too big"),
     rounds: 1,
     draw_outcome: DrawOutcomeResult::Keep,
@@ -199,7 +199,7 @@ fn bettor_outcomes_less_2() {
       },
     ].try_into().expect("Outcomes vec too big"),
     winnings: vec![
-      BettorWinning::Fa(1, 33),
+      BettorWinning::Fa(1.into(), 33.into()),
     ].try_into().expect("Winnings vec too big"),
     rounds: 1,
     draw_outcome: DrawOutcomeResult::Keep,
@@ -220,7 +220,7 @@ fn bettor_outcomes_less_2() {
       },
     ].try_into().expect("Outcomes vec too big"),
     winnings: vec![
-      BettorWinning::Fa(1, 33),
+      BettorWinning::Fa(1.into(), 33.into()),
     ].try_into().expect("Winnings vec too big"),
     rounds: 1,
     draw_outcome: DrawOutcomeResult::Keep,
@@ -241,7 +241,7 @@ fn bettor_outcomes_less_2() {
       },
     ].try_into().expect("Outcomes vec too big"),
     winnings: vec![
-      BettorWinning::Fa(1, 33),
+      BettorWinning::Fa(1.into(), 33.into()),
     ].try_into().expect("Winnings vec too big"),
     rounds: 1,
     draw_outcome: DrawOutcomeResult::Keep,
@@ -261,7 +261,7 @@ fn bettor_outcomes_less_2() {
       },
     ].try_into().expect("Outcomes vec too big"),
     winnings: vec![
-      BettorWinning::Fa(1, 33),
+      BettorWinning::Fa(1.into(), 33.into()),
     ].try_into().expect("Winnings vec too big"),
     rounds: 1,
     draw_outcome: DrawOutcomeResult::Keep,
@@ -285,7 +285,7 @@ fn bettor_rounds_less_1() {
       },
     ].try_into().expect("Outcomes vec too big"),
     winnings: vec![
-      BettorWinning::Fa(1, 33),
+      BettorWinning::Fa(1.into(), 33.into()),
     ].try_into().expect("Winnings vec too big"),
     rounds: 0,
     draw_outcome: DrawOutcomeResult::Keep,
@@ -306,7 +306,7 @@ fn bettor_rounds_less_1() {
       },
     ].try_into().expect("Outcomes vec too big"),
     winnings: vec![
-      BettorWinning::Fa(1, 33),
+      BettorWinning::Fa(1.into(), 33.into()),
     ].try_into().expect("Winnings vec too big"),
     rounds: 1,
     draw_outcome: DrawOutcomeResult::Keep,
@@ -330,7 +330,7 @@ fn bettor_rounds_more_than_limit() {
       },
     ].try_into().expect("Outcomes vec too big"),
     winnings: vec![
-      BettorWinning::Fa(1, 33),
+      BettorWinning::Fa(1.into(), 33.into()),
     ].try_into().expect("Winnings vec too big"),
     rounds: BETTOR_MAX_NUMBER_OF_ROUNDS + 1,
     draw_outcome: DrawOutcomeResult::Keep,
@@ -351,7 +351,7 @@ fn bettor_rounds_more_than_limit() {
       },
     ].try_into().expect("Outcomes vec too big"),
     winnings: vec![
-      BettorWinning::Fa(1, 33),
+      BettorWinning::Fa(1.into(), 33.into()),
     ].try_into().expect("Winnings vec too big"),
     rounds: BETTOR_MAX_NUMBER_OF_ROUNDS,
     draw_outcome: DrawOutcomeResult::Keep,
@@ -395,7 +395,7 @@ fn bettor_wins_empty() {
       },
     ].try_into().expect("Outcomes vec too big"),
     winnings: vec![
-      BettorWinning::Fa(1, 33),
+      BettorWinning::Fa(1.into(), 33.into()),
     ].try_into().expect("Winnings vec too big"),
     rounds: 1,
     draw_outcome: DrawOutcomeResult::Keep,
@@ -416,18 +416,18 @@ fn purchased_has_0_price() {
   let b:Purchased = Purchased {
     offers: vec![
       Offer {
-        fa: 1,
-        price: 10,
+        fa: 1.into(),
+        price: 10.into(),
         attributes: vec![].try_into().unwrap(),
       },
       Offer {
-        fa: 2,
-        price: 100,
+        fa: 2.into(),
+        price: 100.into(),
         attributes: vec![].try_into().unwrap(),
       },
       Offer {
-        fa: 3,
-        price: 0,
+        fa: 3.into(),
+        price: 0.into(),
         attributes: vec![].try_into().unwrap(),
       },
     ].try_into().unwrap(),
@@ -440,18 +440,18 @@ fn purchased_has_0_price_2() {
   let b:Purchased = Purchased {
     offers: vec![
       Offer {
-        fa: 1,
-        price: 10,
+        fa: 1.into(),
+        price: 10.into(),
         attributes: vec![].try_into().unwrap(),
       },
       Offer {
-        fa: 2,
-        price: 100,
+        fa: 2.into(),
+        price: 100.into(),
         attributes: vec![].try_into().unwrap(),
       },
       Offer {
-        fa: 3,
-        price: 1000,
+        fa: 3.into(),
+        price: 1000.into(),
         attributes: vec![].try_into().unwrap(),
       },
     ].try_into().unwrap(),

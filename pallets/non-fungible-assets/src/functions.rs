@@ -9,7 +9,7 @@ impl<T: Config> Pallet<T> {
    pub fn get_next_class_id() -> DispatchResultAs<NonFungibleClassId> {
 		NextClassId::<T>::try_mutate(|id| -> DispatchResultAs<NonFungibleClassId> {
 			let current_id = *id;
-			*id = id.checked_add(NonFungibleClassId::one()).ok_or(Error::<T>::NoAvailableClassId)?;
+			*id = id.next().ok_or(Error::<T>::NoAvailableClassId)?;
 			Ok(current_id)
 		})
 	}
@@ -17,7 +17,7 @@ impl<T: Config> Pallet<T> {
    pub fn get_next_asset_id() -> DispatchResultAs<NonFungibleAssetId> {
 		NextAssetId::<T>::try_mutate(|id| -> DispatchResultAs<NonFungibleAssetId> {
 			let current_id = *id;
-			*id = id.checked_add(NonFungibleClassId::one()).ok_or(Error::<T>::NoAvailableAssetId)?;
+			*id = id.next().ok_or(Error::<T>::NoAvailableAssetId)?;
 			Ok(current_id)
 		})
 	}
@@ -44,7 +44,7 @@ impl<T: Config> Pallet<T> {
 		class_id: NonFungibleClassId,
 		owner: T::AccountId,
 	) -> DispatchResultAs<NonFungibleAssetId> {
-		let mut asset_id = 0u32;
+		let mut asset_id = 0u32.into();
 		Classes::<T>::try_mutate(&class_id, |maybe_class_details| -> DispatchResult {
 			let class_details = maybe_class_details.as_mut().ok_or(Error::<T>::UnknownClass)?;
 			

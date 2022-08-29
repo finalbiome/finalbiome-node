@@ -75,7 +75,7 @@ impl<AccountId, BoundedString> AssetDetails<AccountId, BoundedString> {
       if let Some(topup) = &self.top_upped {
         if topup.speed > Zero::zero() {
           if let Some(cup) = &self.cup_local {
-            let diff = cup.amount.saturating_sub(current_balance);
+            let diff = cup.amount.saturating_sub(&current_balance);
             if diff == Zero::zero() {
               return None
             } else if diff > topup.speed {

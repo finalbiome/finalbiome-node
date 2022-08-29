@@ -54,18 +54,18 @@ impl system::Config for Test {
 pub struct FAPallet {}
 impl pallet_support::traits::FungibleAssets<u64> for FAPallet {
 fn can_withdraw(
-		_asset: u32,
+		_asset: FungibleAssetId,
 		_who: &u64,
-		_amount: u128,
-	) -> frame_support::traits::tokens::WithdrawConsequence<u128> {
+		_amount: FungibleAssetBalance,
+	) -> frame_support::traits::tokens::WithdrawConsequence<FungibleAssetBalance> {
     todo!()
   }
 
 	fn burn_from(
-		_asset_id: u32, 
+		_asset_id: FungibleAssetId, 
 		_who: &u64, 
-		_amount: u128,
-	) -> pallet_support::DispatchResultAs<u128> {
+		_amount: FungibleAssetBalance,
+	) -> pallet_support::DispatchResultAs<FungibleAssetBalance> {
 		todo!()
 	}
 
@@ -78,14 +78,14 @@ fn can_withdraw(
 	}
 
 	fn mint_into(asset: FungibleAssetId, _who: &u64, amount: FungibleAssetBalance) -> sp_runtime::DispatchResult {
-		if asset == 10 { // test do_airdrop_fa_works
+		if asset == 10.into() { // test do_airdrop_fa_works
 			return Ok(())
 		}
-		if asset == 11 { // test do_airdrop_fa_works
+		if asset == 11.into() { // test do_airdrop_fa_works
 			return Err(DispatchError::Other("mock_do_airdrop_fa_works"))
 		}
-		if asset == 12 { // test do_onboarding_works, onboarding_works
-			assert!(amount == 100);
+		if asset == 12.into() { // test do_onboarding_works, onboarding_works
+			assert!(amount == 100.into());
 			return Ok(())
 		}
 		todo!()
@@ -97,21 +97,21 @@ pub struct NFAPallet {}
 impl pallet_support::traits::NonFungibleAssets<u64, u32> for NFAPallet {
 
 fn mint_into(
-    class_id: &u32,
+    class_id: &NonFungibleClassId,
     who: &u64
-  ) -> DispatchResultAs<u32> {
-		if class_id == &10 { // test do_airdrop_nfa_works
-			return Ok(10)
+  ) -> DispatchResultAs<NonFungibleAssetId> {
+		if class_id == &10.into() { // test do_airdrop_nfa_works
+			return Ok(10.into())
 		}
-		if class_id == &11 { // test do_airdrop_nfa_works
+		if class_id == &11.into() { // test do_airdrop_nfa_works
 			return Err(DispatchError::Other("mock_do_airdrop_nfa_works"))
 		}
-		if class_id == &12 { // test do_airdrop_nfa_works
-			return Ok(12)
+		if class_id == &12.into() { // test do_airdrop_nfa_works
+			return Ok(12.into())
 		}
-		if class_id == &13 { // test do_onboarding_works, onboarding_works
+		if class_id == &13.into() { // test do_onboarding_works, onboarding_works
 			assert!(who == &333);
-			return Ok(13)
+			return Ok(13.into())
 		}
 		todo!()
 	}
@@ -127,13 +127,13 @@ fn mint_into(
     asset_id: &pallet_support::NonFungibleAssetId,
     attributes: pallet_support::AttributeList,
   ) -> frame_support::dispatch::DispatchResult {
-		if asset_id == &10 { // test do_airdrop_nfa_works
+		if asset_id == &10.into() { // test do_airdrop_nfa_works
 			return Ok(())
 		}
-		if asset_id == &12 { // test do_airdrop_nfa_works
+		if asset_id == &12.into() { // test do_airdrop_nfa_works
 			return Err(DispatchError::Other("mock_do_airdrop_nfa_works_2"))
 		}
-		if asset_id == &13 { // test do_onboarding_works, onboarding_works
+		if asset_id == &13.into() { // test do_onboarding_works, onboarding_works
 			assert!(attributes.get(0).unwrap().value == 10.try_into().unwrap());
 			assert!(attributes.get(1).unwrap().value == "t".try_into().unwrap());
 			return Ok(())

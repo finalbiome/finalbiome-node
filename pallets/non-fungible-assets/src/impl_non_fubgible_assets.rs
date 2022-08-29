@@ -5,7 +5,7 @@ use super::*;
 impl<T: pallet::Config> pallet_support::traits::NonFungibleAssets<AccountIdOf<T>, IndexOf<T>> for Pallet<T> {
 
   fn mint_into(
-    class_id: &NonFungibleAssetId,
+    class_id: &NonFungibleClassId,
     who: &AccountIdOf<T>
   ) -> DispatchResultAs<NonFungibleAssetId> {
     Self::do_mint(*class_id, who.clone())
@@ -20,7 +20,7 @@ impl<T: pallet::Config> pallet_support::traits::NonFungibleAssets<AccountIdOf<T>
   }
 
   fn get_offer(
-    class_id: &NonFungibleAssetId,
+    class_id: &NonFungibleClassId,
     offer_id: &u32,
   ) -> DispatchResultAs<(FungibleAssetId, FungibleAssetBalance, AttributeList)> {
     let details = Classes::<T>::get(class_id).ok_or(Error::<T>::UnknownClass)?;

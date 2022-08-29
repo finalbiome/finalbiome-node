@@ -92,9 +92,6 @@ pub mod pallet {
 		OptionQuery,
 	>;
 
-	#[pallet::storage]
-	pub type Something<T> = StorageValue<_, u32>;
-
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
