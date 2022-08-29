@@ -51,11 +51,11 @@ impl<T: Config> Pallet<T> {
 			Some(details) => details,
 			None => return UnknownAsset,
 		};
-		if details.supply.checked_add(amount).is_none() {
+		if details.supply.checked_add(&amount).is_none() {
 			return Overflow
 		}
 		if let Some(balance) = Self::maybe_balance(id, who) {
-			if balance.checked_add(amount).is_none() {
+			if balance.checked_add(&amount).is_none() {
 				return Overflow
 			}
 		}
@@ -72,11 +72,11 @@ impl<T: Config> Pallet<T> {
 			Some(details) => details,
 			None => return UnknownAsset,
 		};
-    if details.supply.checked_sub(amount).is_none() {
+    if details.supply.checked_sub(&amount).is_none() {
 			return Underflow
 		}
     if let Some(balance) = Self::maybe_balance(id, who) {
-      if balance.checked_sub(amount).is_none() {
+      if balance.checked_sub(&amount).is_none() {
         NoFunds
       } else {
         Success
@@ -120,12 +120,12 @@ impl<T: Config> Pallet<T> {
     Assets::<T>::try_mutate(id, |maybe_details| -> DispatchResult {
       let details = maybe_details.as_mut().ok_or(TokenError::UnknownAsset)?;
       
-      details.supply = details.supply.saturating_add(amount);
+      details.supply = details.supply.saturating_add(&amount);
       
       Accounts::<T>::try_mutate(beneficiary, id, |maybe_account| -> DispatchResult {
         match maybe_account {
           Some(ref mut account) => {
-						account.balance.saturating_accrue(amount);
+						account.balance = account.balance.saturating_add(&amount);
 					},
           maybe_account @ None => {
             *maybe_account = Some(
@@ -169,11 +169,11 @@ impl<T: Config> Pallet<T> {
       
       // REFACT: support supply data in the asset details will be make huge resource consuming.
       // Maybe need drop it or move to off-chain stats collector
-      details.supply = details.supply.saturating_sub(actual);
+      details.supply = details.supply.saturating_sub(&actual);
 
       Accounts::<T>::try_mutate(target, id, |maybe_account| -> DispatchResult {
         let mut account = maybe_account.take().ok_or(Error::<T>::NoAccount)?;
-        account.balance = account.balance.saturating_sub(actual);
+        account.balance = account.balance.saturating_sub(&actual);
 
         // Check if asset is top upped
         target_topup = details.next_step_topup(account.balance);

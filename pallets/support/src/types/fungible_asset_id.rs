@@ -1,7 +1,6 @@
 use codec::{CompactAs, Decode, Encode, MaxEncodedLen};
 use frame_support::RuntimeDebug;
 use scale_info::TypeInfo;
-pub use num_traits::{CheckedAdd, One};
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 

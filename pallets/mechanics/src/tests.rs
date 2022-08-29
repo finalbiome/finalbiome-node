@@ -970,7 +970,7 @@ fn can_use_mechanic_none() {
 			offers: bvec![
 				Offer {
 					attributes: bvec![],
-					price: 100,
+					price: 100.into(),
 					fa: 0.into(),
 				}
 			]
@@ -1022,7 +1022,7 @@ fn can_use_mechanic_bet() {
 			offers: bvec![
 				Offer {
 					attributes: bvec![],
-					price: 100,
+					price: 100.into(),
 					fa: 0.into(),
 				}
 			]
@@ -1073,7 +1073,7 @@ fn can_use_mechanic_purchased() {
 			offers: bvec![
 				Offer {
 					attributes: bvec![],
-					price: 100,
+					price: 100.into(),
 					fa: 0.into(),
 				}
 			]

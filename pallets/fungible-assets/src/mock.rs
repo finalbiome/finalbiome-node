@@ -68,14 +68,14 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 		// assets: asset_id, organization_id, name, top_upped_speed, cup_global, cup_local
 		assets: vec![
 			(0.into(), 2, "asset01".into(), None, None, None),
-			(1.into(), 2, "asset02".into(), Some(5), None, Some(20)),
+			(1.into(), 2, "asset02".into(), Some(5.into()), None, Some(20.into())),
 		],
 		// account_balances: account_id, asset_id, balance
 		accounts: vec![
-			(1, 0.into(), 1_000),
-			(3, 1.into(), 20),
-			(4, 1.into(), 5),
-			(5, 0.into(), 10_000),
+			(1, 0.into(), 1_000.into()),
+			(3, 1.into(), 20.into()),
+			(4, 1.into(), 5.into()),
+			(5, 0.into(), 10_000.into()),
 		],
 	};
 	config.assimilate_storage(&mut storage).unwrap();

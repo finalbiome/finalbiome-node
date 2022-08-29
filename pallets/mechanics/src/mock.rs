@@ -82,9 +82,9 @@ impl pallet_support::traits::FungibleAssets<u64> for FAPallet {
 fn can_withdraw(
 		asset: FungibleAssetId,
 		_who: &u64,
-		amount: u128,
-	) -> frame_support::traits::tokens::WithdrawConsequence<u128> {
-    if amount > 9999 {
+		amount: FungibleAssetBalance,
+	) -> frame_support::traits::tokens::WithdrawConsequence<FungibleAssetBalance> {
+    if amount > 9999.into() {
 			return frame_support::traits::tokens::WithdrawConsequence::NoFunds
 		}
 		if asset == 333.into() {
@@ -96,10 +96,10 @@ fn can_withdraw(
 fn burn_from(
 	asset_id: FungibleAssetId, 
     _who: &u64, 
-    _amount: u128,
-  ) -> pallet_support::DispatchResultAs<u128> {
+    _amount: FungibleAssetBalance,
+  ) -> pallet_support::DispatchResultAs<FungibleAssetBalance> {
 		if asset_id == 5u32.into() {
-			return Ok(10000u128);
+			return Ok(10000.into());
 		}
 		todo!()
 	}
@@ -163,12 +163,12 @@ fn mint_into(
 		};
 		let attributes: AttributeList = vec![a1.clone(), a2.clone()].try_into().unwrap();	
 		if class_id == &1u32 && offer_id == &2u32 {
-			return Ok((333.into(), 500, attributes))
+			return Ok((333.into(), 500.into(), attributes))
 		}
 		if class_id == &1u32 && offer_id == &3u32 {
-			return Ok((1.into(), 10000, attributes))
+			return Ok((1.into(), 10000.into(), attributes))
 		}
-		Ok((5.into(), 100, attributes))
+		Ok((5.into(), 100.into(), attributes))
 	}
 
 	fn set_attributes(

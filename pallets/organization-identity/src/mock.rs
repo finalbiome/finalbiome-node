@@ -56,16 +56,16 @@ impl pallet_support::traits::FungibleAssets<u64> for FAPallet {
 fn can_withdraw(
 		_asset: FungibleAssetId,
 		_who: &u64,
-		_amount: u128,
-	) -> frame_support::traits::tokens::WithdrawConsequence<u128> {
+		_amount: FungibleAssetBalance,
+	) -> frame_support::traits::tokens::WithdrawConsequence<FungibleAssetBalance> {
     todo!()
   }
 
 	fn burn_from(
 		_asset_id: FungibleAssetId, 
 		_who: &u64, 
-		_amount: u128,
-	) -> pallet_support::DispatchResultAs<u128> {
+		_amount: FungibleAssetBalance,
+	) -> pallet_support::DispatchResultAs<FungibleAssetBalance> {
 		todo!()
 	}
 
@@ -85,7 +85,7 @@ fn can_withdraw(
 			return Err(DispatchError::Other("mock_do_airdrop_fa_works"))
 		}
 		if asset == 12.into() { // test do_onboarding_works, onboarding_works
-			assert!(amount == 100);
+			assert!(amount == 100.into());
 			return Ok(())
 		}
 		todo!()
