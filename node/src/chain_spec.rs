@@ -92,20 +92,20 @@ pub fn development_config() -> Result<ChainSpec, String> {
 					(get_account_id_from_seed::<sr25519::Public>("Dave"), 1.into(), 20.into()),
 				],
 				vec![
-					(0, get_account_id_from_seed::<sr25519::Public>("Eve"), br"nfa01".to_vec()),
-					(1, get_account_id_from_seed::<sr25519::Public>("Eve"), br"nfa02".to_vec()),
+					(0.into(), get_account_id_from_seed::<sr25519::Public>("Eve"), br"nfa01".to_vec()),
+					(1.into(), get_account_id_from_seed::<sr25519::Public>("Eve"), br"nfa02".to_vec()),
 				],
 				vec![
-					(0, br"atr1".to_vec(), 5u32, Some(10u32)),
-					(0, br"atr2".to_vec(), 20u32, None),
+					(0.into(), br"atr1".to_vec(), 5u32, Some(10u32)),
+					(0.into(), br"atr2".to_vec(), 20u32, None),
 				],
 				vec![
-					(0, br"atr3".to_vec(), br"stone".to_vec()),
+					(0.into(), br"atr3".to_vec(), br"stone".to_vec()),
 				],
 				vec![
 					// class_id, fa_id, price, attrs [key, num_value, num_max, text_value]
-					(0, 0.into(), 10.into(), vec![(br"attr4".to_vec(), Some(10), None, None)]),
-					(0, 0.into(), 50.into(), vec![(br"attr4".to_vec(), Some(50), None, None)]),
+					(0.into(), 0.into(), 10.into(), vec![(br"attr4".to_vec(), Some(10), None, None)]),
+					(0.into(), 0.into(), 50.into(), vec![(br"attr4".to_vec(), Some(50), None, None)]),
 				],
 				true,
 			)
@@ -179,20 +179,20 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 					(get_account_id_from_seed::<sr25519::Public>("Dave"), 1.into(), 20.into()),
 				],
 				vec![
-					(0, get_account_id_from_seed::<sr25519::Public>("Eve"), br"nfa01".to_vec()),
-					(1, get_account_id_from_seed::<sr25519::Public>("Eve"), br"nfa02".to_vec()),
+					(0.into(), get_account_id_from_seed::<sr25519::Public>("Eve"), br"nfa01".to_vec()),
+					(1.into(), get_account_id_from_seed::<sr25519::Public>("Eve"), br"nfa02".to_vec()),
 				],
 				vec![
-					(0, br"atr1".to_vec(), 5u32, Some(10u32)),
-					(0, br"atr2".to_vec(), 20u32, None),
+					(0.into(), br"atr1".to_vec(), 5u32, Some(10u32)),
+					(0.into(), br"atr2".to_vec(), 20u32, None),
 				],
 				vec![
-					(0, br"atr3".to_vec(), br"stone".to_vec()),
+					(0.into(), br"atr3".to_vec(), br"stone".to_vec()),
 				],
 				vec![
 					// class_id, fa_id, price, attrs [key, num_value, num_max, text_value]
-					(0, 0.into(), 10.into(), vec![(br"attr4".to_vec(), Some(10), None, None)]),
-					(0, 0.into(), 50.into(), vec![(br"attr4".to_vec(), Some(50), None, None)]),
+					(0.into(), 0.into(), 10.into(), vec![(br"attr4".to_vec(), Some(10), None, None)]),
+					(0.into(), 0.into(), 50.into(), vec![(br"attr4".to_vec(), Some(50), None, None)]),
 				],
 				true,
 			)

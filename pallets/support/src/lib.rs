@@ -35,12 +35,6 @@ use types_nfa::{AssetDetails, ClassDetails};
 #[cfg(test)]
 mod tests;
 
-/// The units in which we record balances of the fungible assets
-// pub type FungibleAssetBalance = u128;
-/// Type of the non-fungible asset id
-pub type NonFungibleClassId = u32;
-/// The units in which we record balances of the fungible assets
-pub type NonFungibleAssetId = u32;
 /// The Account index (aka nonce) type. This stores the number of previous transactions
 /// associated with a sender account.
 pub type Index = u32;
