@@ -57,24 +57,6 @@ fn check_test_genesis_data() {
 }
 
 #[test]
-fn it_works_for_default_value() {
-	new_test_ext().execute_with(|| {
-		// Dispatch a signed extrinsic.
-		assert_ok!(FungibleAssets::do_something(Origin::signed(1), 42));
-		// Read pallet storage and assert an expected result.
-		assert_eq!(Something::<Test>::get(), Some(42));
-	});
-}
-
-#[test]
-fn correct_error_for_none_value() {
-	new_test_ext().execute_with(|| {
-		// Ensure the expected error is thrown when no value is present.
-		assert_noop!(FungibleAssets::cause_error(Origin::signed(1)), Error::<Test>::NoneValue);
-	});
-}
-
-#[test]
 fn create_fa_works() {
 	new_test_ext().execute_with(|| {
 		System::reset_events();
