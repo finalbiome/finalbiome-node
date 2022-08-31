@@ -1,30 +1,22 @@
 //! Traits and associated utilities for use in the FinalBiome environment.
-//! 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use frame_support::pallet_prelude::*;
-use frame_support::inherent::Vec;
+use frame_support::{inherent::Vec, pallet_prelude::*};
 
 use codec::{Decode, Encode, MaxEncodedLen};
+use frame_support::PalletError;
 use scale_info::TypeInfo;
-use frame_support::{
-  PalletError,
-};
 
 // use frame_system::pallet_prelude::*;
-use sp_runtime::{
-	traits:: {
-    Zero,
-	},
-};
+use sp_runtime::traits::Zero;
 
-mod types;
 pub use types::*;
 mod constants;
+mod types;
 pub use constants::*;
+mod characteristics;
 pub mod traits;
 pub mod types_nfa;
-mod characteristics;
 pub use characteristics::*;
 mod errors;
 pub use errors::*;
@@ -44,7 +36,8 @@ pub type DispatchResultAs<T> = sp_std::result::Result<T, sp_runtime::DispatchErr
 /// The user account identifier type for the runtime.
 pub type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 /// Type alias for `frame_system`'s index. \
-/// Account index (aka nonce) type. This stores the number of previous transactions associated with a sender account.
+/// Account index (aka nonce) type. This stores the number of previous transactions associated with
+/// a sender account.
 pub type IndexOf<T> = <T as frame_system::Config>::Index;
 /// Type alias for Mechanic Id with config type
 pub type MechanicIdOf<T> = MechanicId<AccountIdOf<T>, IndexOf<T>>;
@@ -67,7 +60,7 @@ pub struct Attribute {
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 pub enum AttributeValue {
   Number(NumberAttribute),
-  Text(BoundedVec<u8, AttributeValueStringLimit>)
+  Text(BoundedVec<u8, AttributeValueStringLimit>),
 }
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 pub struct NumberAttribute {
@@ -76,60 +69,58 @@ pub struct NumberAttribute {
 }
 
 impl TryFrom<u32> for AttributeValue {
-    type Error = &'static str;
+  type Error = &'static str;
 
-    fn try_from(value: u32) -> Result<Self, Self::Error> {
-      Ok(AttributeValue::Number(NumberAttribute {
-        number_value: value,
-        number_max: None,
-      }))
-    }
+  fn try_from(value: u32) -> Result<Self, Self::Error> {
+    Ok(AttributeValue::Number(NumberAttribute {
+      number_value: value,
+      number_max: None,
+    }))
+  }
 }
 impl TryFrom<(u32, u32)> for AttributeValue {
-    type Error = &'static str;
+  type Error = &'static str;
 
-    fn try_from(value: (u32, u32)) -> Result<Self, Self::Error> {
-      if value.0 > value.1 {
-        Err(ERROR_VALIDATE_NUMBER_ATTRIBUTE)
-      } else {
-        Ok(AttributeValue::Number(NumberAttribute {
-          number_value: value.0,
-          number_max: Some(value.1),
-        }))
-      }
+  fn try_from(value: (u32, u32)) -> Result<Self, Self::Error> {
+    if value.0 > value.1 {
+      Err(ERROR_VALIDATE_NUMBER_ATTRIBUTE)
+    } else {
+      Ok(AttributeValue::Number(NumberAttribute {
+        number_value: value.0,
+        number_max: Some(value.1),
+      }))
     }
+  }
 }
 impl TryFrom<(u32, Option<u32>)> for AttributeValue {
-    type Error = &'static str;
+  type Error = &'static str;
 
-    fn try_from(value: (u32, Option<u32>)) -> Result<Self, Self::Error> {
-      match value.1 {
-        Some(max_val) => Self::try_from((value.0, max_val)),
-        None => Self::try_from(value.0)
-      }
+  fn try_from(value: (u32, Option<u32>)) -> Result<Self, Self::Error> {
+    match value.1 {
+      Some(max_val) => Self::try_from((value.0, max_val)),
+      None => Self::try_from(value.0),
     }
+  }
 }
 impl TryFrom<&str> for AttributeValue {
-    type Error = &'static str;
+  type Error = &'static str;
 
-    fn try_from(value: &str) -> Result<Self, Self::Error> {
-      match value.as_bytes().to_vec().try_into() {
-        Ok(val) => Ok(AttributeValue::Text(val)),
-        Err(_) => Err(ERROR_VALIDATE_TEXT_ATTRIBUTE)
-      }
-      
+  fn try_from(value: &str) -> Result<Self, Self::Error> {
+    match value.as_bytes().to_vec().try_into() {
+      Ok(val) => Ok(AttributeValue::Text(val)),
+      Err(_) => Err(ERROR_VALIDATE_TEXT_ATTRIBUTE),
     }
+  }
 }
 impl TryFrom<Vec<u8>> for AttributeValue {
-    type Error = &'static str;
+  type Error = &'static str;
 
-    fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
-      match value.try_into() {
-        Ok(val) => Ok(AttributeValue::Text(val)),
-        Err(_) => Err(ERROR_VALIDATE_TEXT_ATTRIBUTE)
-      }
-      
+  fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
+    match value.try_into() {
+      Ok(val) => Ok(AttributeValue::Text(val)),
+      Err(_) => Err(ERROR_VALIDATE_TEXT_ATTRIBUTE),
     }
+  }
 }
 
 impl AttributeValue {
@@ -166,17 +157,18 @@ pub enum Locker<AccountId, Index> {
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 /// Structure to represent of the Mechanic Id
-pub struct  MechanicId<AccountId, Index>
-{
+pub struct MechanicId<AccountId, Index> {
   pub account_id: AccountId,
   pub nonce: Index,
 }
 impl<AccountId, Index> MechanicId<AccountId, Index>
-where AccountId: PartialEq
+where
+  AccountId: PartialEq,
 {
   /// Creates mechanic id from an account id
-  pub fn from_account_id<T: frame_system::Config> (account_id: &T::AccountId) -> MechanicId<T::AccountId, T::Index>
-  {
+  pub fn from_account_id<T: frame_system::Config>(
+    account_id: &T::AccountId,
+  ) -> MechanicId<T::AccountId, T::Index> {
     let nonce = <frame_system::Pallet<T>>::account_nonce(account_id);
     MechanicId {
       account_id: account_id.clone(),

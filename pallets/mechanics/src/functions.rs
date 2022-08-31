@@ -1,9 +1,12 @@
 //! Functions for the Mechnics pallet.
 use sp_std::vec::Vec;
 
-use pallet_support::{Locker, bettor::{BettorOutcome, Bettor, BettorWinning, DrawOutcomeResult, OutcomeResult}, DefaultListLengthLimit, misc::cumsum_owned, DispatchResultAs, LockResultOf, LockedAccet};
-use pallet_support::traits::NonFungibleAssets;
-use pallet_support::traits::FungibleAssets;
+use pallet_support::{
+  bettor::{Bettor, BettorOutcome, BettorWinning, DrawOutcomeResult, OutcomeResult},
+  misc::cumsum_owned,
+  traits::{FungibleAssets, NonFungibleAssets},
+  DefaultListLengthLimit, DispatchResultAs, LockResultOf, LockedAccet, Locker,
+};
 
 use super::*;
 
@@ -29,65 +32,67 @@ impl<T: Config> Pallet<T> {
         let origin = Locker::Mechanic(id.clone());
         let who = id.account_id.clone();
         match lock {
-          LockedAccet::Nfa(class_id, asset_id) => {
-            match asset_action {
-              AssetAction::Release => T::NonFungibleAssets::clear_lock(&who, &origin, &class_id, &asset_id)?,
-              AssetAction::Burn => T::NonFungibleAssets::burn(class_id, asset_id, None)?,
-            }
+          LockedAccet::Nfa(class_id, asset_id) => match asset_action {
+            AssetAction::Release => {
+              T::NonFungibleAssets::clear_lock(&who, &origin, &class_id, &asset_id)?
+            },
+            AssetAction::Burn => T::NonFungibleAssets::burn(class_id, asset_id, None)?,
           },
-          LockedAccet::Fa(asset_id, amount) => {
-            match asset_action {
-              AssetAction::Release => todo!("Create an clear_lock method for FA"),
-              AssetAction::Burn => {
-                let _ = T::FungibleAssets::burn_from(asset_id, &who, amount)?;
-              },
-            }
+          LockedAccet::Fa(asset_id, amount) => match asset_action {
+            AssetAction::Release => todo!("Create an clear_lock method for FA"),
+            AssetAction::Burn => {
+              let _ = T::FungibleAssets::burn_from(asset_id, &who, amount)?;
+            },
           },
         }
       }
-      
     };
     Ok(())
   }
 
   /// Add lock of asset to the mechanic side
-  /// 
+  ///
   /// Don't use it on one's own
-  pub(crate) fn try_lock(
-    id: &MechanicIdOf<T>,
-    asset_id: LockedAccet,
-  ) -> DispatchResult {
-    Mechanics::<T>::try_mutate(&id.account_id, &id.nonce, | maybe_mechanic | -> DispatchResult {
-      match maybe_mechanic {
-        Some(ref mut mechanic) => {
-          mechanic.locked.try_push(asset_id).map_err(|_| Error::<T>::AssetsExceedsAllowable)?;
-        },
-        None => return Err(Error::<T>::MechanicsNotAvailable.into()),
-      }
-      Ok(())
-    })?;
+  pub(crate) fn try_lock(id: &MechanicIdOf<T>, asset_id: LockedAccet) -> DispatchResult {
+    Mechanics::<T>::try_mutate(
+      &id.account_id,
+      &id.nonce,
+      |maybe_mechanic| -> DispatchResult {
+        match maybe_mechanic {
+          Some(ref mut mechanic) => {
+            mechanic
+              .locked
+              .try_push(asset_id)
+              .map_err(|_| Error::<T>::AssetsExceedsAllowable)?;
+          },
+          None => return Err(Error::<T>::MechanicsNotAvailable.into()),
+        }
+        Ok(())
+      },
+    )?;
     Ok(())
   }
 
   /// Clear lock of asset on the mechanic side
-  /// 
+  ///
   /// If asset is not found as locked, ignoring it
   /// Don't use it on one's own
-  pub(crate) fn _clear_lock(
-    id: &MechanicIdOf<T>,
-    asset_id: LockedAccet,
-  ) -> DispatchResult {
-    Mechanics::<T>::try_mutate(&id.account_id, &id.nonce, | maybe_mechanic | -> DispatchResult {
-      match maybe_mechanic {
-        Some(ref mut mechanic) => {
-          if let Some(index) = mechanic.locked.iter().position(|&a| a == asset_id) {
-            mechanic.locked.remove(index);
-          }
-        },
-        None => return Err(Error::<T>::MechanicsNotAvailable.into()),
-      }
-      Ok(())
-    })?;
+  pub(crate) fn _clear_lock(id: &MechanicIdOf<T>, asset_id: LockedAccet) -> DispatchResult {
+    Mechanics::<T>::try_mutate(
+      &id.account_id,
+      &id.nonce,
+      |maybe_mechanic| -> DispatchResult {
+        match maybe_mechanic {
+          Some(ref mut mechanic) => {
+            if let Some(index) = mechanic.locked.iter().position(|&a| a == asset_id) {
+              mechanic.locked.remove(index);
+            }
+          },
+          None => return Err(Error::<T>::MechanicsNotAvailable.into()),
+        }
+        Ok(())
+      },
+    )?;
     Ok(())
   }
 
@@ -109,7 +114,7 @@ impl<T: Config> Pallet<T> {
   }
 
   /// Clear lock for NFA
-  /// 
+  ///
   /// Any error will be suppressed
   pub(crate) fn _clear_lock_nfa(
     id: &MechanicIdOf<T>,
@@ -173,28 +178,34 @@ impl<T: Config> Pallet<T> {
     })?;
     if let Some(bettor) = class_details.bettor {
       // no results exist for the first time played asset
-      let outcomes =  Vec::new();
-      
+      let outcomes = Vec::new();
+
       Self::play_bet_round(who, mechanic_id, &bettor, outcomes)?;
     };
     Ok(())
   }
 
   /// Process existed Bet mechanic by it id. \
-  /// Where is no checks about the bettor asset - 
+  /// Where is no checks about the bettor asset -
   /// any checks has been executed in [do_bet()]
   pub(crate) fn do_bet_next_round(
     who: &T::AccountId,
     mechanic_id: MechanicIdOf<T>,
   ) -> DispatchResult {
     // check validity of id
-    mechanic_id.ensure_owner(who).map_err(|_| Error::<T>::MechanicsNotAvailable)?;
-    let mechanic = Mechanics::<T>::try_get(&mechanic_id.account_id, &mechanic_id.nonce).map_err(|_| Error::<T>::MechanicsNotAvailable)?;
+    mechanic_id
+      .ensure_owner(who)
+      .map_err(|_| Error::<T>::MechanicsNotAvailable)?;
+    let mechanic = Mechanics::<T>::try_get(&mechanic_id.account_id, &mechanic_id.nonce)
+      .map_err(|_| Error::<T>::MechanicsNotAvailable)?;
     // get bet asset from mechanic lock
     // for the Bet mechanic only one asset can be using
     if mechanic.locked.len() != 1 {
-      debug_assert!(false, "for the Bet mechanic only one asset can be using (locked)");
-      return Err(Error::<T>::Internal.into())
+      debug_assert!(
+        false,
+        "for the Bet mechanic only one asset can be using (locked)"
+      );
+      return Err(Error::<T>::Internal.into());
     }
     let bet_asset = mechanic.locked[0];
     let (class_id, _) = match bet_asset {
@@ -208,14 +219,17 @@ impl<T: Config> Pallet<T> {
     let outcomes = if let MechanicData::Bet(data_bet) = mechanic.data {
       data_bet.outcomes.into_inner()
     } else {
-      debug_assert!(false, "a mechanic data whitout the bettor can't be present here");
+      debug_assert!(
+        false,
+        "a mechanic data whitout the bettor can't be present here"
+      );
       Vec::new()
     };
     if let Some(bettor) = class_details.bettor {
       Self::play_bet_round(who, mechanic_id, &bettor, outcomes)?;
     } else {
       debug_assert!(false, "an asset whitout the bettor can't be present here");
-      return Err(Error::<T>::Internal.into())
+      return Err(Error::<T>::Internal.into());
     }
     Ok(())
   }
@@ -245,43 +259,50 @@ impl<T: Config> Pallet<T> {
       debug_assert!(bettor.rounds > 1, "bettor cannot have one round here");
       // save results to mechanic data for future uses
       Self::add_bet_result(&mechanic_id, &outcomes)?;
-      Self::deposit_event(Event::Stopped { id: mechanic_id.nonce, owner: mechanic_id.account_id, reason: EventMechanicStopReason::UpgradeNeeded });
+      Self::deposit_event(Event::Stopped {
+        id: mechanic_id.nonce,
+        owner: mechanic_id.account_id,
+        reason: EventMechanicStopReason::UpgradeNeeded,
+      });
     };
     Ok(())
   }
 
   /// Generate a random number from a given seed.
-	/// Note that there is potential bias introduced by using modulus operator.
-	/// You should call this function with different seed values until the random
-	/// number lies within `u32::MAX - u32::MAX % n`.
-	/// TODO: deal with randomness freshness
-	/// https://github.com/paritytech/substrate/issues/8311
+  /// Note that there is potential bias introduced by using modulus operator.
+  /// You should call this function with different seed values until the random
+  /// number lies within `u32::MAX - u32::MAX % n`.
+  /// TODO: deal with randomness freshness
+  /// https://github.com/paritytech/substrate/issues/8311
   /// Taken from https://github.com/paritytech/substrate/blob/d602397a0bbb24b5d627795b797259a44a5e29e9/frame/lottery/src/lib.rs#L506
-	fn generate_random_number(mechanic_id: &MechanicIdOf<T>, seed_suffix: u32) -> u32 {
-		let (random_seed, _) = T::Randomness::random(&(mechanic_id, seed_suffix).encode());
-		let random_number = <u32>::decode(&mut random_seed.as_ref())
-			.expect("secure hashes should always be bigger than u32; qed");
-		random_number
-	}
+  fn generate_random_number(mechanic_id: &MechanicIdOf<T>, seed_suffix: u32) -> u32 {
+    let (random_seed, _) = T::Randomness::random(&(mechanic_id, seed_suffix).encode());
+    let random_number = <u32>::decode(&mut random_seed.as_ref())
+      .expect("secure hashes should always be bigger than u32; qed");
+    random_number
+  }
 
   /// Randomly choose a variant from among the total number of variants (`(1..total)`)
-	pub(crate) fn choose_variant(mechanic_id: &MechanicIdOf<T>, total: u32) -> u32 {
-		let mut random_number = Self::generate_random_number(mechanic_id, 0);
-		// Best effort attempt to remove bias from modulus operator.
-		for i in 1..total {
-			if random_number < u32::MAX - u32::MAX % total {
-				break
-			}
-			random_number = Self::generate_random_number(mechanic_id, i);
-		}
-		random_number % total
-	}
+  pub(crate) fn choose_variant(mechanic_id: &MechanicIdOf<T>, total: u32) -> u32 {
+    let mut random_number = Self::generate_random_number(mechanic_id, 0);
+    // Best effort attempt to remove bias from modulus operator.
+    for i in 1..total {
+      if random_number < u32::MAX - u32::MAX % total {
+        break;
+      }
+      random_number = Self::generate_random_number(mechanic_id, i);
+    }
+    random_number % total
+  }
 
   /// Randomly choose an outcome index by given probability
-  /// 
+  ///
   /// Returns an index of some selected outcomes.  \
   /// **Warn**: `outcomes` must be from the valid [Bettor]
-  pub(crate) fn choose_outcome(mechanic_id: &MechanicIdOf<T>, outcomes: &BoundedVec<BettorOutcome, DefaultListLengthLimit>) -> u32 {
+  pub(crate) fn choose_outcome(
+    mechanic_id: &MechanicIdOf<T>,
+    outcomes: &BoundedVec<BettorOutcome, DefaultListLengthLimit>,
+  ) -> u32 {
     let probs = cumsum_owned(outcomes.iter().map(|o| o.probability).collect());
     let random_variant = Self::choose_variant(mechanic_id, probs[probs.len() - 1]);
     let mut chosen_outcome_idx = probs.len() - 1;
@@ -296,13 +317,13 @@ impl<T: Config> Pallet<T> {
       .expect("BoundedVec index can't overfolow DefaultListLengthLimit")
   }
 
-  /// Trying to determine the winner by completed rounds 
-  /// 
+  /// Trying to determine the winner by completed rounds
+  ///
   /// If win or loss cannot be determined, None is returned.
   pub(crate) fn try_finalize_bet(
     completed: &[u32],
     total_rounds: u32,
-    outcomes: &BoundedVec<BettorOutcome, DefaultListLengthLimit>
+    outcomes: &BoundedVec<BettorOutcome, DefaultListLengthLimit>,
   ) -> Option<BetResult> {
     let mut won_rounds = 0u32;
     let mut lost_rounds = 0u32;
@@ -314,11 +335,19 @@ impl<T: Config> Pallet<T> {
         OutcomeResult::Lose => lost_rounds += 1,
         OutcomeResult::Draw => draw_rounds += 1,
       }
-    };
+    }
 
-    if total_rounds.saturating_sub(draw_rounds).saturating_sub(lost_rounds) < lost_rounds {
+    if total_rounds
+      .saturating_sub(draw_rounds)
+      .saturating_sub(lost_rounds)
+      < lost_rounds
+    {
       Some(BetResult::Lost)
-    } else if total_rounds.saturating_sub(draw_rounds).saturating_sub(won_rounds) < won_rounds {
+    } else if total_rounds
+      .saturating_sub(draw_rounds)
+      .saturating_sub(won_rounds)
+      < won_rounds
+    {
       Some(BetResult::Won)
     } else {
       None
@@ -326,26 +355,23 @@ impl<T: Config> Pallet<T> {
   }
 
   /// Processing with assets by Bet mechanic results
-  /// 
+  ///
   /// Mint assets if needed, drop mechanic, emit events
   pub(crate) fn do_bet_result_processing(
     mechanic_id: &MechanicIdOf<T>,
     who: &T::AccountId,
     bettor: &Bettor,
     result: BetResult,
-    outcomes: Vec<u32>
+    outcomes: Vec<u32>,
   ) -> DispatchResult {
-
     let result = match result {
       BetResult::Won => BetResult::Won,
       BetResult::Lost => BetResult::Lost,
-      BetResult::Draw => {
-        match bettor.draw_outcome {
-          DrawOutcomeResult::Win => BetResult::Won,
-          DrawOutcomeResult::Lose => BetResult::Lost,
-          DrawOutcomeResult::Keep => BetResult::Draw,
-        }
-      }
+      BetResult::Draw => match bettor.draw_outcome {
+        DrawOutcomeResult::Win => BetResult::Won,
+        DrawOutcomeResult::Lose => BetResult::Lost,
+        DrawOutcomeResult::Keep => BetResult::Draw,
+      },
     };
 
     match result {
@@ -375,41 +401,54 @@ impl<T: Config> Pallet<T> {
     };
     // drop mechanic
     // emit Finished event
-    let outcomes: MechanicDataBetOutcomes = outcomes.to_vec().try_into().expect("the number of values cannot exceed the number of rounds");
-    let result:EventMechanicResult = Some(EventMechanicResultData::Bet(
-      EventMechanicResultDataBet {
+    let outcomes: MechanicDataBetOutcomes = outcomes
+      .to_vec()
+      .try_into()
+      .expect("the number of values cannot exceed the number of rounds");
+    let result: EventMechanicResult =
+      Some(EventMechanicResultData::Bet(EventMechanicResultDataBet {
         outcomes,
         result,
-      }
-    ));
-    Self::deposit_event(Event::Finished { id: mechanic_id.nonce, owner: mechanic_id.account_id.clone(), result });
+      }));
+    Self::deposit_event(Event::Finished {
+      id: mechanic_id.nonce,
+      owner: mechanic_id.account_id.clone(),
+      result,
+    });
     Ok(())
   }
 
   /// Add intermediate result to the Bet mechanic data
   pub(crate) fn add_bet_result(id: &MechanicIdOf<T>, outcomes: &[u32]) -> DispatchResult {
-    Mechanics::<T>::try_mutate(&id.account_id, &id.nonce, | maybe_mechanic | -> DispatchResult {
-      let outcomes: MechanicDataBetOutcomes = outcomes.to_vec().try_into().expect("the number of values cannot exceed the number of rounds");
-      let data = MechanicData::Bet(MechanicDataBet { outcomes });
-      match maybe_mechanic {
-        Some(ref mut mechanic) => {
-          mechanic.data = data;
-        },
-        maybe_mechanic @ None => {
-          let mechanic = MechanicDetailsBuilder::build::<T>(id.account_id.clone(), data);
-          Timeouts::<T>::insert(mechanic.get_tiomeout_strorage_key(id.nonce), ());
-          *maybe_mechanic = Some(mechanic);
-        },
-      }
-      Ok(())
-    })?;
+    Mechanics::<T>::try_mutate(
+      &id.account_id,
+      &id.nonce,
+      |maybe_mechanic| -> DispatchResult {
+        let outcomes: MechanicDataBetOutcomes = outcomes
+          .to_vec()
+          .try_into()
+          .expect("the number of values cannot exceed the number of rounds");
+        let data = MechanicData::Bet(MechanicDataBet { outcomes });
+        match maybe_mechanic {
+          Some(ref mut mechanic) => {
+            mechanic.data = data;
+          },
+          maybe_mechanic @ None => {
+            let mechanic = MechanicDetailsBuilder::build::<T>(id.account_id.clone(), data);
+            Timeouts::<T>::insert(mechanic.get_tiomeout_strorage_key(id.nonce), ());
+            *maybe_mechanic = Some(mechanic);
+          },
+        }
+        Ok(())
+      },
+    )?;
     Ok(())
   }
 
   /// Checks if a class can be used for a given mechanic
   pub(crate) fn can_use_mechanic(
     mechanic: &Mechanic,
-    class_details: &ClassDetailsOf<T>
+    class_details: &ClassDetailsOf<T>,
   ) -> DispatchResult {
     match mechanic {
       Mechanic::BuyNfa => {
@@ -432,18 +471,28 @@ impl<T: Config> Pallet<T> {
   /// Upgrage mechanic by given data and try to execute it.
   pub(crate) fn do_upgrade(
     who: &AccountIdOf<T>,
-    upgrage_data: MechanicUpgradeDataOf<T>
+    upgrage_data: MechanicUpgradeDataOf<T>,
   ) -> DispatchResult {
     // check validity of id
-    upgrage_data.mechanic_id.ensure_owner(who).map_err(|_| Error::<T>::NoPermission)?;
+    upgrage_data
+      .mechanic_id
+      .ensure_owner(who)
+      .map_err(|_| Error::<T>::NoPermission)?;
     // checks an mechanic existance
-    let mechanic = Mechanics::<T>::try_get(&upgrage_data.mechanic_id.account_id, &upgrage_data.mechanic_id.nonce).map_err(|_| Error::<T>::MechanicsNotAvailable)?;
+    let mechanic = Mechanics::<T>::try_get(
+      &upgrage_data.mechanic_id.account_id,
+      &upgrage_data.mechanic_id.nonce,
+    )
+    .map_err(|_| Error::<T>::MechanicsNotAvailable)?;
     // checks mechanic owner
     ensure!(&mechanic.owner == who, Error::<T>::NoPermission);
 
     // validate data
     // ensure compatibility
-    ensure!(Mechanic::from(&upgrage_data.payload) == Mechanic::from(&mechanic.data), Error::<T>::IncompatibleData);
+    ensure!(
+      Mechanic::from(&upgrage_data.payload) == Mechanic::from(&mechanic.data),
+      Error::<T>::IncompatibleData
+    );
     // upgrade mechanic / update mechanic data
     // execute mechanic
 
@@ -451,14 +500,14 @@ impl<T: Config> Pallet<T> {
       MechanicUpgradePayload::Bet => {
         // for bet mechanic just execute next round
         Self::do_bet_next_round(who, upgrage_data.mechanic_id)?;
-      }
+      },
     }
 
     Ok(())
   }
 
   /// Drop all mechanics by timeout.
-  /// 
+  ///
   /// Returns weight and count of dropped mechanics
   pub(crate) fn process_mechanic_timeouts() -> (Weight, u32) {
     let mut mechanics_count = 0;
@@ -470,7 +519,7 @@ impl<T: Config> Pallet<T> {
       };
       let _ = Self::drop_mechanic(&id, AssetAction::Burn);
       mechanics_count = mechanics_count.saturating_add(1);
-    };
+    }
     (0, mechanics_count)
   }
 }

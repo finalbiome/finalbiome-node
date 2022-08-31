@@ -8,25 +8,25 @@ pub struct Purchased {
 }
 
 impl AssetCharacteristic for Purchased {
-    fn is_valid(&self) -> bool {
-        // number of offers must be more than 0
-        if self.offers.len() == 0 {
-          return false
-        }
-        // price must be more than 0
-        if self.offers.iter().any(|o| o.price.is_zero()) {
-          return false
-        }
-        // TODO: check for the existence of an FA
-        // TODO: check that no attributes with default values (like in class)
-        true
+  fn is_valid(&self) -> bool {
+    // number of offers must be more than 0
+    if self.offers.len() == 0 {
+      return false;
     }
-    fn ensure(&self) -> Result<(), CommonError> {
-      if !self.is_valid() {
-        return Err(CommonError::WrongPurchased)
-      }
-      Ok(())
+    // price must be more than 0
+    if self.offers.iter().any(|o| o.price.is_zero()) {
+      return false;
     }
+    // TODO: check for the existence of an FA
+    // TODO: check that no attributes with default values (like in class)
+    true
+  }
+  fn ensure(&self) -> Result<(), CommonError> {
+    if !self.is_valid() {
+      return Err(CommonError::WrongPurchased);
+    }
+    Ok(())
+  }
 }
 
 #[derive(Clone, Encode, Decode, TypeInfo, MaxEncodedLen, PartialEq, RuntimeDebug)]

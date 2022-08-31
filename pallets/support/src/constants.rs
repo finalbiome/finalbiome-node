@@ -11,7 +11,8 @@ pub type DefaultStringLimit = ConstU32<64>;
 /// Default length of the vec data type
 pub type DefaultListLengthLimit = ConstU32<{ u8::MAX as u32 }>;
 
-pub(crate) const ERROR_VALIDATE_NUMBER_ATTRIBUTE: &str = "Attribute numeric value exceeds the maximum value";
+pub(crate) const ERROR_VALIDATE_NUMBER_ATTRIBUTE: &str =
+  "Attribute numeric value exceeds the maximum value";
 pub(crate) const ERROR_VALIDATE_TEXT_ATTRIBUTE: &str = "String attribute length out of bound";
 
 /// The maximum number of rounds accessible in Bet mechanic

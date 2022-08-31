@@ -6,34 +6,34 @@ use serde::{Deserialize, Serialize};
 
 /// Type of the fungible asset id
 #[derive(
-	Copy,
-	Clone,
-	Encode,
-	Decode,
-	RuntimeDebug,
-	TypeInfo,
-	Eq,
-	PartialEq,
-	MaxEncodedLen,
-	CompactAs,
-	Default,
+  Copy,
+  Clone,
+  Encode,
+  Decode,
+  RuntimeDebug,
+  TypeInfo,
+  Eq,
+  PartialEq,
+  MaxEncodedLen,
+  CompactAs,
+  Default,
 )]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct NonFungibleAssetId(u32);
 
 impl From<u32> for NonFungibleAssetId {
-	#[inline]
-	fn from(value: u32) -> Self {
-		NonFungibleAssetId(value)
-	}
+  #[inline]
+  fn from(value: u32) -> Self {
+    NonFungibleAssetId(value)
+  }
 }
 
 impl core::ops::Deref for NonFungibleAssetId {
-	type Target = u32;
-	#[inline]
-	fn deref(&self) -> &Self::Target {
-		&self.0
-	}
+  type Target = u32;
+  #[inline]
+  fn deref(&self) -> &Self::Target {
+    &self.0
+  }
 }
 
 impl Iterator for NonFungibleAssetId {
@@ -46,17 +46,17 @@ impl Iterator for NonFungibleAssetId {
 
 #[cfg(test)]
 mod tests {
-	use super::NonFungibleAssetId;
+  use super::NonFungibleAssetId;
 
-	#[test]
-	fn fa_deref() {
-		let a = NonFungibleAssetId::from(2);
-		assert_eq!(2, *a)
-	}
+  #[test]
+  fn fa_deref() {
+    let a = NonFungibleAssetId::from(2);
+    assert_eq!(2, *a)
+  }
 
-	#[test]
-	fn fa_next() {
-		let mut a = NonFungibleAssetId::from(2);
-		assert_eq!(a.next(), Some(NonFungibleAssetId::from(3)))
-	}
+  #[test]
+  fn fa_next() {
+    let mut a = NonFungibleAssetId::from(2);
+    assert_eq!(a.next(), Some(NonFungibleAssetId::from(3)))
+  }
 }

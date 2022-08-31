@@ -38,6 +38,14 @@ jobs:
         run: |
           cargo +nightly fmt -- --check
 
+      - name: Check Code
+        run: |
+          cargo clippy --locked -p "pallet-*" -- -D warnings
+      
+      - name: Tests
+        run: |
+          cargo test --locked
+      
       # - name: Check Build
       #   run: |
       #     SKIP_WASM_BUILD=1 cargo check --release

@@ -1,9 +1,10 @@
 //! Various basic types for use in the assets pallet.
 
-use frame_support::{
-	pallet_prelude::*,
+use frame_support::pallet_prelude::*;
+use pallet_support::{
+  AttributeList, AttributeListLengthLimit, FungibleAssetBalance, FungibleAssetId,
+  NonFungibleClassId,
 };
-use pallet_support::{FungibleAssetId, NonFungibleClassId, FungibleAssetBalance, AttributeList, AttributeListLengthLimit};
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 pub struct OrganizationDetails<BoundedString> {
@@ -18,7 +19,7 @@ impl<BoundedString> OrganizationDetails<BoundedString> {
       name,
       onboarding_assets: Default::default(),
     }
-  }  
+  }
 }
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, MaxEncodedLen, TypeInfo)]

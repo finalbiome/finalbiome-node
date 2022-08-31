@@ -1,8 +1,6 @@
 use super::*;
 use pallet_support::{
-  Locker,
-  CharacteristicBettor, CharacteristicPurchased,
-  AssetCharacteristic, DefaultStringLimit,
+  AssetCharacteristic, CharacteristicBettor, CharacteristicPurchased, DefaultStringLimit, Locker,
 };
 
 /// Type of the non-fungible asset instance ids
@@ -81,9 +79,7 @@ pub struct AssetDetailsBuilder<T: Config> {
 }
 impl<T: pallet::Config> AssetDetailsBuilder<T> {
   pub fn new(owner: T::AccountId) -> AssetDetailsBuilderResult<T> {
-    Ok(AssetDetailsBuilder {
-      owner
-    })
+    Ok(AssetDetailsBuilder { owner })
   }
   pub fn build(self) -> DispatchResultAs<AssetDetails<T::AccountId, T::Index>> {
     Ok(AssetDetails {
@@ -105,5 +101,10 @@ pub type GenesisNumberAttributesConfig = Vec<(NonFungibleClassId, Vec<u8>, u32, 
 pub type GenesisTextAttributesConfig = Vec<(NonFungibleClassId, Vec<u8>, Vec<u8>)>;
 /// key, num_value, num_max, text_value
 pub type GenesisCommonAttributesList = Vec<(Vec<u8>, Option<u32>, Option<u32>, Option<Vec<u8>>)>;
-pub type GenesisPurchasedClassesConfig = Vec<(NonFungibleClassId, FungibleAssetId, FungibleAssetBalance, GenesisCommonAttributesList)>;
+pub type GenesisPurchasedClassesConfig = Vec<(
+  NonFungibleClassId,
+  FungibleAssetId,
+  FungibleAssetBalance,
+  GenesisCommonAttributesList,
+)>;
 // endregion: Genesis Types

@@ -1,8 +1,14 @@
 // use super::*;
 
-use frame_support::{assert_ok};
+use frame_support::assert_ok;
 
-use crate::{AttributeValue, NumberAttribute, bettor::*, purchased::*, characteristics::*, misc::{cumsum_array_owned, cumsum_owned}, BETTOR_MAX_NUMBER_OF_ROUNDS, };
+use crate::{
+  bettor::*,
+  characteristics::*,
+  misc::{cumsum_array_owned, cumsum_owned},
+  purchased::*,
+  AttributeValue, NumberAttribute, BETTOR_MAX_NUMBER_OF_ROUNDS,
+};
 
 #[test]
 fn template_test() {
@@ -12,7 +18,11 @@ fn template_test() {
 #[test]
 fn attribute_value_from_u32() {
   let val: AttributeValue = 15u32.try_into().unwrap();
-  if let AttributeValue::Number(NumberAttribute { number_value: v, number_max: _ }) = val {
+  if let AttributeValue::Number(NumberAttribute {
+    number_value: v,
+    number_max: _,
+  }) = val
+  {
     assert_eq!(v, 15u32);
   } else {
     assert_eq!(false, true);
@@ -22,7 +32,11 @@ fn attribute_value_from_u32() {
 #[test]
 fn attribute_value_from_tuple_u32() {
   let val: AttributeValue = (15u32, 100u32).try_into().unwrap();
-  if let AttributeValue::Number(NumberAttribute { number_value: v, number_max: m }) = val {
+  if let AttributeValue::Number(NumberAttribute {
+    number_value: v,
+    number_max: m,
+  }) = val
+  {
     assert_eq!(v, 15u32);
     assert_eq!(m, Some(100u32))
   } else {
@@ -33,14 +47,22 @@ fn attribute_value_from_tuple_u32() {
 #[test]
 fn attribute_value_from_opt_tuple_u32() {
   let val: AttributeValue = (15u32, Some(100u32)).try_into().unwrap();
-  if let AttributeValue::Number(NumberAttribute { number_value: v, number_max: m }) = val {
+  if let AttributeValue::Number(NumberAttribute {
+    number_value: v,
+    number_max: m,
+  }) = val
+  {
     assert_eq!(v, 15u32);
     assert_eq!(m, Some(100u32))
   } else {
     assert_eq!(false, true);
   }
   let val: AttributeValue = (15u32, None).try_into().unwrap();
-  if let AttributeValue::Number(NumberAttribute { number_value: v, number_max: m }) = val {
+  if let AttributeValue::Number(NumberAttribute {
+    number_value: v,
+    number_max: m,
+  }) = val
+  {
     assert_eq!(v, 15u32);
     assert_eq!(m, None)
   } else {
@@ -53,7 +75,7 @@ fn attribute_value_from_opt_tuple_u32() {
 fn attribute_value_from_tuple_u32_error() {
   // hiding trace stack
   std::panic::set_hook(Box::new(|_| {}));
-  
+
   let _: AttributeValue = (150u32, 100u32).try_into().unwrap();
 }
 
@@ -92,7 +114,7 @@ fn attribute_value_from_vec() {
 fn attribute_value_from_vec_error() {
   // hiding trace stack
   std::panic::set_hook(Box::new(|_| {}));
-  
+
   let _: AttributeValue = br"looooong___string_________looooong___string_________looooong___string_________looooong___string_________looooong___string_________looooong___string_________looooong___string_________"
     .to_vec().try_into().unwrap();
 }
@@ -119,7 +141,7 @@ fn attribute_validate_no_max_val() {
 fn attribute_validate_no_max_val_err() {
   // hiding trace stack
   std::panic::set_hook(Box::new(|_| {}));
-    
+
   let val: AttributeValue = AttributeValue::Number(NumberAttribute {
     number_value: 10,
     number_max: Some(1),
@@ -129,7 +151,7 @@ fn attribute_validate_no_max_val_err() {
 
 #[test]
 fn bettor_empty() {
-  let b:Bettor = Bettor {
+  let b: Bettor = Bettor {
     outcomes: vec![].try_into().expect("Outcomes vec too big"),
     winnings: vec![].try_into().expect("Winnings vec too big"),
     rounds: 1,
@@ -140,7 +162,7 @@ fn bettor_empty() {
 
 #[test]
 fn bettor_probs_eq_0() {
-  let b:Bettor = Bettor {
+  let b: Bettor = Bettor {
     outcomes: vec![
       BettorOutcome {
         name: br"out0".to_vec().try_into().expect("too long"),
@@ -157,16 +179,18 @@ fn bettor_probs_eq_0() {
         probability: 95,
         result: OutcomeResult::Draw,
       },
-    ].try_into().expect("Outcomes vec too big"),
-    winnings: vec![
-      BettorWinning::Fa(1.into(), 33.into()),
-    ].try_into().expect("Winnings vec too big"),
+    ]
+    .try_into()
+    .expect("Outcomes vec too big"),
+    winnings: vec![BettorWinning::Fa(1.into(), 33.into())]
+      .try_into()
+      .expect("Winnings vec too big"),
     rounds: 1,
     draw_outcome: DrawOutcomeResult::Keep,
   };
   assert_eq!(AssetCharacteristic::is_valid(&b), false);
 
-  let b:Bettor = Bettor {
+  let b: Bettor = Bettor {
     outcomes: vec![
       BettorOutcome {
         name: br"out0".to_vec().try_into().expect("too long"),
@@ -178,10 +202,12 @@ fn bettor_probs_eq_0() {
         probability: 95,
         result: OutcomeResult::Lose,
       },
-    ].try_into().expect("Outcomes vec too big"),
-    winnings: vec![
-      BettorWinning::Fa(1.into(), 33.into()),
-    ].try_into().expect("Winnings vec too big"),
+    ]
+    .try_into()
+    .expect("Outcomes vec too big"),
+    winnings: vec![BettorWinning::Fa(1.into(), 33.into())]
+      .try_into()
+      .expect("Winnings vec too big"),
     rounds: 1,
     draw_outcome: DrawOutcomeResult::Keep,
   };
@@ -190,23 +216,23 @@ fn bettor_probs_eq_0() {
 
 #[test]
 fn bettor_outcomes_less_2() {
-  let b:Bettor = Bettor {
-    outcomes: vec![
-      BettorOutcome {
-        name: br"out1".to_vec().try_into().expect("too long"),
-        probability: 100,
-        result: OutcomeResult::Win,
-      },
-    ].try_into().expect("Outcomes vec too big"),
-    winnings: vec![
-      BettorWinning::Fa(1.into(), 33.into()),
-    ].try_into().expect("Winnings vec too big"),
+  let b: Bettor = Bettor {
+    outcomes: vec![BettorOutcome {
+      name: br"out1".to_vec().try_into().expect("too long"),
+      probability: 100,
+      result: OutcomeResult::Win,
+    }]
+    .try_into()
+    .expect("Outcomes vec too big"),
+    winnings: vec![BettorWinning::Fa(1.into(), 33.into())]
+      .try_into()
+      .expect("Winnings vec too big"),
     rounds: 1,
     draw_outcome: DrawOutcomeResult::Keep,
   };
   assert_eq!(AssetCharacteristic::is_valid(&b), false);
 
-  let b:Bettor = Bettor {
+  let b: Bettor = Bettor {
     outcomes: vec![
       BettorOutcome {
         name: br"out0".to_vec().try_into().expect("too long"),
@@ -218,16 +244,18 @@ fn bettor_outcomes_less_2() {
         probability: 95,
         result: OutcomeResult::Win,
       },
-    ].try_into().expect("Outcomes vec too big"),
-    winnings: vec![
-      BettorWinning::Fa(1.into(), 33.into()),
-    ].try_into().expect("Winnings vec too big"),
+    ]
+    .try_into()
+    .expect("Outcomes vec too big"),
+    winnings: vec![BettorWinning::Fa(1.into(), 33.into())]
+      .try_into()
+      .expect("Winnings vec too big"),
     rounds: 1,
     draw_outcome: DrawOutcomeResult::Keep,
   };
   assert_eq!(AssetCharacteristic::is_valid(&b), false);
 
-  let b:Bettor = Bettor {
+  let b: Bettor = Bettor {
     outcomes: vec![
       BettorOutcome {
         name: br"out0".to_vec().try_into().expect("too long"),
@@ -239,15 +267,17 @@ fn bettor_outcomes_less_2() {
         probability: 95,
         result: OutcomeResult::Lose,
       },
-    ].try_into().expect("Outcomes vec too big"),
-    winnings: vec![
-      BettorWinning::Fa(1.into(), 33.into()),
-    ].try_into().expect("Winnings vec too big"),
+    ]
+    .try_into()
+    .expect("Outcomes vec too big"),
+    winnings: vec![BettorWinning::Fa(1.into(), 33.into())]
+      .try_into()
+      .expect("Winnings vec too big"),
     rounds: 1,
     draw_outcome: DrawOutcomeResult::Keep,
   };
   assert_eq!(AssetCharacteristic::is_valid(&b), false);
-  let b:Bettor = Bettor {
+  let b: Bettor = Bettor {
     outcomes: vec![
       BettorOutcome {
         name: br"out0".to_vec().try_into().expect("too long"),
@@ -259,10 +289,12 @@ fn bettor_outcomes_less_2() {
         probability: 95,
         result: OutcomeResult::Lose,
       },
-    ].try_into().expect("Outcomes vec too big"),
-    winnings: vec![
-      BettorWinning::Fa(1.into(), 33.into()),
-    ].try_into().expect("Winnings vec too big"),
+    ]
+    .try_into()
+    .expect("Outcomes vec too big"),
+    winnings: vec![BettorWinning::Fa(1.into(), 33.into())]
+      .try_into()
+      .expect("Winnings vec too big"),
     rounds: 1,
     draw_outcome: DrawOutcomeResult::Keep,
   };
@@ -271,7 +303,7 @@ fn bettor_outcomes_less_2() {
 
 #[test]
 fn bettor_rounds_less_1() {
-  let b:Bettor = Bettor {
+  let b: Bettor = Bettor {
     outcomes: vec![
       BettorOutcome {
         name: br"out0".to_vec().try_into().expect("too long"),
@@ -283,16 +315,18 @@ fn bettor_rounds_less_1() {
         probability: 95,
         result: OutcomeResult::Lose,
       },
-    ].try_into().expect("Outcomes vec too big"),
-    winnings: vec![
-      BettorWinning::Fa(1.into(), 33.into()),
-    ].try_into().expect("Winnings vec too big"),
+    ]
+    .try_into()
+    .expect("Outcomes vec too big"),
+    winnings: vec![BettorWinning::Fa(1.into(), 33.into())]
+      .try_into()
+      .expect("Winnings vec too big"),
     rounds: 0,
     draw_outcome: DrawOutcomeResult::Keep,
   };
   assert_eq!(AssetCharacteristic::is_valid(&b), false);
 
-  let b:Bettor = Bettor {
+  let b: Bettor = Bettor {
     outcomes: vec![
       BettorOutcome {
         name: br"out0".to_vec().try_into().expect("too long"),
@@ -304,10 +338,12 @@ fn bettor_rounds_less_1() {
         probability: 95,
         result: OutcomeResult::Lose,
       },
-    ].try_into().expect("Outcomes vec too big"),
-    winnings: vec![
-      BettorWinning::Fa(1.into(), 33.into()),
-    ].try_into().expect("Winnings vec too big"),
+    ]
+    .try_into()
+    .expect("Outcomes vec too big"),
+    winnings: vec![BettorWinning::Fa(1.into(), 33.into())]
+      .try_into()
+      .expect("Winnings vec too big"),
     rounds: 1,
     draw_outcome: DrawOutcomeResult::Keep,
   };
@@ -316,7 +352,7 @@ fn bettor_rounds_less_1() {
 
 #[test]
 fn bettor_rounds_more_than_limit() {
-  let b:Bettor = Bettor {
+  let b: Bettor = Bettor {
     outcomes: vec![
       BettorOutcome {
         name: br"out0".to_vec().try_into().expect("too long"),
@@ -328,16 +364,18 @@ fn bettor_rounds_more_than_limit() {
         probability: 95,
         result: OutcomeResult::Lose,
       },
-    ].try_into().expect("Outcomes vec too big"),
-    winnings: vec![
-      BettorWinning::Fa(1.into(), 33.into()),
-    ].try_into().expect("Winnings vec too big"),
+    ]
+    .try_into()
+    .expect("Outcomes vec too big"),
+    winnings: vec![BettorWinning::Fa(1.into(), 33.into())]
+      .try_into()
+      .expect("Winnings vec too big"),
     rounds: BETTOR_MAX_NUMBER_OF_ROUNDS + 1,
     draw_outcome: DrawOutcomeResult::Keep,
   };
   assert_eq!(AssetCharacteristic::is_valid(&b), false);
 
-  let b:Bettor = Bettor {
+  let b: Bettor = Bettor {
     outcomes: vec![
       BettorOutcome {
         name: br"out0".to_vec().try_into().expect("too long"),
@@ -349,10 +387,12 @@ fn bettor_rounds_more_than_limit() {
         probability: 95,
         result: OutcomeResult::Lose,
       },
-    ].try_into().expect("Outcomes vec too big"),
-    winnings: vec![
-      BettorWinning::Fa(1.into(), 33.into()),
-    ].try_into().expect("Winnings vec too big"),
+    ]
+    .try_into()
+    .expect("Outcomes vec too big"),
+    winnings: vec![BettorWinning::Fa(1.into(), 33.into())]
+      .try_into()
+      .expect("Winnings vec too big"),
     rounds: BETTOR_MAX_NUMBER_OF_ROUNDS,
     draw_outcome: DrawOutcomeResult::Keep,
   };
@@ -361,7 +401,7 @@ fn bettor_rounds_more_than_limit() {
 
 #[test]
 fn bettor_wins_empty() {
-  let b:Bettor = Bettor {
+  let b: Bettor = Bettor {
     outcomes: vec![
       BettorOutcome {
         name: br"out0".to_vec().try_into().expect("too long"),
@@ -373,15 +413,16 @@ fn bettor_wins_empty() {
         probability: 95,
         result: OutcomeResult::Lose,
       },
-    ].try_into().expect("Outcomes vec too big"),
-    winnings: vec![
-    ].try_into().expect("Winnings vec too big"),
+    ]
+    .try_into()
+    .expect("Outcomes vec too big"),
+    winnings: vec![].try_into().expect("Winnings vec too big"),
     rounds: 1,
     draw_outcome: DrawOutcomeResult::Keep,
   };
   assert_eq!(AssetCharacteristic::is_valid(&b), false);
 
-  let b:Bettor = Bettor {
+  let b: Bettor = Bettor {
     outcomes: vec![
       BettorOutcome {
         name: br"out0".to_vec().try_into().expect("too long"),
@@ -393,10 +434,12 @@ fn bettor_wins_empty() {
         probability: 95,
         result: OutcomeResult::Lose,
       },
-    ].try_into().expect("Outcomes vec too big"),
-    winnings: vec![
-      BettorWinning::Fa(1.into(), 33.into()),
-    ].try_into().expect("Winnings vec too big"),
+    ]
+    .try_into()
+    .expect("Outcomes vec too big"),
+    winnings: vec![BettorWinning::Fa(1.into(), 33.into())]
+      .try_into()
+      .expect("Winnings vec too big"),
     rounds: 1,
     draw_outcome: DrawOutcomeResult::Keep,
   };
@@ -405,7 +448,7 @@ fn bettor_wins_empty() {
 
 #[test]
 fn purchased_empty() {
-  let b:Purchased = Purchased {
+  let b: Purchased = Purchased {
     offers: vec![].try_into().unwrap(),
   };
   assert_eq!(AssetCharacteristic::is_valid(&b), false);
@@ -413,7 +456,7 @@ fn purchased_empty() {
 
 #[test]
 fn purchased_has_0_price() {
-  let b:Purchased = Purchased {
+  let b: Purchased = Purchased {
     offers: vec![
       Offer {
         fa: 1.into(),
@@ -430,14 +473,16 @@ fn purchased_has_0_price() {
         price: 0.into(),
         attributes: vec![].try_into().unwrap(),
       },
-    ].try_into().unwrap(),
+    ]
+    .try_into()
+    .unwrap(),
   };
   assert_eq!(AssetCharacteristic::is_valid(&b), false)
 }
 
 #[test]
 fn purchased_has_0_price_2() {
-  let b:Purchased = Purchased {
+  let b: Purchased = Purchased {
     offers: vec![
       Offer {
         fa: 1.into(),
@@ -454,7 +499,9 @@ fn purchased_has_0_price_2() {
         price: 1000.into(),
         attributes: vec![].try_into().unwrap(),
       },
-    ].try_into().unwrap(),
+    ]
+    .try_into()
+    .unwrap(),
   };
   assert_eq!(AssetCharacteristic::is_valid(&b), true)
 }

@@ -1,6 +1,4 @@
-use crate::{
-  errors::CommonError,
-};
+use crate::errors::CommonError;
 
 use self::{bettor::Bettor, purchased::Purchased};
 
@@ -14,7 +12,7 @@ pub trait AssetCharacteristic {
   /// Check the characteristic and return WrongCharacteristic error
   fn ensure(&self) -> Result<(), CommonError> {
     if !self.is_valid() {
-      return Err(CommonError::WrongCharacteristic)
+      return Err(CommonError::WrongCharacteristic);
     }
     Ok(())
   }
