@@ -101,7 +101,7 @@ fn create_class_created() {
     assert_eq!(nfa.instances, 0);
     assert_eq!(nfa.attributes, 0);
     assert_eq!(nfa.owner, org);
-    assert_eq!(ClassAccounts::<Test>::contains_key(org, nfa_id), true);
+    assert!(ClassAccounts::<Test>::contains_key(org, nfa_id));
     assert_eq!(
       System::events(),
       vec![EventRecord {
@@ -134,17 +134,13 @@ fn do_destroy_class_not_owner() {
     let name = br"nfa name".to_vec();
     let nfa_id = get_next_class_id();
     let org = 2;
-    assert_ok!(NonFungibleAssets::create(
-      Origin::signed(1),
-      org,
-      name
-    ));
+    assert_ok!(NonFungibleAssets::create(Origin::signed(1), org, name));
     assert_noop!(
       NonFungibleAssets::do_destroy_class(nfa_id, Some(3)),
       Error::<Test>::NoPermission
     );
-    assert_eq!(Classes::<Test>::contains_key(nfa_id), true);
-    assert_eq!(ClassAccounts::<Test>::contains_key(org, nfa_id), true);
+    assert!(Classes::<Test>::contains_key(nfa_id));
+    assert!(ClassAccounts::<Test>::contains_key(org, nfa_id));
   });
 }
 
@@ -155,15 +151,11 @@ fn do_destroy_class_worked() {
     let name = br"nfa name".to_vec();
     let nfa_id = get_next_class_id();
     let org = 2;
-    assert_ok!(NonFungibleAssets::create(
-      Origin::signed(1),
-      org,
-      name
-    ));
+    assert_ok!(NonFungibleAssets::create(Origin::signed(1), org, name));
     System::reset_events();
     assert_ok!(NonFungibleAssets::do_destroy_class(nfa_id, Some(org)));
-    assert_eq!(Classes::<Test>::contains_key(nfa_id), false);
-    assert_eq!(ClassAccounts::<Test>::contains_key(org, nfa_id), false);
+    assert!(!Classes::<Test>::contains_key(nfa_id));
+    assert!(!ClassAccounts::<Test>::contains_key(org, nfa_id));
     assert_eq!(
       System::events(),
       vec![EventRecord {
@@ -182,11 +174,7 @@ fn do_destroy_class_removes_attributes() {
     let name = br"nfa name".to_vec();
     let class_id = get_next_class_id();
     let org = 2;
-    assert_ok!(NonFungibleAssets::create(
-      Origin::signed(1),
-      org,
-      name
-    ));
+    assert_ok!(NonFungibleAssets::create(Origin::signed(1), org, name));
     // create attribute
     let a: Attribute = Attribute {
       key: br"a_name".to_vec().try_into().unwrap(),
@@ -198,16 +186,13 @@ fn do_destroy_class_removes_attributes() {
       a
     ));
     let key: AttributeKey = br"a_name".to_vec().try_into().unwrap();
-    assert_eq!(ClassAttributes::<Test>::contains_key(&class_id, &key), true);
+    assert!(ClassAttributes::<Test>::contains_key(&class_id, &key));
     assert_eq!(Classes::<Test>::get(&class_id).unwrap().attributes, 1);
 
     assert_ok!(NonFungibleAssets::do_destroy_class(class_id, Some(org)));
-    assert_eq!(Classes::<Test>::contains_key(&class_id), false);
-    assert_eq!(ClassAccounts::<Test>::contains_key(&org, &class_id), false);
-    assert_eq!(
-      ClassAttributes::<Test>::contains_key(&class_id, &key),
-      false
-    );
+    assert!(!Classes::<Test>::contains_key(&class_id));
+    assert!(!ClassAccounts::<Test>::contains_key(&org, &class_id));
+    assert!(!ClassAttributes::<Test>::contains_key(&class_id, &key));
   });
 }
 
@@ -218,11 +203,7 @@ fn destroy_class_not_org() {
     let name = br"nfa name".to_vec();
     let nfa_id = get_next_class_id();
     let org = 2;
-    assert_ok!(NonFungibleAssets::create(
-      Origin::signed(1),
-      org,
-      name
-    ));
+    assert_ok!(NonFungibleAssets::create(Origin::signed(1), org, name));
     System::reset_events();
     assert_noop!(
       NonFungibleAssets::destroy(Origin::none(), org, nfa_id),
@@ -250,15 +231,11 @@ fn do_mint_worked() {
     let id = get_next_asset_id();
     let org = 2;
     let acc = 1;
-    assert_ok!(NonFungibleAssets::create(
-      Origin::signed(1),
-      org,
-      name
-    ));
+    assert_ok!(NonFungibleAssets::create(Origin::signed(1), org, name));
     System::reset_events();
     assert_eq!(NonFungibleAssets::do_mint(nfa_id, acc).unwrap(), id);
-    assert_eq!(Assets::<Test>::contains_key(&nfa_id, &id), true);
-    assert_eq!(Accounts::<Test>::contains_key((&acc, &nfa_id, &id)), true);
+    assert!(Assets::<Test>::contains_key(&nfa_id, &id));
+    assert!(Accounts::<Test>::contains_key((&acc, &nfa_id, &id)));
     assert_eq!(Classes::<Test>::get(nfa_id).unwrap().instances, 1);
 
     let minted = Assets::<Test>::get(&nfa_id, &id).unwrap();
@@ -289,15 +266,11 @@ fn do_burn_no_attributes() {
     let id = get_next_asset_id();
     let org = 2;
     let acc = 1;
-    assert_ok!(NonFungibleAssets::create(
-      Origin::signed(1),
-      org,
-      name
-    ));
+    assert_ok!(NonFungibleAssets::create(Origin::signed(1), org, name));
 
     assert_eq!(NonFungibleAssets::do_mint(nfa_id, acc).unwrap(), id);
-    assert_eq!(Assets::<Test>::contains_key(&nfa_id, &id), true);
-    assert_eq!(Accounts::<Test>::contains_key((&acc, &nfa_id, &id)), true);
+    assert!(Assets::<Test>::contains_key(&nfa_id, &id));
+    assert!(Accounts::<Test>::contains_key((&acc, &nfa_id, &id)));
     assert_eq!(Classes::<Test>::get(nfa_id).unwrap().instances, 1);
 
     let minted = Assets::<Test>::get(&nfa_id, &id).unwrap();
@@ -305,7 +278,7 @@ fn do_burn_no_attributes() {
 
     System::reset_events();
     assert_ok!(NonFungibleAssets::do_burn(nfa_id, id, Some(&acc)));
-    assert_eq!(Accounts::<Test>::contains_key((&acc, &nfa_id, &id)), false);
+    assert!(!Accounts::<Test>::contains_key((&acc, &nfa_id, &id)));
     assert_eq!(Classes::<Test>::get(nfa_id).unwrap().instances, 0);
 
     assert_eq!(
@@ -333,15 +306,11 @@ fn do_burn_with_attributes() {
     let id = get_next_asset_id();
     let org = 2;
     let acc = 1;
-    assert_ok!(NonFungibleAssets::create(
-      Origin::signed(1),
-      org,
-      name
-    ));
+    assert_ok!(NonFungibleAssets::create(Origin::signed(1), org, name));
 
     assert_eq!(NonFungibleAssets::do_mint(nfa_id, acc).unwrap(), id);
-    assert_eq!(Assets::<Test>::contains_key(&nfa_id, &id), true);
-    assert_eq!(Accounts::<Test>::contains_key((&acc, &nfa_id, &id)), true);
+    assert!(Assets::<Test>::contains_key(&nfa_id, &id));
+    assert!(Accounts::<Test>::contains_key((&acc, &nfa_id, &id)));
     assert_eq!(Classes::<Test>::get(nfa_id).unwrap().instances, 1);
 
     let a = Attribute {
@@ -353,15 +322,15 @@ fn do_burn_with_attributes() {
     };
     let attributes: AttributeList = vec![a.clone()].try_into().unwrap();
     assert_ok!(NonFungibleAssets::assign_attributes(&id, attributes));
-    assert_eq!(Attributes::<Test>::contains_key(&id, &a.key), true);
+    assert!(Attributes::<Test>::contains_key(&id, &a.key));
 
     let minted = Assets::<Test>::get(&nfa_id, &id).unwrap();
     assert_eq!(minted.owner, acc);
 
     System::reset_events();
     assert_ok!(NonFungibleAssets::do_burn(nfa_id, id, Some(&acc)));
-    assert_eq!(Accounts::<Test>::contains_key((&acc, &nfa_id, &id)), false);
-    assert_eq!(Attributes::<Test>::contains_key(&id, a.key), false);
+    assert!(!Accounts::<Test>::contains_key((&acc, &nfa_id, &id)));
+    assert!(!Attributes::<Test>::contains_key(&id, a.key));
     assert_eq!(Classes::<Test>::get(nfa_id).unwrap().instances, 0);
 
     assert_eq!(
@@ -389,15 +358,11 @@ fn do_burn_not_owner() {
     let id = get_next_asset_id();
     let org = 2;
     let acc = 1;
-    assert_ok!(NonFungibleAssets::create(
-      Origin::signed(1),
-      org,
-      name
-    ));
+    assert_ok!(NonFungibleAssets::create(Origin::signed(1), org, name));
 
     assert_eq!(NonFungibleAssets::do_mint(nfa_id, acc).unwrap(), id);
-    assert_eq!(Assets::<Test>::contains_key(&nfa_id, &id), true);
-    assert_eq!(Accounts::<Test>::contains_key((&acc, &nfa_id, &id)), true);
+    assert!(Assets::<Test>::contains_key(&nfa_id, &id));
+    assert!(Accounts::<Test>::contains_key((&acc, &nfa_id, &id)));
 
     let minted = Assets::<Test>::get(&nfa_id, &id).unwrap();
     assert_eq!(minted.owner, acc);
@@ -407,7 +372,7 @@ fn do_burn_not_owner() {
       NonFungibleAssets::do_burn(nfa_id, id, Some(&33)),
       Error::<Test>::NoPermission
     );
-    assert_eq!(Accounts::<Test>::contains_key((&acc, &nfa_id, &id)), true);
+    assert!(Accounts::<Test>::contains_key((&acc, &nfa_id, &id)));
     assert_eq!(Classes::<Test>::get(nfa_id).unwrap().instances, 1);
   });
 }
@@ -465,11 +430,7 @@ fn do_create_attribute_owner_no_permissions() {
     let name = br"nfa name".to_vec();
     let nfa_id = get_next_class_id();
     let org = 2;
-    assert_ok!(NonFungibleAssets::create(
-      Origin::signed(1),
-      org,
-      name
-    ));
+    assert_ok!(NonFungibleAssets::create(Origin::signed(1), org, name));
 
     assert_noop!(
       NonFungibleAssets::do_create_attribute(nfa_id, Some(1111), a),
@@ -489,11 +450,7 @@ fn do_create_attribute_already_exists() {
     let name = br"nfa name".to_vec();
     let nfa_id = get_next_class_id();
     let org = 2;
-    assert_ok!(NonFungibleAssets::create(
-      Origin::signed(1),
-      org,
-      name
-    ));
+    assert_ok!(NonFungibleAssets::create(Origin::signed(1), org, name));
     // create fake attr w/ same name
     let eat = AttributeValue::Number(NumberAttribute {
       number_value: 10,
@@ -520,21 +477,14 @@ fn do_create_attribute_already_exists1() {
     let name = br"nfa name".to_vec();
     let nfa_id = get_next_class_id();
     let org = 2;
-    assert_ok!(NonFungibleAssets::create(
-      Origin::signed(1),
-      org,
-      name
-    ));
+    assert_ok!(NonFungibleAssets::create(Origin::signed(1), org, name));
     assert_eq!(Classes::<Test>::get(nfa_id).unwrap().attributes, 0);
 
     System::reset_events();
     assert_ok!(NonFungibleAssets::do_create_attribute(nfa_id, Some(org), a));
 
     let attr_name: AttributeKey = br"a_name".to_vec().try_into().unwrap();
-    assert_eq!(
-      ClassAttributes::<Test>::contains_key(nfa_id, &attr_name),
-      true
-    );
+    assert!(ClassAttributes::<Test>::contains_key(nfa_id, &attr_name));
     assert_eq!(Classes::<Test>::get(nfa_id).unwrap().attributes, 1);
     assert_eq!(
       System::events(),
@@ -576,11 +526,7 @@ fn do_remove_attribute_owner_no_permissions() {
     let name = br"nfa name".to_vec();
     let nfa_id = get_next_class_id();
     let org = 2;
-    assert_ok!(NonFungibleAssets::create(
-      Origin::signed(1),
-      org,
-      name
-    ));
+    assert_ok!(NonFungibleAssets::create(Origin::signed(1), org, name));
 
     assert_noop!(
       NonFungibleAssets::do_remove_attribute(
@@ -600,11 +546,7 @@ fn do_remove_attribute_work() {
     let name = br"nfa name".to_vec();
     let class_id = get_next_class_id();
     let org = 2;
-    assert_ok!(NonFungibleAssets::create(
-      Origin::signed(1),
-      org,
-      name
-    ));
+    assert_ok!(NonFungibleAssets::create(Origin::signed(1), org, name));
     // create attribute
     let a: Attribute = Attribute {
       key: br"a_name".to_vec().try_into().unwrap(),
@@ -627,16 +569,13 @@ fn do_remove_attribute_work() {
 
     System::reset_events();
 
-    assert_eq!(ClassAttributes::<Test>::contains_key(&class_id, &key), true);
+    assert!(ClassAttributes::<Test>::contains_key(&class_id, &key));
     assert_ok!(NonFungibleAssets::do_remove_attribute(
       class_id,
       Some(org),
       br"a_name".to_vec().try_into().unwrap()
     ));
-    assert_eq!(
-      ClassAttributes::<Test>::contains_key(&class_id, &key),
-      false
-    );
+    assert!(!ClassAttributes::<Test>::contains_key(&class_id, &key));
     assert_eq!(Classes::<Test>::get(class_id).unwrap().attributes, 0);
 
     assert_eq!(
@@ -657,11 +596,7 @@ fn create_attribute_unsigned() {
     let name = br"nfa name".to_vec();
     let class_id = get_next_class_id();
     let org = 2;
-    assert_ok!(NonFungibleAssets::create(
-      Origin::signed(1),
-      org,
-      name
-    ));
+    assert_ok!(NonFungibleAssets::create(Origin::signed(1), org, name));
 
     let a: Attribute = Attribute {
       key: br"a_name".to_vec().try_into().unwrap(),
@@ -682,11 +617,7 @@ fn create_attribute_worked() {
     let name = br"nfa name".to_vec();
     let class_id = get_next_class_id();
     let org = 2;
-    assert_ok!(NonFungibleAssets::create(
-      Origin::signed(1),
-      org,
-      name
-    ));
+    assert_ok!(NonFungibleAssets::create(Origin::signed(1), org, name));
 
     let a: Attribute = Attribute {
       key: br"a_name".to_vec().try_into().unwrap(),
@@ -701,10 +632,7 @@ fn create_attribute_worked() {
     ));
 
     let attr_name: AttributeKey = br"a_name".to_vec().try_into().unwrap();
-    assert_eq!(
-      ClassAttributes::<Test>::contains_key(class_id, &attr_name),
-      true
-    );
+    assert!(ClassAttributes::<Test>::contains_key(class_id, &attr_name));
   });
 }
 
@@ -715,11 +643,7 @@ fn remove_attribute_unsigned() {
     let name = br"nfa name".to_vec();
     let class_id = get_next_class_id();
     let org = 2;
-    assert_ok!(NonFungibleAssets::create(
-      Origin::signed(1),
-      org,
-      name
-    ));
+    assert_ok!(NonFungibleAssets::create(Origin::signed(1), org, name));
 
     let attribute_name = br"a_name".to_vec().try_into().unwrap();
 
@@ -737,11 +661,7 @@ fn remove_attribute_worked() {
     let name = br"nfa name".to_vec();
     let class_id = get_next_class_id();
     let org = 2;
-    assert_ok!(NonFungibleAssets::create(
-      Origin::signed(1),
-      org,
-      name
-    ));
+    assert_ok!(NonFungibleAssets::create(Origin::signed(1), org, name));
 
     let a: Attribute = Attribute {
       key: br"a_name".to_vec().try_into().unwrap(),
@@ -756,10 +676,7 @@ fn remove_attribute_worked() {
     ));
 
     let attr_name: AttributeKey = br"a_name".to_vec().try_into().unwrap();
-    assert_eq!(
-      ClassAttributes::<Test>::contains_key(class_id, &attr_name),
-      true
-    );
+    assert!(ClassAttributes::<Test>::contains_key(class_id, &attr_name));
 
     assert_ok!(NonFungibleAssets::remove_attribute(
       Origin::signed(1),
@@ -767,10 +684,7 @@ fn remove_attribute_worked() {
       class_id,
       a.key
     ));
-    assert_eq!(
-      ClassAttributes::<Test>::contains_key(class_id, &attr_name),
-      false
-    );
+    assert!(!ClassAttributes::<Test>::contains_key(class_id, &attr_name));
   });
 }
 
@@ -810,11 +724,7 @@ fn set_lock_try_unlock() {
     let id = get_next_asset_id();
     let org = 2;
     let acc = 1;
-    assert_ok!(NonFungibleAssets::create(
-      Origin::signed(1),
-      org,
-      name
-    ));
+    assert_ok!(NonFungibleAssets::create(Origin::signed(1), org, name));
     // create test asset
     assert_eq!(NonFungibleAssets::do_mint(nfa_id, acc).unwrap(), id);
 
@@ -851,11 +761,7 @@ fn set_lock_not_owner() {
     let id = get_next_asset_id();
     let org = 2;
     let acc = 1;
-    assert_ok!(NonFungibleAssets::create(
-      Origin::signed(1),
-      org,
-      name
-    ));
+    assert_ok!(NonFungibleAssets::create(Origin::signed(1), org, name));
     // create test asset
     assert_eq!(NonFungibleAssets::do_mint(nfa_id, acc).unwrap(), id);
 
@@ -879,11 +785,7 @@ fn set_lock_for_no_locked() {
     let id = get_next_asset_id();
     let org = 2;
     let acc = 1;
-    assert_ok!(NonFungibleAssets::create(
-      Origin::signed(1),
-      org,
-      name
-    ));
+    assert_ok!(NonFungibleAssets::create(Origin::signed(1), org, name));
     // create test asset
     assert_eq!(NonFungibleAssets::do_mint(nfa_id, acc).unwrap(), id);
 
@@ -922,11 +824,7 @@ fn set_lock_for_locked() {
     let id = get_next_asset_id();
     let org = 2;
     let acc = 1;
-    assert_ok!(NonFungibleAssets::create(
-      Origin::signed(1),
-      org,
-      name
-    ));
+    assert_ok!(NonFungibleAssets::create(Origin::signed(1), org, name));
     // create test asset
     assert_eq!(NonFungibleAssets::do_mint(nfa_id, acc).unwrap(), id);
 
@@ -965,11 +863,7 @@ fn unset_lock_for_locked() {
     let id = get_next_asset_id();
     let org = 2;
     let acc = 1;
-    assert_ok!(NonFungibleAssets::create(
-      Origin::signed(1),
-      org,
-      name
-    ));
+    assert_ok!(NonFungibleAssets::create(Origin::signed(1), org, name));
     // create test asset
     assert_eq!(NonFungibleAssets::do_mint(nfa_id, acc).unwrap(), id);
 
@@ -1001,11 +895,7 @@ fn unset_lock_for_locked_other_owner() {
     let id = get_next_asset_id();
     let org = 2;
     let acc = 1;
-    assert_ok!(NonFungibleAssets::create(
-      Origin::signed(1),
-      org,
-      name
-    ));
+    assert_ok!(NonFungibleAssets::create(Origin::signed(1), org, name));
     // create test asset
     assert_eq!(NonFungibleAssets::do_mint(nfa_id, acc).unwrap(), id);
 
@@ -1037,11 +927,7 @@ fn unset_lock_for_locked_other_origin() {
     let id = get_next_asset_id();
     let org = 2;
     let acc = 1;
-    assert_ok!(NonFungibleAssets::create(
-      Origin::signed(1),
-      org,
-      name
-    ));
+    assert_ok!(NonFungibleAssets::create(Origin::signed(1), org, name));
     // create test asset
     assert_eq!(NonFungibleAssets::do_mint(nfa_id, acc).unwrap(), id);
 

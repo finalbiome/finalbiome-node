@@ -72,11 +72,8 @@ fn drop_mechanic_with_timeout() {
     Timeouts::<Test>::insert(timeout_key, ());
 
     assert_ok!(MechanicsModule::drop_mechanic(&id, AssetAction::Release));
-    assert_eq!(
-      Mechanics::<Test>::contains_key(&id.account_id, &id.nonce),
-      false
-    );
-    assert_eq!(Timeouts::<Test>::contains_key(timeout_key), false);
+    assert!(!Mechanics::<Test>::contains_key(&id.account_id, &id.nonce));
+    assert!(!Timeouts::<Test>::contains_key(timeout_key));
   });
 }
 
@@ -262,41 +259,43 @@ fn add_bet_result_first_time() {
     >::from_account_id::<Test>(&acc);
     let outcomes = [1];
     System::set_block_number(10);
-    assert_eq!(
-      Mechanics::<Test>::contains_key(&mechanic_id.account_id, &mechanic_id.nonce),
-      false
-    );
+    assert!(!Mechanics::<Test>::contains_key(
+      &mechanic_id.account_id,
+      &mechanic_id.nonce
+    ));
     assert_ok!(MechanicsModule::add_bet_result(&mechanic_id, &outcomes));
-    assert_eq!(
-      Mechanics::<Test>::contains_key(&mechanic_id.account_id, &mechanic_id.nonce),
-      true
-    );
+    assert!(Mechanics::<Test>::contains_key(
+      &mechanic_id.account_id,
+      &mechanic_id.nonce
+    ));
     let md = Mechanics::<Test>::get(&mechanic_id.account_id, &mechanic_id.nonce).unwrap();
     match md.data {
       MechanicData::Bet(bet_data) => assert_eq!(bet_data.outcomes.into_inner(), outcomes.to_vec()),
-      _ => assert!(false),
+      _ => unreachable!(),
     }
-    assert_eq!(
-      Timeouts::<Test>::contains_key((&30, &mechanic_id.account_id, &mechanic_id.nonce)),
-      true
-    );
+    assert!(Timeouts::<Test>::contains_key((
+      &30,
+      &mechanic_id.account_id,
+      &mechanic_id.nonce
+    )));
 
     // second time
     let outcomes = [1, 3];
     assert_ok!(MechanicsModule::add_bet_result(&mechanic_id, &outcomes));
-    assert_eq!(
-      Mechanics::<Test>::contains_key(&mechanic_id.account_id, &mechanic_id.nonce),
-      true
-    );
+    assert!(Mechanics::<Test>::contains_key(
+      &mechanic_id.account_id,
+      &mechanic_id.nonce
+    ));
     let md = Mechanics::<Test>::get(&mechanic_id.account_id, &mechanic_id.nonce).unwrap();
     match md.data {
       MechanicData::Bet(bet_data) => assert_eq!(bet_data.outcomes.into_inner(), outcomes.to_vec()),
-      _ => assert!(false),
+      _ => unreachable!(),
     }
-    assert_eq!(
-      Timeouts::<Test>::contains_key((&30, &mechanic_id.account_id, &mechanic_id.nonce)),
-      true
-    );
+    assert!(Timeouts::<Test>::contains_key((
+      &30,
+      &mechanic_id.account_id,
+      &mechanic_id.nonce
+    )));
   });
 }
 
@@ -1162,17 +1161,11 @@ fn try_lock_works() {
     let asset_id: LockedAccet = LockedAccet::Nfa(1.into(), 2.into());
     let mut locks = [asset_id].to_vec();
 
-    assert_eq!(
-      Mechanics::<Test>::contains_key(&id.account_id, &id.nonce),
-      false
-    );
+    assert!(!Mechanics::<Test>::contains_key(&id.account_id, &id.nonce));
     let details = MechanicDetailsBuilder::build::<Test>(1, MechanicData::BuyNfa);
     Mechanics::<Test>::insert(&id.account_id, &id.nonce, details);
     assert_ok!(MechanicsModule::try_lock(&id, asset_id));
-    assert_eq!(
-      Mechanics::<Test>::contains_key(&id.account_id, &id.nonce),
-      true
-    );
+    assert!(Mechanics::<Test>::contains_key(&id.account_id, &id.nonce));
 
     let m = Mechanics::<Test>::get(&id.account_id, &id.nonce).unwrap();
     assert_eq!(m.locked.to_vec(), locks);
@@ -1210,10 +1203,7 @@ fn clear_lock_works() {
     Mechanics::<Test>::insert(&id.account_id, &id.nonce, details);
     assert_ok!(MechanicsModule::try_lock(&id, asset_id));
     assert_ok!(MechanicsModule::try_lock(&id, asset_id_2));
-    assert_eq!(
-      Mechanics::<Test>::contains_key(&id.account_id, &id.nonce),
-      true
-    );
+    assert!(Mechanics::<Test>::contains_key(&id.account_id, &id.nonce));
 
     let m = Mechanics::<Test>::get(&id.account_id, &id.nonce).unwrap();
     assert_eq!(m.locked.to_vec(), locks);
@@ -1249,17 +1239,11 @@ fn try_lock_nfa_works() {
     let class_id = 2.into();
     let asset_id = 3.into();
 
-    assert_eq!(
-      Mechanics::<Test>::contains_key(&id.account_id, &id.nonce),
-      false
-    );
+    assert!(!Mechanics::<Test>::contains_key(&id.account_id, &id.nonce));
     let details = MechanicDetailsBuilder::build::<Test>(1, MechanicData::BuyNfa);
     Mechanics::<Test>::insert(&id.account_id, &id.nonce, details);
     assert_ok!(MechanicsModule::try_lock_nfa(&id, &who, class_id, asset_id));
-    assert_eq!(
-      Mechanics::<Test>::contains_key(&id.account_id, &id.nonce),
-      true
-    );
+    assert!(Mechanics::<Test>::contains_key(&id.account_id, &id.nonce));
   });
 }
 
@@ -1275,17 +1259,11 @@ fn crear_lock_nfa_works() {
     let asset_id = 5.into();
     let locks = [LockedAccet::Nfa(4.into(), 5.into())].to_vec();
 
-    assert_eq!(
-      Mechanics::<Test>::contains_key(&id.account_id, &id.nonce),
-      false
-    );
+    assert!(!Mechanics::<Test>::contains_key(&id.account_id, &id.nonce));
     let details = MechanicDetailsBuilder::build::<Test>(1, MechanicData::BuyNfa);
     Mechanics::<Test>::insert(&id.account_id, &id.nonce, details);
     assert_ok!(MechanicsModule::try_lock_nfa(&id, &who, class_id, asset_id));
-    assert_eq!(
-      Mechanics::<Test>::contains_key(&id.account_id, &id.nonce),
-      true
-    );
+    assert!(Mechanics::<Test>::contains_key(&id.account_id, &id.nonce));
 
     let m = Mechanics::<Test>::get(&id.account_id, &id.nonce).unwrap();
     assert_eq!(m.locked.to_vec(), locks);
@@ -1340,10 +1318,10 @@ fn play_bet_round_single_round_win() {
       outcomes
     ));
 
-    assert_eq!(
-      Mechanics::<Test>::contains_key(&mechanic_id.account_id, &mechanic_id.nonce),
-      false
-    );
+    assert!(!Mechanics::<Test>::contains_key(
+      &mechanic_id.account_id,
+      &mechanic_id.nonce
+    ));
 
     assert_eq!(
       System::events(),
@@ -1406,10 +1384,10 @@ fn play_bet_round_single_round_lose() {
       outcomes
     ));
 
-    assert_eq!(
-      Mechanics::<Test>::contains_key(&mechanic_id.account_id, &mechanic_id.nonce),
-      false
-    );
+    assert!(!Mechanics::<Test>::contains_key(
+      &mechanic_id.account_id,
+      &mechanic_id.nonce
+    ));
 
     assert_eq!(
       System::events(),
@@ -1475,10 +1453,10 @@ fn play_bet_round_single_round_draw_keep() {
       outcomes
     ));
 
-    assert_eq!(
-      Mechanics::<Test>::contains_key(&mechanic_id.account_id, &mechanic_id.nonce),
-      false
-    );
+    assert!(!Mechanics::<Test>::contains_key(
+      &mechanic_id.account_id,
+      &mechanic_id.nonce
+    ));
 
     assert_eq!(
       System::events(),
@@ -1544,10 +1522,10 @@ fn play_bet_round_single_round_draw_lose() {
       outcomes
     ));
 
-    assert_eq!(
-      Mechanics::<Test>::contains_key(&mechanic_id.account_id, &mechanic_id.nonce),
-      false
-    );
+    assert!(!Mechanics::<Test>::contains_key(
+      &mechanic_id.account_id,
+      &mechanic_id.nonce
+    ));
 
     assert_eq!(
       System::events(),
@@ -1613,10 +1591,10 @@ fn play_bet_round_single_round_draw_win() {
       outcomes
     ));
 
-    assert_eq!(
-      Mechanics::<Test>::contains_key(&mechanic_id.account_id, &mechanic_id.nonce),
-      false
-    );
+    assert!(!Mechanics::<Test>::contains_key(
+      &mechanic_id.account_id,
+      &mechanic_id.nonce
+    ));
 
     assert_eq!(
       System::events(),
@@ -1678,21 +1656,22 @@ fn play_bet_round_three_rounds_win_at_second_round() {
       &bettor,
       outcomes
     ));
-    assert_eq!(
-      Mechanics::<Test>::contains_key(&mechanic_id.account_id, &mechanic_id.nonce),
-      true
-    );
+    assert!(Mechanics::<Test>::contains_key(
+      &mechanic_id.account_id,
+      &mechanic_id.nonce
+    ));
     let m = Mechanics::<Test>::get(&mechanic_id.account_id, &mechanic_id.nonce).unwrap();
     if let MechanicData::Bet(data) = m.data {
       assert_eq!(data.outcomes.to_vec(), [0].to_vec()); // first round was won
     } else {
-      assert!(false)
+      unreachable!()
     }
     // after first round mechanic must have timeout
-    assert_eq!(
-      Timeouts::<Test>::contains_key((m.timeout_id, &mechanic_id.account_id, &mechanic_id.nonce)),
-      true
-    );
+    assert!(Timeouts::<Test>::contains_key((
+      m.timeout_id,
+      &mechanic_id.account_id,
+      &mechanic_id.nonce
+    )));
 
     assert_eq!(
       System::events(),
@@ -1719,16 +1698,17 @@ fn play_bet_round_three_rounds_win_at_second_round() {
       &bettor,
       outcomes
     ));
-    assert_eq!(
-      Mechanics::<Test>::contains_key(&mechanic_id.account_id, &mechanic_id.nonce),
-      false
-    );
+    assert!(!Mechanics::<Test>::contains_key(
+      &mechanic_id.account_id,
+      &mechanic_id.nonce
+    ));
 
     // after second, t.e. final round, mechanic must clean a timeout
-    assert_eq!(
-      Timeouts::<Test>::contains_key((m.timeout_id, &mechanic_id.account_id, &mechanic_id.nonce)),
-      false
-    );
+    assert!(!Timeouts::<Test>::contains_key((
+      m.timeout_id,
+      &mechanic_id.account_id,
+      &mechanic_id.nonce
+    )));
 
     assert_eq!(
       System::events(),
@@ -1765,10 +1745,7 @@ fn do_bet_unexisted_bet_asset() {
       sp_runtime::DispatchError::Other("mock_error_asset_doesnt_exist")
     );
 
-    assert_eq!(
-      Mechanics::<Test>::contains_key(&id.account_id, &id.nonce),
-      false
-    );
+    assert!(!Mechanics::<Test>::contains_key(&id.account_id, &id.nonce));
   });
 }
 
@@ -1788,10 +1765,10 @@ fn do_bet_asset_not_bettor() {
       Error::<Test>::IncompatibleAsset
     );
 
-    assert_eq!(
-      Mechanics::<Test>::contains_key(&inner_id.account_id, &inner_id.nonce),
-      false
-    );
+    assert!(!Mechanics::<Test>::contains_key(
+      &inner_id.account_id,
+      &inner_id.nonce
+    ));
   });
 }
 
@@ -1812,14 +1789,15 @@ fn do_bet_asset_one_round_work() {
 
     // should mint Nfa(20), drop mechanic, deposit event
 
-    assert_eq!(
-      Mechanics::<Test>::contains_key(&inner_id.account_id, &inner_id.nonce),
-      false
-    );
-    assert_eq!(
-      Timeouts::<Test>::contains_key((22, &inner_id.account_id, &inner_id.nonce)),
-      false
-    );
+    assert!(!Mechanics::<Test>::contains_key(
+      &inner_id.account_id,
+      &inner_id.nonce
+    ));
+    assert!(!Timeouts::<Test>::contains_key((
+      22,
+      &inner_id.account_id,
+      &inner_id.nonce
+    )));
 
     assert_eq!(
       System::events(),
@@ -1869,25 +1847,26 @@ fn do_bet_next_round_two_rounds_work() {
       },]
     );
     // at first round should save mechanic
-    assert_eq!(
-      Mechanics::<Test>::contains_key(&inner_id.account_id, &inner_id.nonce),
-      true
-    );
+    assert!(Mechanics::<Test>::contains_key(
+      &inner_id.account_id,
+      &inner_id.nonce
+    ));
     // and set the timeout
-    assert_eq!(
-      Timeouts::<Test>::contains_key((timeout_id, &inner_id.account_id, &inner_id.nonce)),
-      true
-    );
+    assert!(Timeouts::<Test>::contains_key((
+      timeout_id,
+      &inner_id.account_id,
+      &inner_id.nonce
+    )));
 
     System::set_block_number(3); // rnd(3) % total_outcomes(2) = 1; 1 = lose
     System::reset_events();
     assert_ok!(MechanicsModule::do_bet_next_round(&who, inner_id.clone()));
     // final result = draw
     // should burn nfa, drop mechanic, deposit event
-    assert_eq!(
-      Mechanics::<Test>::contains_key(&inner_id.account_id, &inner_id.nonce),
-      false
-    );
+    assert!(!Mechanics::<Test>::contains_key(
+      &inner_id.account_id,
+      &inner_id.nonce
+    ));
 
     assert_eq!(
       System::events(),
@@ -1942,15 +1921,16 @@ fn do_do_upgrade_bet_two_rounds_work() {
     );
 
     // at first round should save mechanic
-    assert_eq!(
-      Mechanics::<Test>::contains_key(&inner_id.account_id, &inner_id.nonce),
-      true
-    );
+    assert!(Mechanics::<Test>::contains_key(
+      &inner_id.account_id,
+      &inner_id.nonce
+    ));
     // and set the timeout
-    assert_eq!(
-      Timeouts::<Test>::contains_key((timeout_id, &inner_id.account_id, &inner_id.nonce)),
-      true
-    );
+    assert!(Timeouts::<Test>::contains_key((
+      timeout_id,
+      &inner_id.account_id,
+      &inner_id.nonce
+    )));
 
     // NEXT round by upgrade mechanic
     System::set_block_number(3); // rnd(3) % total_outcomes(2) = 1; 1 = lose
@@ -1962,14 +1942,15 @@ fn do_do_upgrade_bet_two_rounds_work() {
     assert_ok!(MechanicsModule::upgrade(Origin::signed(who), upgrage_data));
     // final result = draw
     // should burn nfa, drop mechanic, deposit event
-    assert_eq!(
-      Mechanics::<Test>::contains_key(&inner_id.account_id, &inner_id.nonce),
-      false
-    );
-    assert_eq!(
-      Timeouts::<Test>::contains_key((timeout_id, &inner_id.account_id, &inner_id.nonce)),
-      false
-    );
+    assert!(!Mechanics::<Test>::contains_key(
+      &inner_id.account_id,
+      &inner_id.nonce
+    ));
+    assert!(!Timeouts::<Test>::contains_key((
+      timeout_id,
+      &inner_id.account_id,
+      &inner_id.nonce
+    )));
 
     assert_eq!(
       System::events(),
@@ -2078,28 +2059,19 @@ fn process_mechanic_timeouts_dropped() {
     Mechanics::<Test>::insert(&who, &nonce, details);
     // add timeout records
     Timeouts::<Test>::insert((&timeout_id, &who, &nonce), ());
-    assert_eq!(
-      Timeouts::<Test>::contains_key((&timeout_id, &who, &nonce)),
-      true
-    );
-    assert_eq!(Mechanics::<Test>::contains_key(&who, &nonce), true);
+    assert!(Timeouts::<Test>::contains_key((&timeout_id, &who, &nonce)));
+    assert!(Mechanics::<Test>::contains_key(&who, &nonce));
 
     System::set_block_number(2);
     assert_eq!(MechanicsModule::process_mechanic_timeouts(), (0, 0));
-    assert_eq!(
-      Timeouts::<Test>::contains_key((&timeout_id, &who, &nonce)),
-      true
-    );
-    assert_eq!(Mechanics::<Test>::contains_key(&who, &nonce), true);
+    assert!(Timeouts::<Test>::contains_key((&timeout_id, &who, &nonce)));
+    assert!(Mechanics::<Test>::contains_key(&who, &nonce));
 
     System::set_block_number(timeout_id);
     assert_eq!(MechanicsModule::process_mechanic_timeouts(), (0, 1));
 
-    assert_eq!(Mechanics::<Test>::contains_key(&who, &nonce), false);
-    assert_eq!(
-      Timeouts::<Test>::contains_key((&timeout_id, &who, &nonce)),
-      false
-    );
+    assert!(!Mechanics::<Test>::contains_key(&who, &nonce));
+    assert!(!Timeouts::<Test>::contains_key((&timeout_id, &who, &nonce)));
     System::set_block_number(timeout_id + 1);
     assert_eq!(MechanicsModule::process_mechanic_timeouts(), (0, 0));
   });
@@ -2130,44 +2102,23 @@ fn process_mechanic_timeouts_lifecycle() {
     Mechanics::<Test>::insert(&who, &44, details_3);
     // add timeout records 3
     Timeouts::<Test>::insert((&timeout_id, &who, &44), ());
-    assert_eq!(
-      Timeouts::<Test>::contains_key((&timeout_id, &who, &nonce)),
-      true
-    );
-    assert_eq!(Mechanics::<Test>::contains_key(&who, &nonce), true);
-    assert_eq!(
-      Timeouts::<Test>::contains_key((&timeout_id, &who, &nonce)),
-      true
-    );
-    assert_eq!(Mechanics::<Test>::contains_key(&who, &nonce), true);
-    assert_eq!(
-      Timeouts::<Test>::contains_key((&timeout_id_2, &33, &44)),
-      true
-    );
-    assert_eq!(Mechanics::<Test>::contains_key(&who, &nonce), true);
+    assert!(Timeouts::<Test>::contains_key((&timeout_id, &who, &nonce)));
+    assert!(Mechanics::<Test>::contains_key(&who, &nonce));
+    assert!(Timeouts::<Test>::contains_key((&timeout_id, &who, &nonce)));
+    assert!(Mechanics::<Test>::contains_key(&who, &nonce));
+    assert!(Timeouts::<Test>::contains_key((&timeout_id_2, &33, &44)));
+    assert!(Mechanics::<Test>::contains_key(&who, &nonce));
 
     run_to_block(timeout_id);
-    assert_eq!(
-      Timeouts::<Test>::contains_key((&timeout_id, &who, &nonce)),
-      false
-    );
-    assert_eq!(Mechanics::<Test>::contains_key(&who, &nonce), false);
-    assert_eq!(
-      Timeouts::<Test>::contains_key((&timeout_id, &who, &nonce)),
-      false
-    );
-    assert_eq!(Mechanics::<Test>::contains_key(&who, &nonce), false);
-    assert_eq!(
-      Timeouts::<Test>::contains_key((&timeout_id_2, &33, &44)),
-      true
-    );
-    assert_eq!(Mechanics::<Test>::contains_key(&33, &44), true);
+    assert!(!Timeouts::<Test>::contains_key((&timeout_id, &who, &nonce)));
+    assert!(!Mechanics::<Test>::contains_key(&who, &nonce));
+    assert!(!Timeouts::<Test>::contains_key((&timeout_id, &who, &nonce)));
+    assert!(!Mechanics::<Test>::contains_key(&who, &nonce));
+    assert!(Timeouts::<Test>::contains_key((&timeout_id_2, &33, &44)));
+    assert!(Mechanics::<Test>::contains_key(&33, &44));
 
     run_to_block(timeout_id_2);
-    assert_eq!(
-      Timeouts::<Test>::contains_key((&timeout_id_2, &33, &44)),
-      false
-    );
-    assert_eq!(Mechanics::<Test>::contains_key(&33, &44), false);
+    assert!(!Timeouts::<Test>::contains_key((&timeout_id_2, &33, &44)));
+    assert!(!Mechanics::<Test>::contains_key(&33, &44));
   });
 }

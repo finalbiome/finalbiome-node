@@ -157,7 +157,7 @@ fn bettor_empty() {
     rounds: 1,
     draw_outcome: DrawOutcomeResult::Keep,
   };
-  assert_eq!(AssetCharacteristic::is_valid(&b), false)
+  assert!(!AssetCharacteristic::is_valid(&b))
 }
 
 #[test]
@@ -188,7 +188,7 @@ fn bettor_probs_eq_0() {
     rounds: 1,
     draw_outcome: DrawOutcomeResult::Keep,
   };
-  assert_eq!(AssetCharacteristic::is_valid(&b), false);
+  assert!(!AssetCharacteristic::is_valid(&b));
 
   let b: Bettor = Bettor {
     outcomes: vec![
@@ -211,7 +211,7 @@ fn bettor_probs_eq_0() {
     rounds: 1,
     draw_outcome: DrawOutcomeResult::Keep,
   };
-  assert_eq!(AssetCharacteristic::is_valid(&b), true);
+  assert!(AssetCharacteristic::is_valid(&b));
 }
 
 #[test]
@@ -230,7 +230,7 @@ fn bettor_outcomes_less_2() {
     rounds: 1,
     draw_outcome: DrawOutcomeResult::Keep,
   };
-  assert_eq!(AssetCharacteristic::is_valid(&b), false);
+  assert!(!AssetCharacteristic::is_valid(&b));
 
   let b: Bettor = Bettor {
     outcomes: vec![
@@ -253,7 +253,7 @@ fn bettor_outcomes_less_2() {
     rounds: 1,
     draw_outcome: DrawOutcomeResult::Keep,
   };
-  assert_eq!(AssetCharacteristic::is_valid(&b), false);
+  assert!(!AssetCharacteristic::is_valid(&b));
 
   let b: Bettor = Bettor {
     outcomes: vec![
@@ -276,7 +276,7 @@ fn bettor_outcomes_less_2() {
     rounds: 1,
     draw_outcome: DrawOutcomeResult::Keep,
   };
-  assert_eq!(AssetCharacteristic::is_valid(&b), false);
+  assert!(!AssetCharacteristic::is_valid(&b));
   let b: Bettor = Bettor {
     outcomes: vec![
       BettorOutcome {
@@ -298,7 +298,7 @@ fn bettor_outcomes_less_2() {
     rounds: 1,
     draw_outcome: DrawOutcomeResult::Keep,
   };
-  assert_eq!(AssetCharacteristic::is_valid(&b), true);
+  assert!(AssetCharacteristic::is_valid(&b));
 }
 
 #[test]
@@ -324,7 +324,7 @@ fn bettor_rounds_less_1() {
     rounds: 0,
     draw_outcome: DrawOutcomeResult::Keep,
   };
-  assert_eq!(AssetCharacteristic::is_valid(&b), false);
+  assert!(!AssetCharacteristic::is_valid(&b));
 
   let b: Bettor = Bettor {
     outcomes: vec![
@@ -347,7 +347,7 @@ fn bettor_rounds_less_1() {
     rounds: 1,
     draw_outcome: DrawOutcomeResult::Keep,
   };
-  assert_eq!(AssetCharacteristic::is_valid(&b), true);
+  assert!(AssetCharacteristic::is_valid(&b));
 }
 
 #[test]
@@ -373,7 +373,7 @@ fn bettor_rounds_more_than_limit() {
     rounds: BETTOR_MAX_NUMBER_OF_ROUNDS + 1,
     draw_outcome: DrawOutcomeResult::Keep,
   };
-  assert_eq!(AssetCharacteristic::is_valid(&b), false);
+  assert!(!AssetCharacteristic::is_valid(&b));
 
   let b: Bettor = Bettor {
     outcomes: vec![
@@ -396,7 +396,7 @@ fn bettor_rounds_more_than_limit() {
     rounds: BETTOR_MAX_NUMBER_OF_ROUNDS,
     draw_outcome: DrawOutcomeResult::Keep,
   };
-  assert_eq!(AssetCharacteristic::is_valid(&b), true);
+  assert!(AssetCharacteristic::is_valid(&b));
 }
 
 #[test]
@@ -420,7 +420,7 @@ fn bettor_wins_empty() {
     rounds: 1,
     draw_outcome: DrawOutcomeResult::Keep,
   };
-  assert_eq!(AssetCharacteristic::is_valid(&b), false);
+  assert!(!AssetCharacteristic::is_valid(&b));
 
   let b: Bettor = Bettor {
     outcomes: vec![
@@ -443,7 +443,7 @@ fn bettor_wins_empty() {
     rounds: 1,
     draw_outcome: DrawOutcomeResult::Keep,
   };
-  assert_eq!(AssetCharacteristic::is_valid(&b), true);
+  assert!(AssetCharacteristic::is_valid(&b));
 }
 
 #[test]
@@ -451,7 +451,7 @@ fn purchased_empty() {
   let b: Purchased = Purchased {
     offers: vec![].try_into().unwrap(),
   };
-  assert_eq!(AssetCharacteristic::is_valid(&b), false);
+  assert!(!AssetCharacteristic::is_valid(&b));
 }
 
 #[test]
@@ -477,7 +477,7 @@ fn purchased_has_0_price() {
     .try_into()
     .unwrap(),
   };
-  assert_eq!(AssetCharacteristic::is_valid(&b), false)
+  assert!(!AssetCharacteristic::is_valid(&b))
 }
 
 #[test]
@@ -503,7 +503,7 @@ fn purchased_has_0_price_2() {
     .try_into()
     .unwrap(),
   };
-  assert_eq!(AssetCharacteristic::is_valid(&b), true)
+  assert!(AssetCharacteristic::is_valid(&b))
 }
 
 #[test]

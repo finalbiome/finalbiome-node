@@ -32,7 +32,7 @@ fn create_organization_works() {
     let stored_org = Organizations::<Test>::get(&org).unwrap();
     assert_eq!(stored_org.name.to_vec(), name);
 
-    assert_eq!(Members::<Test>::contains_key(&org), true);
+    assert!(Members::<Test>::contains_key(&org));
 
     // TODO: test the events.
     //			 Impl bellow doesn't work
@@ -92,12 +92,12 @@ fn add_member_works() {
     ));
     // add member with id 2
     assert_ok!(OrganizationIdentity::add_member(Origin::signed(1), 2));
-    assert_eq!(Members::<Test>::contains_key(&2), true);
+    assert!(Members::<Test>::contains_key(&2));
     assert_eq!(OrganizationIdentity::member_count(1), 1u8);
     assert_eq!(OrganizationIdentity::member_count(0), 0u8);
     // add member with id 3
     assert_ok!(OrganizationIdentity::add_member(Origin::signed(1), 3));
-    assert_eq!(Members::<Test>::contains_key(&3), true);
+    assert!(Members::<Test>::contains_key(&3));
     assert_eq!(OrganizationIdentity::member_count(1), 2u8);
     // add member with id 2 second time
     assert_noop!(
@@ -107,7 +107,7 @@ fn add_member_works() {
     assert_eq!(OrganizationIdentity::member_count(1), 2u8);
     // add member with id 4
     assert_ok!(OrganizationIdentity::add_member(Origin::signed(1), 4));
-    assert_eq!(Members::<Test>::contains_key(&4), true);
+    assert!(Members::<Test>::contains_key(&4));
     assert_eq!(OrganizationIdentity::member_count(1), 3u8);
     // add member with id 5 should return an error
     assert_noop!(
@@ -171,7 +171,7 @@ fn remove_member_works() {
     assert_eq!(OrganizationIdentity::member_count(1), 2u8);
     // remove member 2
     assert_ok!(OrganizationIdentity::remove_member(Origin::signed(1), 2));
-    assert_eq!(Members::<Test>::contains_key(&2), false);
+    assert!(!Members::<Test>::contains_key(&2));
     assert_eq!(OrganizationIdentity::member_count(1), 1u8);
     // remove member 4
     assert_noop!(
@@ -201,7 +201,7 @@ fn do_set_onboarding_assets_works() {
       Origin::signed(1),
       br"some name".to_vec()
     ));
-    assert_eq!(Organizations::<Test>::contains_key(&1), true);
+    assert!(Organizations::<Test>::contains_key(&1));
     assert_eq!(
       Organizations::<Test>::get(&1).unwrap().onboarding_assets,
       None
@@ -344,7 +344,7 @@ fn do_onboarding_works() {
       Origin::signed(1),
       br"some name".to_vec()
     ));
-    assert_eq!(Organizations::<Test>::contains_key(&1), true);
+    assert!(Organizations::<Test>::contains_key(&1));
     assert_eq!(
       Organizations::<Test>::get(&1).unwrap().onboarding_assets,
       None
@@ -376,10 +376,10 @@ fn do_onboarding_works() {
       Organizations::<Test>::get(&1).unwrap().onboarding_assets,
       assets
     );
-    assert_eq!(UsersOf::<Test>::contains_key(&1, &333), false);
+    assert!(!UsersOf::<Test>::contains_key(&1, &333));
 
     assert_ok!(OrganizationIdentity::do_onboarding(&1, &333));
-    assert_eq!(UsersOf::<Test>::contains_key(&1, &333), true);
+    assert!(UsersOf::<Test>::contains_key(&1, &333));
   })
 }
 
@@ -391,7 +391,7 @@ fn onboarding_works() {
       Origin::signed(1),
       br"some name".to_vec()
     ));
-    assert_eq!(Organizations::<Test>::contains_key(&1), true);
+    assert!(Organizations::<Test>::contains_key(&1));
     assert_eq!(
       Organizations::<Test>::get(&1).unwrap().onboarding_assets,
       None
@@ -462,7 +462,7 @@ fn onboarding_works_with_empty_airdrops() {
       Origin::signed(1),
       br"some name".to_vec()
     ));
-    assert_eq!(Organizations::<Test>::contains_key(&1), true);
+    assert!(Organizations::<Test>::contains_key(&1));
     assert_eq!(
       Organizations::<Test>::get(&1).unwrap().onboarding_assets,
       None

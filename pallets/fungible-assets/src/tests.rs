@@ -50,11 +50,11 @@ fn check_test_genesis_data() {
     // TopUppedAssets should includes asset02
     let tua = TopUppedAssets::<Test>::get();
     assert_eq!(tua.len(), 1);
-    assert_eq!(tua.contains(&1.into()), true);
-    assert_eq!(
-      TopUpQueue::<Test>::contains_key(&FungibleAssetId::from(1), &4),
-      true
-    );
+    assert!(tua.contains(&1.into()));
+    assert!(TopUpQueue::<Test>::contains_key(
+      &FungibleAssetId::from(1),
+      &4
+    ));
   })
 }
 
@@ -216,7 +216,7 @@ fn create_fa_top_up() {
     let fa = Assets::<Test>::get(fa_id).unwrap();
     assert_eq!(fa.top_upped, Some(TopUppedFA { speed: 20.into() }));
 
-    assert_eq!(true, TopUppedAssets::<Test>::get().contains(&fa_id));
+    assert!(TopUppedAssets::<Test>::get().contains(&fa_id));
   })
 }
 
@@ -752,7 +752,7 @@ fn decrease_balance_topup_check() {
     let max_allowed = false;
     let acc_balance = Accounts::<Test>::get(target, id).unwrap().balance;
 
-    assert_eq!(TopUpQueue::<Test>::get(id, target).is_none(), true);
+    assert!(TopUpQueue::<Test>::get(id, target).is_none());
     assert_eq!(
       FungibleAssets::decrease_balance(id, &target, amount, max_allowed),
       Ok(amount)
@@ -761,19 +761,19 @@ fn decrease_balance_topup_check() {
       Accounts::<Test>::get(target, id).unwrap().balance,
       acc_balance - amount // 17
     );
-    assert_eq!(TopUpQueue::<Test>::contains_key(id, target), true);
+    assert!(TopUpQueue::<Test>::contains_key(id, target));
 
     assert_eq!(
       FungibleAssets::decrease_balance(id, &target, 15.into(), max_allowed),
       Ok(15.into())
     );
-    assert_eq!(TopUpQueue::<Test>::contains_key(id, target), true);
+    assert!(TopUpQueue::<Test>::contains_key(id, target));
 
     assert_eq!(
       FungibleAssets::decrease_balance(id, &target, 1000.into(), true),
       Ok(2.into())
     );
-    assert_eq!(TopUpQueue::<Test>::contains_key(id, target), true);
+    assert!(TopUpQueue::<Test>::contains_key(id, target));
   })
 }
 
@@ -813,31 +813,31 @@ fn top_upped_asset_manipulations_test() {
     let curr_len = TopUppedAssets::<Test>::get().len();
     assert_ok!(FungibleAssets::top_upped_asset_add(&33.into()));
     assert_eq!(curr_len + 1, TopUppedAssets::<Test>::get().len());
-    assert_eq!(true, TopUppedAssets::<Test>::get().contains(&33.into()));
+    assert!(TopUppedAssets::<Test>::get().contains(&33.into()));
 
     assert_ok!(FungibleAssets::top_upped_asset_add(&33.into()));
     assert_eq!(curr_len + 1, TopUppedAssets::<Test>::get().len());
-    assert_eq!(true, TopUppedAssets::<Test>::get().contains(&33.into()));
+    assert!(TopUppedAssets::<Test>::get().contains(&33.into()));
 
     let curr_len = TopUppedAssets::<Test>::get().len();
     assert_ok!(FungibleAssets::top_upped_asset_add(&34.into()));
     assert_eq!(curr_len + 1, TopUppedAssets::<Test>::get().len());
-    assert_eq!(true, TopUppedAssets::<Test>::get().contains(&34.into()));
+    assert!(TopUppedAssets::<Test>::get().contains(&34.into()));
 
     let curr_len = TopUppedAssets::<Test>::get().len();
     FungibleAssets::top_upped_asset_remove(&34.into());
     assert_eq!(curr_len - 1, TopUppedAssets::<Test>::get().len());
-    assert_eq!(false, TopUppedAssets::<Test>::get().contains(&34.into()));
+    assert!(!TopUppedAssets::<Test>::get().contains(&34.into()));
 
     let curr_len = TopUppedAssets::<Test>::get().len();
     FungibleAssets::top_upped_asset_remove(&34.into());
     assert_eq!(curr_len, TopUppedAssets::<Test>::get().len());
-    assert_eq!(false, TopUppedAssets::<Test>::get().contains(&34.into()));
+    assert!(!TopUppedAssets::<Test>::get().contains(&34.into()));
 
     let curr_len = TopUppedAssets::<Test>::get().len();
     FungibleAssets::top_upped_asset_remove(&33.into());
     assert_eq!(curr_len - 1, TopUppedAssets::<Test>::get().len());
-    assert_eq!(false, TopUppedAssets::<Test>::get().contains(&33.into()));
+    assert!(!TopUppedAssets::<Test>::get().contains(&33.into()));
   })
 }
 
@@ -847,19 +847,13 @@ fn top_upped_asset_remove_from_queue() {
     // in genesis we have one asset with topup
     assert_eq!(TopUppedAssets::<Test>::get().len(), 1);
     // add fake record to TopUpQueue and check removing
-    assert_eq!(true, TopUppedAssets::<Test>::get().contains(&1.into()));
+    assert!(TopUppedAssets::<Test>::get().contains(&1.into()));
     TopUpQueue::<Test>::insert(&FungibleAssetId::from(1), &3, ());
 
-    assert_eq!(
-      TopUpQueue::<Test>::get(&FungibleAssetId::from(1), &3).is_some(),
-      true
-    );
-    TopUpQueue::<Test>::get(&FungibleAssetId::from(1), &3).unwrap();;
+    assert!(TopUpQueue::<Test>::get(&FungibleAssetId::from(1), &3).is_some());
+    TopUpQueue::<Test>::get(&FungibleAssetId::from(1), &3).unwrap();
     FungibleAssets::top_upped_asset_remove(&FungibleAssetId::from(1));
-    assert_eq!(
-      TopUpQueue::<Test>::get(&FungibleAssetId::from(1), &3).is_none(),
-      true
-    );
+    assert!(TopUpQueue::<Test>::get(&FungibleAssetId::from(1), &3).is_none());
   })
 }
 
@@ -879,8 +873,8 @@ fn process_top_upped_assets() {
 
     assert_eq!(Accounts::<Test>::get(1100, id).unwrap().balance, 20.into());
     assert_eq!(Accounts::<Test>::get(1200, id).unwrap().balance, 6.into());
-    assert_eq!(TopUpQueue::<Test>::contains_key(&id, &1100), false);
-    assert_eq!(TopUpQueue::<Test>::contains_key(&id, &1200), true);
+    assert!(!TopUpQueue::<Test>::contains_key(&id, &1100));
+    assert!(TopUpQueue::<Test>::contains_key(&id, &1200));
   })
 }
 
@@ -899,15 +893,15 @@ fn process_top_up_in_progress() {
 
     assert_eq!(Accounts::<Test>::get(1100, id).unwrap().balance, 20.into());
     assert_eq!(Accounts::<Test>::get(1200, id).unwrap().balance, 6.into());
-    assert_eq!(TopUpQueue::<Test>::contains_key(&id, &1100), false);
-    assert_eq!(TopUpQueue::<Test>::contains_key(&id, &1200), true);
+    assert!(!TopUpQueue::<Test>::contains_key(&id, &1100));
+    assert!(TopUpQueue::<Test>::contains_key(&id, &1200));
 
     run_to_block(System::block_number() + 5);
 
     assert_eq!(Accounts::<Test>::get(1100, id).unwrap().balance, 20.into());
     assert_eq!(Accounts::<Test>::get(1200, id).unwrap().balance, 20.into());
-    assert_eq!(TopUpQueue::<Test>::contains_key(&id, &1100), false);
-    assert_eq!(TopUpQueue::<Test>::contains_key(&id, &1200), false);
+    assert!(!TopUpQueue::<Test>::contains_key(&id, &1100));
+    assert!(!TopUpQueue::<Test>::contains_key(&id, &1200));
   })
 }
 
@@ -946,28 +940,28 @@ fn increase_balance_topup_check() {
     let beneficiary = 333; // account has no fa 1
     let amount = 3.into(); // total suply 20
 
-    assert_eq!(TopUpQueue::<Test>::get(id, beneficiary).is_none(), true);
-    assert_eq!(Accounts::<Test>::get(beneficiary, id).is_none(), true);
+    assert!(TopUpQueue::<Test>::get(id, beneficiary).is_none());
+    assert!(Accounts::<Test>::get(beneficiary, id).is_none());
     assert_ok!(FungibleAssets::increase_balance(id, &beneficiary, amount));
 
     assert_eq!(
       Accounts::<Test>::get(beneficiary, id).unwrap().balance,
       amount
     );
-    assert_eq!(TopUpQueue::<Test>::get(id, beneficiary).is_none(), true);
+    assert!(TopUpQueue::<Test>::get(id, beneficiary).is_none());
 
     assert_ok!(FungibleAssets::increase_balance(
       id,
       &beneficiary,
       15.into()
     ));
-    assert_eq!(TopUpQueue::<Test>::get(id, beneficiary).is_none(), true);
+    assert!(TopUpQueue::<Test>::get(id, beneficiary).is_none());
 
     assert_ok!(FungibleAssets::increase_balance(
       id,
       &beneficiary,
       15.into()
     ));
-    assert_eq!(TopUpQueue::<Test>::get(id, beneficiary).is_none(), true);
+    assert!(TopUpQueue::<Test>::get(id, beneficiary).is_none());
   })
 }
