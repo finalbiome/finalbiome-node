@@ -34,6 +34,12 @@ jobs:
           rustup update stable
           rustup target add wasm32-unknown-unknown --toolchain nightly
           rustup component add clippy
+          rustflags=(
+            "-C link-arg=-fuse-ld=lld"
+            "-C link-arg=-Wl,--compress-debug-sections=zlib"
+            "-C force-frame-pointers=yes"
+            )
+          export RUSTFLAGS="${rustflags[*]}"
 
       - name: Toolchain info
         run: |
