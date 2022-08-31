@@ -1,7 +1,7 @@
 //! The Purchased Characteristic code
 use super::*;
 
-#[derive(Clone, Encode, Decode, TypeInfo, MaxEncodedLen, PartialEq, RuntimeDebug)]
+#[derive(Clone, Encode, Decode, TypeInfo, MaxEncodedLen, PartialEq, Eq, RuntimeDebug)]
 /// Parameters of the Purchased Characteristic
 pub struct Purchased {
   pub offers: BoundedVec<Offer, DefaultListLengthLimit>,
@@ -29,7 +29,7 @@ impl AssetCharacteristic for Purchased {
   }
 }
 
-#[derive(Clone, Encode, Decode, TypeInfo, MaxEncodedLen, PartialEq, RuntimeDebug)]
+#[derive(Clone, Encode, Decode, TypeInfo, MaxEncodedLen, PartialEq, Eq, RuntimeDebug)]
 /// An offer of the Purchased Characteristic
 pub struct Offer {
   pub fa: FungibleAssetId,

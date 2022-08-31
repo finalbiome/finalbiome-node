@@ -40,7 +40,7 @@ fn create_organization_works() {
     // org)));
 
     assert_noop!(
-      OrganizationIdentity::create_organization(Origin::none(), name.clone()),
+      OrganizationIdentity::create_organization(Origin::none(), name),
       sp_runtime::traits::BadOrigin
     );
   })
@@ -288,7 +288,7 @@ fn set_onboarding_assets_works() {
     assert_ok!(OrganizationIdentity::set_onboarding_assets(
       Origin::signed(2),
       1,
-      assets.clone()
+      assets
     ));
 
     assert_eq!(

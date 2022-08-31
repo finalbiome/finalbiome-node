@@ -848,7 +848,7 @@ fn do_bet_result_processing_draw_win() {
       &mechanic_id,
       &who,
       &bettor,
-      result.clone(),
+      result,
       some_outcomes
     ));
     // should min nfa(11,) burn nfa(24,35), drop mechanic, deposit event
@@ -910,7 +910,7 @@ fn do_bet_result_processing_draw_lose() {
       &mechanic_id,
       &who,
       &bettor,
-      result.clone(),
+      result,
       some_outcomes
     ));
     // should burn nfa(25,36), drop mechanic, deposit event
@@ -1160,7 +1160,7 @@ fn try_lock_works() {
     };
 
     let asset_id: LockedAccet = LockedAccet::Nfa(1.into(), 2.into());
-    let mut locks = [asset_id.clone()].to_vec();
+    let mut locks = [asset_id].to_vec();
 
     assert_eq!(
       Mechanics::<Test>::contains_key(&id.account_id, &id.nonce),
@@ -1168,7 +1168,7 @@ fn try_lock_works() {
     );
     let details = MechanicDetailsBuilder::build::<Test>(1, MechanicData::BuyNfa);
     Mechanics::<Test>::insert(&id.account_id, &id.nonce, details);
-    assert_ok!(MechanicsModule::try_lock(&id, asset_id.clone()));
+    assert_ok!(MechanicsModule::try_lock(&id, asset_id));
     assert_eq!(
       Mechanics::<Test>::contains_key(&id.account_id, &id.nonce),
       true
@@ -1179,14 +1179,14 @@ fn try_lock_works() {
 
     for i in 1..256 {
       let asset_id: LockedAccet = LockedAccet::Nfa((1 + i).into(), (2 + i).into());
-      locks.push(asset_id.clone());
+      locks.push(asset_id);
       if i == 255 {
         assert_noop!(
-          MechanicsModule::try_lock(&id, asset_id.clone()),
+          MechanicsModule::try_lock(&id, asset_id),
           Error::<Test>::AssetsExceedsAllowable
         );
       } else {
-        assert_ok!(MechanicsModule::try_lock(&id, asset_id.clone()));
+        assert_ok!(MechanicsModule::try_lock(&id, asset_id));
         let m = Mechanics::<Test>::get(&id.account_id, &id.nonce).unwrap();
         assert_eq!(m.locked.to_vec(), locks);
       }
@@ -1204,12 +1204,12 @@ fn clear_lock_works() {
 
     let asset_id: LockedAccet = LockedAccet::Nfa(1.into(), 2.into());
     let asset_id_2: LockedAccet = LockedAccet::Nfa(2.into(), 3.into());
-    let locks = [asset_id.clone(), asset_id_2.clone()].to_vec();
+    let locks = [asset_id, asset_id_2].to_vec();
 
     let details = MechanicDetailsBuilder::build::<Test>(1, MechanicData::BuyNfa);
     Mechanics::<Test>::insert(&id.account_id, &id.nonce, details);
-    assert_ok!(MechanicsModule::try_lock(&id, asset_id.clone()));
-    assert_ok!(MechanicsModule::try_lock(&id, asset_id_2.clone()));
+    assert_ok!(MechanicsModule::try_lock(&id, asset_id));
+    assert_ok!(MechanicsModule::try_lock(&id, asset_id_2));
     assert_eq!(
       Mechanics::<Test>::contains_key(&id.account_id, &id.nonce),
       true
@@ -1232,9 +1232,9 @@ fn clear_lock_works() {
       Error::<Test>::MechanicsNotAvailable
     );
 
-    assert_ok!(MechanicsModule::_clear_lock(&id, asset_id.clone()));
+    assert_ok!(MechanicsModule::_clear_lock(&id, asset_id));
     let m = Mechanics::<Test>::get(&id.account_id, &id.nonce).unwrap();
-    assert_eq!(m.locked.to_vec(), [asset_id_2.clone()].to_vec());
+    assert_eq!(m.locked.to_vec(), [asset_id_2].to_vec());
   });
 }
 

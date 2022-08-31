@@ -179,7 +179,7 @@ impl pallet_support::traits::NonFungibleAssets<u64, u32> for NFAPallet {
       key: br"a2".to_vec().try_into().unwrap(),
       value: AttributeValue::Text(br"v1".to_vec().try_into().unwrap()),
     };
-    let attributes: AttributeList = vec![a1.clone(), a2.clone()].try_into().unwrap();
+    let attributes: AttributeList = vec![a1, a2].try_into().unwrap();
     if class_id == &1u32.into() && offer_id == &2u32 {
       return Ok((333.into(), 500.into(), attributes));
     }

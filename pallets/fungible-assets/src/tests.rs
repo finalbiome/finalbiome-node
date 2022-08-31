@@ -90,7 +90,7 @@ fn create_fa_works() {
     );
 
     assert_noop!(
-      FungibleAssets::create(Origin::none(), 2, name.clone(), None, None, None,),
+      FungibleAssets::create(Origin::none(), 2, name, None, None, None,),
       sp_runtime::traits::BadOrigin
     );
   })
@@ -176,7 +176,7 @@ fn create_fa_with_cups() {
       FungibleAssets::create(
         Origin::signed(1),
         org_id,
-        name.clone(),
+        name,
         None,
         Some(CupFA { amount: 10.into() }),
         Some(CupFA { amount: 0.into() }),
@@ -208,7 +208,7 @@ fn create_fa_top_up() {
     assert_ok!(FungibleAssets::create(
       Origin::signed(1),
       org_id,
-      name.clone(),
+      name,
       Some(TopUppedFA { speed: 20.into() }),
       Some(CupFA { amount: 100.into() }),
       Some(CupFA { amount: 10.into() }),
@@ -854,7 +854,7 @@ fn top_upped_asset_remove_from_queue() {
       TopUpQueue::<Test>::get(&FungibleAssetId::from(1), &3).is_some(),
       true
     );
-    _ = TopUpQueue::<Test>::get(&FungibleAssetId::from(1), &3).unwrap();
+    TopUpQueue::<Test>::get(&FungibleAssetId::from(1), &3).unwrap();;
     FungibleAssets::top_upped_asset_remove(&FungibleAssetId::from(1));
     assert_eq!(
       TopUpQueue::<Test>::get(&FungibleAssetId::from(1), &3).is_none(),

@@ -18,7 +18,7 @@ pub struct ClassDetails<AccountId> {
   pub purchased: Option<Purchased>,
 }
 
-#[derive(Clone, Encode, Decode, RuntimeDebug, PartialEq, TypeInfo, MaxEncodedLen)]
+#[derive(Clone, Encode, Decode, RuntimeDebug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 pub struct AssetDetails<AccountId, Index> {
   /// The owner of this asset.
   pub owner: AccountId,

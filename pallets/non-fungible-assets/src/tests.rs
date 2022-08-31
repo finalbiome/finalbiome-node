@@ -137,7 +137,7 @@ fn do_destroy_class_not_owner() {
     assert_ok!(NonFungibleAssets::create(
       Origin::signed(1),
       org,
-      name.clone()
+      name
     ));
     assert_noop!(
       NonFungibleAssets::do_destroy_class(nfa_id, Some(3)),
@@ -158,7 +158,7 @@ fn do_destroy_class_worked() {
     assert_ok!(NonFungibleAssets::create(
       Origin::signed(1),
       org,
-      name.clone()
+      name
     ));
     System::reset_events();
     assert_ok!(NonFungibleAssets::do_destroy_class(nfa_id, Some(org)));
@@ -185,7 +185,7 @@ fn do_destroy_class_removes_attributes() {
     assert_ok!(NonFungibleAssets::create(
       Origin::signed(1),
       org,
-      name.clone()
+      name
     ));
     // create attribute
     let a: Attribute = Attribute {
@@ -221,7 +221,7 @@ fn destroy_class_not_org() {
     assert_ok!(NonFungibleAssets::create(
       Origin::signed(1),
       org,
-      name.clone()
+      name
     ));
     System::reset_events();
     assert_noop!(
@@ -253,7 +253,7 @@ fn do_mint_worked() {
     assert_ok!(NonFungibleAssets::create(
       Origin::signed(1),
       org,
-      name.clone()
+      name
     ));
     System::reset_events();
     assert_eq!(NonFungibleAssets::do_mint(nfa_id, acc).unwrap(), id);
@@ -292,7 +292,7 @@ fn do_burn_no_attributes() {
     assert_ok!(NonFungibleAssets::create(
       Origin::signed(1),
       org,
-      name.clone()
+      name
     ));
 
     assert_eq!(NonFungibleAssets::do_mint(nfa_id, acc).unwrap(), id);
@@ -336,7 +336,7 @@ fn do_burn_with_attributes() {
     assert_ok!(NonFungibleAssets::create(
       Origin::signed(1),
       org,
-      name.clone()
+      name
     ));
 
     assert_eq!(NonFungibleAssets::do_mint(nfa_id, acc).unwrap(), id);
@@ -392,7 +392,7 @@ fn do_burn_not_owner() {
     assert_ok!(NonFungibleAssets::create(
       Origin::signed(1),
       org,
-      name.clone()
+      name
     ));
 
     assert_eq!(NonFungibleAssets::do_mint(nfa_id, acc).unwrap(), id);
@@ -468,7 +468,7 @@ fn do_create_attribute_owner_no_permissions() {
     assert_ok!(NonFungibleAssets::create(
       Origin::signed(1),
       org,
-      name.clone()
+      name
     ));
 
     assert_noop!(
@@ -492,7 +492,7 @@ fn do_create_attribute_already_exists() {
     assert_ok!(NonFungibleAssets::create(
       Origin::signed(1),
       org,
-      name.clone()
+      name
     ));
     // create fake attr w/ same name
     let eat = AttributeValue::Number(NumberAttribute {
@@ -523,7 +523,7 @@ fn do_create_attribute_already_exists1() {
     assert_ok!(NonFungibleAssets::create(
       Origin::signed(1),
       org,
-      name.clone()
+      name
     ));
     assert_eq!(Classes::<Test>::get(nfa_id).unwrap().attributes, 0);
 
@@ -579,7 +579,7 @@ fn do_remove_attribute_owner_no_permissions() {
     assert_ok!(NonFungibleAssets::create(
       Origin::signed(1),
       org,
-      name.clone()
+      name
     ));
 
     assert_noop!(
@@ -603,7 +603,7 @@ fn do_remove_attribute_work() {
     assert_ok!(NonFungibleAssets::create(
       Origin::signed(1),
       org,
-      name.clone()
+      name
     ));
     // create attribute
     let a: Attribute = Attribute {
@@ -660,7 +660,7 @@ fn create_attribute_unsigned() {
     assert_ok!(NonFungibleAssets::create(
       Origin::signed(1),
       org,
-      name.clone()
+      name
     ));
 
     let a: Attribute = Attribute {
@@ -685,7 +685,7 @@ fn create_attribute_worked() {
     assert_ok!(NonFungibleAssets::create(
       Origin::signed(1),
       org,
-      name.clone()
+      name
     ));
 
     let a: Attribute = Attribute {
@@ -718,7 +718,7 @@ fn remove_attribute_unsigned() {
     assert_ok!(NonFungibleAssets::create(
       Origin::signed(1),
       org,
-      name.clone()
+      name
     ));
 
     let attribute_name = br"a_name".to_vec().try_into().unwrap();
@@ -740,7 +740,7 @@ fn remove_attribute_worked() {
     assert_ok!(NonFungibleAssets::create(
       Origin::signed(1),
       org,
-      name.clone()
+      name
     ));
 
     let a: Attribute = Attribute {
@@ -813,7 +813,7 @@ fn set_lock_try_unlock() {
     assert_ok!(NonFungibleAssets::create(
       Origin::signed(1),
       org,
-      name.clone()
+      name
     ));
     // create test asset
     assert_eq!(NonFungibleAssets::do_mint(nfa_id, acc).unwrap(), id);
@@ -854,7 +854,7 @@ fn set_lock_not_owner() {
     assert_ok!(NonFungibleAssets::create(
       Origin::signed(1),
       org,
-      name.clone()
+      name
     ));
     // create test asset
     assert_eq!(NonFungibleAssets::do_mint(nfa_id, acc).unwrap(), id);
@@ -882,7 +882,7 @@ fn set_lock_for_no_locked() {
     assert_ok!(NonFungibleAssets::create(
       Origin::signed(1),
       org,
-      name.clone()
+      name
     ));
     // create test asset
     assert_eq!(NonFungibleAssets::do_mint(nfa_id, acc).unwrap(), id);
@@ -907,7 +907,7 @@ fn set_lock_for_no_locked() {
       nonce: 2,
     });
     assert_ok!(
-      NonFungibleAssets::set_lock(&acc, origin.clone(), &nfa_id, &id),
+      NonFungibleAssets::set_lock(&acc, origin, &nfa_id, &id),
       LockResultOf::<Test>::Already(details)
     );
   });
@@ -925,7 +925,7 @@ fn set_lock_for_locked() {
     assert_ok!(NonFungibleAssets::create(
       Origin::signed(1),
       org,
-      name.clone()
+      name
     ));
     // create test asset
     assert_eq!(NonFungibleAssets::do_mint(nfa_id, acc).unwrap(), id);
@@ -968,7 +968,7 @@ fn unset_lock_for_locked() {
     assert_ok!(NonFungibleAssets::create(
       Origin::signed(1),
       org,
-      name.clone()
+      name
     ));
     // create test asset
     assert_eq!(NonFungibleAssets::do_mint(nfa_id, acc).unwrap(), id);
@@ -1004,7 +1004,7 @@ fn unset_lock_for_locked_other_owner() {
     assert_ok!(NonFungibleAssets::create(
       Origin::signed(1),
       org,
-      name.clone()
+      name
     ));
     // create test asset
     assert_eq!(NonFungibleAssets::do_mint(nfa_id, acc).unwrap(), id);
@@ -1040,7 +1040,7 @@ fn unset_lock_for_locked_other_origin() {
     assert_ok!(NonFungibleAssets::create(
       Origin::signed(1),
       org,
-      name.clone()
+      name
     ));
     // create test asset
     assert_eq!(NonFungibleAssets::do_mint(nfa_id, acc).unwrap(), id);
@@ -1053,7 +1053,7 @@ fn unset_lock_for_locked_other_origin() {
     details.locked = origin.clone();
 
     assert_ok!(
-      NonFungibleAssets::set_lock(&acc, origin.clone(), &nfa_id, &id),
+      NonFungibleAssets::set_lock(&acc, origin, &nfa_id, &id),
       LockResultOf::<Test>::Locked(details)
     );
     let origin = Locker::Mechanic(MechanicId {

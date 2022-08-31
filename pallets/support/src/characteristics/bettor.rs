@@ -65,7 +65,7 @@ impl AssetCharacteristic for Bettor {
   }
 }
 
-#[derive(Clone, Encode, Decode, MaxEncodedLen, TypeInfo, PartialEq, RuntimeDebug)]
+#[derive(Clone, Encode, Decode, MaxEncodedLen, TypeInfo, PartialEq, Eq, RuntimeDebug)]
 pub struct BettorOutcome {
   /// Name of the outcome
   pub name: BoundedVec<u8, DefaultStringLimit>,
@@ -76,7 +76,7 @@ pub struct BettorOutcome {
 }
 
 /// A type of the asset with given params of winning results
-#[derive(Clone, Encode, Decode, MaxEncodedLen, TypeInfo, PartialEq, RuntimeDebug)]
+#[derive(Clone, Encode, Decode, MaxEncodedLen, TypeInfo, PartialEq, Eq, RuntimeDebug)]
 pub enum BettorWinning {
   /// Fungible asset \
   /// Represented as (FA id, amount)
@@ -86,14 +86,14 @@ pub enum BettorWinning {
   Nfa(NonFungibleClassId),
 }
 
-#[derive(Clone, Encode, Decode, MaxEncodedLen, TypeInfo, PartialEq, RuntimeDebug)]
+#[derive(Clone, Encode, Decode, MaxEncodedLen, TypeInfo, PartialEq, Eq, RuntimeDebug)]
 pub enum DrawOutcomeResult {
   Win,
   Lose,
   Keep,
 }
 
-#[derive(Clone, Encode, Decode, MaxEncodedLen, TypeInfo, PartialEq, RuntimeDebug)]
+#[derive(Clone, Encode, Decode, MaxEncodedLen, TypeInfo, PartialEq, Eq, RuntimeDebug)]
 pub enum OutcomeResult {
   Win,
   Lose,

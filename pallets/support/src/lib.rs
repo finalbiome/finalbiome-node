@@ -185,7 +185,7 @@ where
   }
 }
 
-#[derive(RuntimeDebug, PartialEq)]
+#[derive(RuntimeDebug, PartialEq, Eq)]
 /// Result of locking assets
 pub enum LockResult<AccountId, Index> {
   /// The asset has been locked for the first time
@@ -201,7 +201,7 @@ pub enum AssetId {
   Nfa(NonFungibleClassId, NonFungibleAssetId),
 }
 
-#[derive(Copy, Clone, Encode, Decode, TypeInfo, MaxEncodedLen, PartialEq, RuntimeDebug)]
+#[derive(Copy, Clone, Encode, Decode, TypeInfo, MaxEncodedLen, PartialEq, Eq, RuntimeDebug)]
 /// Represent a locked FA with amount or NFA asset id
 pub enum LockedAccet {
   Fa(FungibleAssetId, FungibleAssetBalance),

@@ -16,7 +16,7 @@ pub type FungibleAssetBalance = pallet_support::FungibleAssetBalance;
 /// Bounded vector of NFA ids
 pub type NonFungibleAssetIds<T> = BoundedVec<NonFungibleAssetId, <T as Config>::AssetsListLimit>;
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Eq)]
 /// Describes types of mechanics
 pub enum Mechanic {
   /// NFA purchase
@@ -95,7 +95,7 @@ pub enum BetResult {
   Draw,
 }
 
-#[derive(RuntimeDebug, Clone, PartialEq, Encode, Decode, TypeInfo)]
+#[derive(RuntimeDebug, Clone, PartialEq, Eq, Encode, Decode, TypeInfo)]
 /// The data that is transmitted to upgrade the mechanic.
 pub struct MechanicUpgradeData<AccountId, Index> {
   pub mechanic_id: MechanicId<AccountId, Index>,
@@ -104,7 +104,7 @@ pub struct MechanicUpgradeData<AccountId, Index> {
   pub payload: MechanicUpgradePayload,
 }
 
-#[derive(RuntimeDebug, Clone, PartialEq, Encode, Decode, TypeInfo)]
+#[derive(RuntimeDebug, Clone, PartialEq, Eq, Encode, Decode, TypeInfo)]
 /// Payload of the data for upgrade specific mechanic
 pub enum MechanicUpgradePayload {
   /// For the Bet mechanic no need any data
@@ -118,13 +118,13 @@ impl From<&MechanicUpgradePayload> for Mechanic {
   }
 }
 
-#[derive(Clone, PartialEq, RuntimeDebug, Encode, Decode, TypeInfo)]
+#[derive(Clone, PartialEq, Eq, RuntimeDebug, Encode, Decode, TypeInfo)]
 pub enum EventMechanicStopReason {
   /// Needs a mechanical upgrade
   UpgradeNeeded,
 }
 
-#[derive(Clone, PartialEq, RuntimeDebug, Encode, Decode, TypeInfo)]
+#[derive(Clone, PartialEq, Eq, RuntimeDebug, Encode, Decode, TypeInfo)]
 pub enum EventMechanicResultData {
   /// Hold a minted asset id
   BuyNfa(NonFungibleAssetId),
@@ -132,7 +132,7 @@ pub enum EventMechanicResultData {
   Bet(EventMechanicResultDataBet),
 }
 
-#[derive(Clone, PartialEq, RuntimeDebug, Encode, Decode, TypeInfo)]
+#[derive(Clone, PartialEq, Eq, RuntimeDebug, Encode, Decode, TypeInfo)]
 pub struct EventMechanicResultDataBet {
   /// Hold a final outcomes of Bet mechanic
   pub outcomes: MechanicDataBetOutcomes,
