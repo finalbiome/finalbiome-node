@@ -49,7 +49,6 @@ jobs:
       - name: Toolchain info
         run: |
           clang --version
-          echo $LLVM_INSTALL_DIR
           cargo --version --verbose
           rustc --version
           cargo clippy --version 
