@@ -2,7 +2,7 @@
 use super::*;
 
 /// Parameters of the Bettor Characteristic
-#[derive(Clone, Encode, Decode, MaxEncodedLen, TypeInfo, PartialEq, RuntimeDebug)]
+#[derive(Clone, Encode, Decode, MaxEncodedLen, TypeInfo, PartialEq, Eq, RuntimeDebug)]
 pub struct Bettor {
   /// Options of outcomes
   pub outcomes: Outcomes,

@@ -19,7 +19,7 @@ pub trait AssetCharacteristic {
 }
 
 /// Represent a some single characteristic of NFA class
-#[derive(Clone, Encode, Decode, PartialEq, RuntimeDebug, TypeInfo)]
+#[derive(Clone, Encode, Decode, PartialEq, Eq, RuntimeDebug, TypeInfo)]
 pub enum Characteristic {
   Bettor(CharacteristicBettor),
   Purchased(CharacteristicPurchased),
