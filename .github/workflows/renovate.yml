@@ -1,11 +1,7 @@
 name: Renovate
 on:
   schedule:
-    # The "*" (#42, asterisk) character has special semantics in YAML, so this
-    # string has to be quoted.
-    - cron: '0/15 * * * *'
-  
-  # Allows you to run this workflow manually from the Actions tab
+    - cron: '0 1 * * *'
   workflow_dispatch:
 
 jobs:
