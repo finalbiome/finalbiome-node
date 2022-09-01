@@ -25,6 +25,10 @@
         "^serde[-_]?"
       ],
       "groupName": "serde packages"
+    },
+    {
+      "matchSourceUrlPrefixes": ["https://github.com/paritytech/substrate"],
+      "groupName": "substrate packages"
     }
   ],
   "regexManagers": [
