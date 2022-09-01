@@ -1,6 +1,30 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "github>finalbiome/renovate-config:rust"
+  "dependencyDashboard": true,
+  "semanticCommitType": "fix",
+  "packageRules": [
+    {
+      "packagePatterns": ["^finalbiome[-_]?"],
+      "groupName": "finalbiome packages"
+    },
+    {
+      "packagePatterns": ["^pallet[-_]?"],
+      "groupName": "finalbiome pallet packages"
+    },
+    {
+      "packagePatterns": ["^serde[-_]?"],
+      "groupName": "serde packages"
+    }
+  ],
+  "regexManagers": [
+    {
+      "fileMatch": ["^rust-toolchain\\.toml?$"],
+      "matchStrings": [
+        "channel\\s*=\\s*\"(?<currentValue>\\d+\\.\\d+\\.\\d+)\""
+      ],
+      "depNameTemplate": "rust",
+      "lookupNameTemplate": "rust-lang/rust",
+      "datasourceTemplate": "github-releases"
+    }
   ]
 }
