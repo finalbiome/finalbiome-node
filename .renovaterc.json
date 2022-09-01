@@ -1,29 +1,42 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "dependencyDashboard": true,
+  "branchPrefix": "renovate/",
   "semanticCommitType": "fix",
+  "platform": "github",
+  "repositories": [
+    "finalbiome/finalbiome-node"
+  ],
   "packageRules": [
     {
-      "packagePatterns": ["^finalbiome[-_]?"],
+      "matchPackagePatterns": [
+        "^finalbiome[-_]?"
+      ],
       "groupName": "finalbiome packages"
     },
     {
-      "packagePatterns": ["^pallet[-_]?"],
+      "matchPackagePatterns": [
+        "^pallet[-_]?"
+      ],
       "groupName": "finalbiome pallet packages"
     },
     {
-      "packagePatterns": ["^serde[-_]?"],
+      "matchPackagePatterns": [
+        "^serde[-_]?"
+      ],
       "groupName": "serde packages"
     }
   ],
   "regexManagers": [
     {
-      "fileMatch": ["^rust-toolchain\\.toml?$"],
+      "fileMatch": [
+        "^rust-toolchain\\.toml?$"
+      ],
       "matchStrings": [
         "channel\\s*=\\s*\"(?<currentValue>\\d+\\.\\d+\\.\\d+)\""
       ],
       "depNameTemplate": "rust",
-      "lookupNameTemplate": "rust-lang/rust",
+      "packageNameTemplate": "rust-lang/rust",
       "datasourceTemplate": "github-releases"
     }
   ]
