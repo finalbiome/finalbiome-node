@@ -29,6 +29,10 @@
     {
       "matchSourceUrlPrefixes": ["https://github.com/paritytech/substrate"],
       "groupName": "substrate packages"
+    },
+    {
+      "matchPackageNames": ["renovatebot/github-action"],
+      "extends": ["schedule:monthly"]
     }
   ],
   "regexManagers": [
