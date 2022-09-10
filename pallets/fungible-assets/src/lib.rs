@@ -43,6 +43,10 @@ use sp_std::{fmt::Debug, vec::Vec};
 pub mod pallet {
   use super::*;
 
+  #[pallet::pallet]
+  #[pallet::generate_store(pub(super) trait Store)]
+  pub struct Pallet<T>(_);
+
   /// Configure the pallet by specifying the parameters and types on which it depends.
   #[pallet::config]
   pub trait Config: frame_system::Config {
@@ -74,12 +78,6 @@ pub mod pallet {
     // #[pallet::constant]
     // type MaxAssets: Get<u32>;
   }
-
-  #[pallet::pallet]
-  #[pallet::generate_store(pub(super) trait Store)]
-  // #[pallet::without_storage_info]
-  /// Fungible Assets Pallet
-  pub struct Pallet<T>(_);
 
   #[pallet::storage]
   /// Details of an asset.

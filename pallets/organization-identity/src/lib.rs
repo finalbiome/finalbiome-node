@@ -25,9 +25,12 @@ pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
+  use super::*;
   use frame_support::error::BadOrigin;
 
-  use super::*;
+  #[pallet::pallet]
+  #[pallet::generate_store(pub(super) trait Store)]
+  pub struct Pallet<T>(_);
 
   /// Configure the pallet by specifying the parameters and types on which it depends.
   #[pallet::config]
@@ -50,10 +53,6 @@ pub mod pallet {
     #[pallet::constant]
     type MaxMembers: Get<u8>;
   }
-
-  #[pallet::pallet]
-  #[pallet::generate_store(pub(super) trait Store)]
-  pub struct Pallet<T>(_);
 
   #[pallet::storage]
   /// Details of an organization.

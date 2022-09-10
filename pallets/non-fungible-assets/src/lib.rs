@@ -36,9 +36,12 @@ use frame_system::pallet_prelude::*;
 
 #[frame_support::pallet]
 pub mod pallet {
+  use super::*;
   use pallet_support::{CommonError, Index};
 
-  use super::*;
+  #[pallet::pallet]
+  #[pallet::generate_store(pub(super) trait Store)]
+  pub struct Pallet<T>(_);
 
   /// Configure the pallet by specifying the parameters and types on which it depends.
   #[pallet::config]
@@ -51,10 +54,6 @@ pub mod pallet {
     /// Connector to fungible assets instances
     type FungibleAssets: pallet_support::traits::FungibleAssets<Self::AccountId>;
   }
-
-  #[pallet::pallet]
-  #[pallet::generate_store(pub(super) trait Store)]
-  pub struct Pallet<T>(_);
 
   #[pallet::storage]
   /// Details of asset classes.

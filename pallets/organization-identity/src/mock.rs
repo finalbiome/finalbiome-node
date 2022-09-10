@@ -22,8 +22,8 @@ frame_support::construct_runtime!(
     NodeBlock = Block,
     UncheckedExtrinsic = UncheckedExtrinsic,
   {
-    System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-    OrganizationIdentity: pallet_organization_identity::{Pallet, Call, Storage, Event<T>},
+    System: frame_system,
+    OrganizationIdentity: pallet_organization_identity,
   }
 );
 

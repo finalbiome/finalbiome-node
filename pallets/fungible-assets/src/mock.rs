@@ -21,8 +21,8 @@ frame_support::construct_runtime!(
     NodeBlock = Block,
     UncheckedExtrinsic = UncheckedExtrinsic,
   {
-    System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-    FungibleAssets: pallet_fungible_assets::{Pallet, Call, Storage, Event<T>},
+    System: frame_system,
+    FungibleAssets: pallet_fungible_assets,
   }
 );
 

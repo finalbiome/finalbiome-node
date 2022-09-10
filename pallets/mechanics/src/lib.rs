@@ -30,6 +30,10 @@ use frame_support::{log, traits::Randomness};
 pub mod pallet {
   use super::*;
 
+  #[pallet::pallet]
+  #[pallet::generate_store(pub(super) trait Store)]
+  pub struct Pallet<T>(_);
+
   /// Configure the pallet by specifying the parameters and types on which it depends.
   #[pallet::config]
   pub trait Config: frame_system::Config<Index = Index> {
@@ -54,10 +58,6 @@ pub mod pallet {
     #[pallet::constant]
     type MechanicsLifeTime: Get<Self::BlockNumber>;
   }
-
-  #[pallet::pallet]
-  #[pallet::generate_store(pub(super) trait Store)]
-  pub struct Pallet<T>(_);
 
   #[pallet::storage]
   /// Store of the Mechanics.
