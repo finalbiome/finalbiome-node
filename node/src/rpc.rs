@@ -7,8 +7,8 @@
 
 use std::sync::Arc;
 
-use jsonrpsee::RpcModule;
 use finalbiome_node_runtime::{opaque::Block, AccountId, Balance, Index};
+use jsonrpsee::RpcModule;
 use sc_transaction_pool_api::TransactionPool;
 use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
@@ -28,7 +28,7 @@ pub struct FullDeps<C, P> {
 
 /// Instantiate all full RPC extensions.
 pub fn create_full<C, P>(
-	deps: FullDeps<C, P>,
+  deps: FullDeps<C, P>,
 ) -> Result<RpcModule<()>, Box<dyn std::error::Error + Send + Sync>>
 where
   C: ProvideRuntimeApi<Block>,
@@ -40,7 +40,7 @@ where
   P: TransactionPool + 'static,
 {
   use pallet_transaction_payment_rpc::{TransactionPaymentApiServer, TransactionPaymentRpc};
-	use substrate_frame_rpc_system::{SystemApiServer, SystemRpc};
+  use substrate_frame_rpc_system::{SystemApiServer, SystemRpc};
 
   let mut module = RpcModule::new(());
   let FullDeps {
@@ -50,7 +50,7 @@ where
   } = deps;
 
   module.merge(SystemRpc::new(client.clone(), pool.clone(), deny_unsafe).into_rpc())?;
-	module.merge(TransactionPaymentRpc::new(client).into_rpc())?;
+  module.merge(TransactionPaymentRpc::new(client).into_rpc())?;
 
   // Extend this RPC with a custom API by using the following syntax.
   // `YourRpcStruct` should have a reference to a client, which is needed

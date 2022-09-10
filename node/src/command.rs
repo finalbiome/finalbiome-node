@@ -168,8 +168,7 @@ pub fn run() -> sc_cli::Result<()> {
               Arc::new(ext_builder),
             )
           },
-          BenchmarkCmd::Machine(cmd) =>
-						cmd.run(&config, SUBSTRATE_REFERENCE_HARDWARE.clone()),
+          BenchmarkCmd::Machine(cmd) => cmd.run(&config, SUBSTRATE_REFERENCE_HARDWARE.clone()),
         }
       })
     },
@@ -195,9 +194,9 @@ pub fn run() -> sc_cli::Result<()> {
         .into(),
     ),
     Some(Subcommand::ChainInfo(cmd)) => {
-			let runner = cli.create_runner(cmd)?;
-			runner.sync_run(|config| cmd.run::<Block>(&config))
-		},
+      let runner = cli.create_runner(cmd)?;
+      runner.sync_run(|config| cmd.run::<Block>(&config))
+    },
     None => {
       let runner = cli.create_runner(&cli.run)?;
       runner.run_node_until_exit(|config| async move {

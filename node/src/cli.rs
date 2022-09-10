@@ -49,5 +49,5 @@ pub enum Subcommand {
   TryRuntime,
 
   /// Db meta columns information.
-	ChainInfo(sc_cli::ChainInfoCmd),
+  ChainInfo(sc_cli::ChainInfoCmd),
 }
