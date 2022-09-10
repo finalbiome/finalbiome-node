@@ -1,5 +1,7 @@
 # FinalBiome Node
 
+[![CI](https://github.com/finalbiome/finalbiome-node/actions/workflows/check.yml/badge.svg)](https://github.com/finalbiome/finalbiome-node/actions/workflows/check.yml)
+
 A node of the FinalBiome Network.
 
 ## Development
