@@ -225,7 +225,7 @@ impl<T: Config> Pallet<T> {
       current_topupped.remove(index);
       <TopUppedAssets<T>>::put(current_topupped);
       // remove all records for that asset in TopUpQueue (if exisit)
-      <TopUpQueue<T>>::remove_prefix(&id, None);
+      _ = <TopUpQueue<T>>::clear_prefix(&id, u32::MAX, None);
     };
   }
 

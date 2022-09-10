@@ -34,7 +34,7 @@ impl<T: Config> Pallet<T> {
       }
       ClassAccounts::<T>::remove(&class_details.owner, &class_id);
       // Remove attributes for class and for all instances
-      ClassAttributes::<T>::remove_prefix(&class_id, None);
+      _ = ClassAttributes::<T>::clear_prefix(&class_id, u32::MAX, None);
       Self::deposit_event(Event::Destroyed { class_id });
       Ok(())
     })
@@ -91,7 +91,7 @@ impl<T: Config> Pallet<T> {
       };
       Accounts::<T>::remove((&asset_details.owner, &class_id, &asset_id));
       // Remove attributes for an instance
-      Attributes::<T>::remove_prefix(&asset_id, None);
+      _ = Attributes::<T>::clear_prefix(&asset_id, u32::MAX, None);
       // decrease class intances counter
       Classes::<T>::try_mutate(&class_id, |maybe_class_details| -> DispatchResult {
         let class_details = maybe_class_details
