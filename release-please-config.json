@@ -1,5 +1,4 @@
 {
-  "plugins": ["cargo-workspace"],
   "bootstrap-sha": "7a9a7db34be2e37cf96c99dcef03cb0a6f9acd27",
   "release-type": "rust",
   "changelog-path": "CHANGELOG.md",
