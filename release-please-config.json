@@ -8,17 +8,17 @@
   "draft": false,
   "prerelease": false,
   "packages": {
+    "pallets/template": {},
+    "pallets/support": {},
+    "pallets/mechanics": {},
+    "pallets/non-fungible-assets": {},
+    "pallets/fungible-assets": {},
+    "pallets/organization-identity": {},
+    "runtime": {},
+    "node": {},
     ".": {
       "release-type": "simple",
       "package-name": "finalbiome"
-    },
-    "runtime": {},
-    "node": {},
-    "pallets/fungible-assets": {},
-    "pallets/mechanics": {},
-    "pallets/non-fungible-assets": {},
-    "pallets/organization-identity": {},
-    "pallets/support": {},
-    "pallets/template": {}
+    }
   }
 }
