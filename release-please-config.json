@@ -9,7 +9,6 @@
   "prerelease": false,
   "packages": {
     ".": {
-      "release-type": "simple",
       "package-name": "finalbiome"
     }
   }
