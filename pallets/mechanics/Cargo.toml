@@ -1,6 +1,6 @@
 [package]
 name = "pallet-mechanics"
-version = "1.0.0-dev"
+version = "0.1.0"
 description = "Mechanics provides interaction methods with FA and NFA."
 authors = ["FinalBiome Devs <https://github.com/finalbiome>"]
 homepage = "https://finalbiome.net/"
@@ -21,7 +21,7 @@ frame-system = { version = "4.0.0-dev", default-features = false, git = "https:/
 sp-runtime = { version = "6.0.0", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.28" }
 frame-benchmarking = { version = "4.0.0-dev", default-features = false, optional = true, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.28" }
 sp-std = { version = "4.0.0", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.28" }
-pallet-support = { version = "1.0.0-dev", default-features = false, path = "../support" }
+pallet-support = { version = "0.1.0", default-features = false, path = "../support" }
 
 [dev-dependencies]
 sp-core = { version = "6.0.0", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.28" }
