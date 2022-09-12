@@ -10,7 +10,7 @@
   "packages": {
     ".": {
       "release-type": "simple",
-      "package-name": "FinalBiome Node"
+      "package-name": "finalbiome"
     }
   }
 }
