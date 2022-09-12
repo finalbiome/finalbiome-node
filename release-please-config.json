@@ -18,6 +18,7 @@
     "pallets/mechanics": {},
     "pallets/non-fungible-assets": {},
     "pallets/organization-identity": {},
-    "pallets/support": {}
+    "pallets/support": {},
+    "pallets/template": {}
   }
 }
