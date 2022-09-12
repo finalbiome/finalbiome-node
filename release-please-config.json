@@ -1,14 +1,16 @@
 {
   "plugins": ["cargo-workspace"],
   "bootstrap-sha": "31e050d5799afba833d671dc62bc1224abd46cc1",
+  "release-type": "rust",
+  "changelog-path": "CHANGELOG.md",
+  "bump-minor-pre-major": false,
+  "bump-patch-for-minor-pre-major": false,
+  "draft": false,
+  "prerelease": false,
   "packages": {
     ".": {
-      "release-type": "rust",
-      "changelog-path": "CHANGELOG.md",
-      "bump-minor-pre-major": false,
-      "bump-patch-for-minor-pre-major": false,
-      "draft": false,
-      "prerelease": false
+      "release-type": "simple",
+      "package-name": "FinalBiome Node"
     }
   }
 }
