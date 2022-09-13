@@ -1,6 +1,6 @@
 {
-  ".": "0.2.0",
-  "node": "0.1.0",
+  ".": "0.2.1",
+  "node": "0.1.1",
   "runtime": "0.1.0",
   "pallets/fungible-assets": "0.1.0",
   "pallets/mechanics": "0.1.0",

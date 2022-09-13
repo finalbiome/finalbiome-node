@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/finalbiome/finalbiome-node/compare/finalbiome-node-v0.1.0...finalbiome-node-v0.1.1) (2022-09-13)
+
+
+### Bug Fixes
+
+* **deps:** update rust crate clap to 3.2.21 ([85685a1](https://github.com/finalbiome/finalbiome-node/commit/85685a1fd1dc4b21a93e473e0f366344f8492ea7))
+
 ## 0.1.0 (2022-09-12)
 
 
