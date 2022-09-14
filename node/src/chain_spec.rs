@@ -149,7 +149,6 @@ pub fn development_config() -> Result<ChainSpec, String> {
           (0.into(), br"Req.Level".to_vec(), 91, None),
           (0.into(), br"DPS".to_vec(), 327, None),
           (0.into(), br"Speed".to_vec(), 360, None),
-
           (1.into(), br"Damage".to_vec(), 314, Some(473)),
           (1.into(), br"Intellect".to_vec(), 2044, None),
           (1.into(), br"Stamina".to_vec(), 763, None),
@@ -159,7 +158,11 @@ pub fn development_config() -> Result<ChainSpec, String> {
           (1.into(), br"Speed".to_vec(), 360, None),
         ],
         vec![
-          (0.into(), br"Name".to_vec(), br"Draenic Steel Bulwark".to_vec()),
+          (
+            0.into(),
+            br"Name".to_vec(),
+            br"Draenic Steel Bulwark".to_vec(),
+          ),
           (0.into(), br"Slot".to_vec(), br"Off Hand".to_vec()),
           (1.into(), br"Name".to_vec(), br"Maledict Opus".to_vec()),
           (1.into(), br"Slot".to_vec(), br"Two Hand".to_vec()),
@@ -312,7 +315,6 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
           (0.into(), br"Req.Level".to_vec(), 91, None),
           (0.into(), br"DPS".to_vec(), 327, None),
           (0.into(), br"Speed".to_vec(), 360, None),
-
           (1.into(), br"Damage".to_vec(), 314, Some(473)),
           (1.into(), br"Intellect".to_vec(), 2044, None),
           (1.into(), br"Stamina".to_vec(), 763, None),
@@ -322,7 +324,11 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
           (1.into(), br"Speed".to_vec(), 360, None),
         ],
         vec![
-          (0.into(), br"Name".to_vec(), br"Draenic Steel Bulwark".to_vec()),
+          (
+            0.into(),
+            br"Name".to_vec(),
+            br"Draenic Steel Bulwark".to_vec(),
+          ),
           (0.into(), br"Slot".to_vec(), br"Off Hand".to_vec()),
           (1.into(), br"Name".to_vec(), br"Maledict Opus".to_vec()),
           (1.into(), br"Slot".to_vec(), br"Two Hand".to_vec()),
