@@ -62,14 +62,15 @@ pub fn development_config() -> Result<ChainSpec, String> {
           get_account_id_from_seed::<sr25519::Public>("Bob"),
           get_account_id_from_seed::<sr25519::Public>("Eve"),
           get_account_id_from_seed::<sr25519::Public>("Ferdie"),
-          get_account_id_from_seed::<sr25519::Public>("Mike"),
           get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
           get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
           get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
           get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
-          get_account_id_from_seed::<sr25519::Public>("Mike//stash"),
           get_account_id_from_seed::<sr25519::Public>("Charlie"),
           get_account_id_from_seed::<sr25519::Public>("Dave"),
+          get_account_id_from_seed::<sr25519::Public>("Mike"),
+          get_account_id_from_seed::<sr25519::Public>("Pat"),
+          get_account_id_from_seed::<sr25519::Public>("Oscar"),
         ],
         // Organization accounts
         vec![
@@ -110,7 +111,7 @@ pub fn development_config() -> Result<ChainSpec, String> {
           (
             1.into(),
             get_account_id_from_seed::<sr25519::Public>("Eve"),
-            br"Energy".to_vec(),
+            br"Mana".to_vec(),
             Some(5.into()),
             None,
             Some(2000.into()),
@@ -119,7 +120,7 @@ pub fn development_config() -> Result<ChainSpec, String> {
         // Balances of Fungible Assets
         vec![
           (
-            get_account_id_from_seed::<sr25519::Public>("Charlie"),
+            get_account_id_from_seed::<sr25519::Public>("Dave"),
             0.into(),
             1000.into(),
           ),
@@ -133,32 +134,52 @@ pub fn development_config() -> Result<ChainSpec, String> {
           (
             0.into(),
             get_account_id_from_seed::<sr25519::Public>("Eve"),
-            br"nfa01".to_vec(),
+            br"Shield".to_vec(),
           ),
           (
             1.into(),
             get_account_id_from_seed::<sr25519::Public>("Eve"),
-            br"nfa02".to_vec(),
+            br"Stave".to_vec(),
           ),
         ],
         vec![
-          (0.into(), br"atr1".to_vec(), 5u32, Some(10u32)),
-          (0.into(), br"atr2".to_vec(), 20u32, None),
+          (0.into(), br"Armor".to_vec(), 18873, Some(40000)),
+          (0.into(), br"Stamina".to_vec(), 5076, None),
+          (0.into(), br"Level".to_vec(), 637, None),
+          (0.into(), br"Req.Level".to_vec(), 91, None),
+          (0.into(), br"DPS".to_vec(), 327, None),
+          (0.into(), br"Speed".to_vec(), 360, None),
+          (1.into(), br"Damage".to_vec(), 314, Some(473)),
+          (1.into(), br"Intellect".to_vec(), 2044, None),
+          (1.into(), br"Stamina".to_vec(), 763, None),
+          (1.into(), br"Level".to_vec(), 223, None),
+          (1.into(), br"Req.Level".to_vec(), 60, None),
+          (1.into(), br"DPS".to_vec(), 327, None),
+          (1.into(), br"Speed".to_vec(), 360, None),
         ],
-        vec![(0.into(), br"atr3".to_vec(), br"stone".to_vec())],
+        vec![
+          (
+            0.into(),
+            br"Name".to_vec(),
+            br"Draenic Steel Bulwark".to_vec(),
+          ),
+          (0.into(), br"Slot".to_vec(), br"Off Hand".to_vec()),
+          (1.into(), br"Name".to_vec(), br"Maledict Opus".to_vec()),
+          (1.into(), br"Slot".to_vec(), br"Two Hand".to_vec()),
+        ],
         vec![
           // class_id, fa_id, price, attrs [key, num_value, num_max, text_value]
           (
             0.into(),
-            0.into(),
-            10.into(),
-            vec![(br"attr4".to_vec(), Some(10), None, None)],
+            0.into(), // Gold
+            28.into(),
+            vec![(br"Price".to_vec(), Some(28), None, None)],
           ),
           (
-            0.into(),
-            0.into(),
+            1.into(),
+            0.into(), // Gold
             50.into(),
-            vec![(br"attr4".to_vec(), Some(50), None, None)],
+            vec![(br"Price".to_vec(), Some(159), None, None)],
           ),
         ],
         true,
@@ -213,6 +234,9 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
           get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
           get_account_id_from_seed::<sr25519::Public>("Charlie"),
           get_account_id_from_seed::<sr25519::Public>("Dave"),
+          get_account_id_from_seed::<sr25519::Public>("Mike"),
+          get_account_id_from_seed::<sr25519::Public>("Pat"),
+          get_account_id_from_seed::<sr25519::Public>("Oscar"),
         ],
         // Organization accounts
         vec![
@@ -253,7 +277,7 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
           (
             1.into(),
             get_account_id_from_seed::<sr25519::Public>("Eve"),
-            br"Energy".to_vec(),
+            br"Mana".to_vec(),
             Some(5.into()),
             None,
             Some(2000.into()),
@@ -262,7 +286,7 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
         // Balances of Fungible Assets
         vec![
           (
-            get_account_id_from_seed::<sr25519::Public>("Charlie"),
+            get_account_id_from_seed::<sr25519::Public>("Dave"),
             0.into(),
             1000.into(),
           ),
@@ -276,32 +300,52 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
           (
             0.into(),
             get_account_id_from_seed::<sr25519::Public>("Eve"),
-            br"nfa01".to_vec(),
+            br"Shield".to_vec(),
           ),
           (
             1.into(),
             get_account_id_from_seed::<sr25519::Public>("Eve"),
-            br"nfa02".to_vec(),
+            br"Stave".to_vec(),
           ),
         ],
         vec![
-          (0.into(), br"atr1".to_vec(), 5u32, Some(10u32)),
-          (0.into(), br"atr2".to_vec(), 20u32, None),
+          (0.into(), br"Armor".to_vec(), 18873, Some(40000)),
+          (0.into(), br"Stamina".to_vec(), 5076, None),
+          (0.into(), br"Level".to_vec(), 637, None),
+          (0.into(), br"Req.Level".to_vec(), 91, None),
+          (0.into(), br"DPS".to_vec(), 327, None),
+          (0.into(), br"Speed".to_vec(), 360, None),
+          (1.into(), br"Damage".to_vec(), 314, Some(473)),
+          (1.into(), br"Intellect".to_vec(), 2044, None),
+          (1.into(), br"Stamina".to_vec(), 763, None),
+          (1.into(), br"Level".to_vec(), 223, None),
+          (1.into(), br"Req.Level".to_vec(), 60, None),
+          (1.into(), br"DPS".to_vec(), 327, None),
+          (1.into(), br"Speed".to_vec(), 360, None),
         ],
-        vec![(0.into(), br"atr3".to_vec(), br"stone".to_vec())],
+        vec![
+          (
+            0.into(),
+            br"Name".to_vec(),
+            br"Draenic Steel Bulwark".to_vec(),
+          ),
+          (0.into(), br"Slot".to_vec(), br"Off Hand".to_vec()),
+          (1.into(), br"Name".to_vec(), br"Maledict Opus".to_vec()),
+          (1.into(), br"Slot".to_vec(), br"Two Hand".to_vec()),
+        ],
         vec![
           // class_id, fa_id, price, attrs [key, num_value, num_max, text_value]
           (
             0.into(),
-            0.into(),
-            10.into(),
-            vec![(br"attr4".to_vec(), Some(10), None, None)],
+            0.into(), // Gold
+            28.into(),
+            vec![(br"Price".to_vec(), Some(28), None, None)],
           ),
           (
-            0.into(),
-            0.into(),
+            1.into(),
+            0.into(), // Gold
             50.into(),
-            vec![(br"attr4".to_vec(), Some(50), None, None)],
+            vec![(br"Price".to_vec(), Some(159), None, None)],
           ),
         ],
         true,

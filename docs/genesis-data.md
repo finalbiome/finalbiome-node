@@ -15,43 +15,53 @@ The document contains data that is included in the genesis block.
 ## FA
 
 ### Assets
-  1.  Gold `0`
-      owner `Eve`
-      top up - None
-      local cup - None
-      global cup - None
-  2.  Energy `1`
-      owner `Eve`
-      top up - 5
-      local cup - 20
-      global cup - None
+  1.  `Gold` - `0`  
+      owner `Eve`  
+  2.  `Mana` - `1`  
+      owner `Eve`  
+      top up - 5  
+      local cup - 20  
+      global cup - None  
 ### Balances
-  1.  Charlie
-      ass01 - 1000
-  2.  Dave
-      ass02 - 20
+  1.  Dave  
+      `Gold` - 1000
+      `Mana` - 20
 
-## FNA
-  1.  nfa01 `0`
-      owner `Eve`
-      attrs: [
-        * attr1 - `stone`
-        * attr2 - (5, 10)
-        * attr3 - (20, None)
-      ]
-      purchased:
-        * offer1
-          - fa - `0`
-          - price - `10`
-          - attrs [
-            * attr4 - (10, None)
-          ]
-        * offer2
-          - fa - `0`
-          - price - `50`
-          - attrs [
-            * attr4 - (50, None)
-          ]
-  1.  nfa02 `1`
-      owner `Eve`
-      attrs: []
+## NFA
+  1.  `Shield` - `0`  
+    Owner `Eve`  
+    Attrs: [
+      * Name - `Draenic Steel Bulwark`
+      * Armor - (18873, 40000)
+      * Stamina - (5076, None)
+      * Level - (637, None)
+      * Req.Level - (91, None)
+      * DPS - (327, None)
+      * Speed - (360, None)
+      * Slot - `Off Hand`
+    ]
+    purchased:
+      * offer1
+        - fa - `0`
+        - price - `28`
+        - attrs:
+          * Price - (28, None)
+  1.  `Stave` - `1`  
+    Owner `Eve`  
+    Attrs: [
+      * Name - `Maledict Opus`
+      * Damage - (314, 473)
+      * Intellect - (2044, None)
+      * Stamina - (763, None)
+      * Level - (223, None)
+      * Req.Level - (60, None)
+      * DPS - (327, None)
+      * Speed - (360, None)
+      * Slot - `Two Hand`
+    ]
+    purchased:
+      * offer1
+        - fa - `0`
+        - price - `159`
+        - attrs:
+          * Price - (159, None)
