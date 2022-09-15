@@ -307,7 +307,7 @@ impl pallet_mechanics::Config for Runtime {
   type NonFungibleAssets = NonFungibleAssets;
   type Randomness = RandomnessCollectiveFlip;
   type AssetsListLimit = ConstU32<64>;
-  type MechanicsLifeTime = ConstU32<60>;
+  type MechanicsLifeTime = ConstU32<300>;
   type ExecuteOrigin = pallet_organization_identity::EnsureUser<Runtime>;
 }
 
