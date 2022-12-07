@@ -28,7 +28,7 @@ use frame_support::{log, traits::Randomness};
 
 #[frame_support::pallet]
 pub mod pallet {
-  use pallet_support::{GameAccountOf};
+  use pallet_support::GameAccountOf;
   use super::*;
 
   #[pallet::pallet]
@@ -64,9 +64,9 @@ pub mod pallet {
   /// Store of the Mechanics.
   pub(super) type Mechanics<T: Config> = StorageDoubleMap<
     _,
-    Blake2_128Concat,
+    Twox64Concat,
     GameAccountOf<T>,
-    Blake2_128Concat,
+    Twox64Concat,
     T::Index,
     MechanicDetailsOf<T>,
     OptionQuery,
@@ -77,9 +77,9 @@ pub mod pallet {
   pub(super) type Timeouts<T: Config> = StorageNMap<
     _,
     (
-      NMapKey<Blake2_128Concat, T::BlockNumber>, // when time out will happen
-      NMapKey<Blake2_128Concat, GameAccountOf<T>>,
-      NMapKey<Blake2_128Concat, T::Index>,
+      NMapKey<Twox64Concat, T::BlockNumber>, // when time out will happen
+      NMapKey<Twox64Concat, GameAccountOf<T>>,
+      NMapKey<Twox64Concat, T::Index>,
     ),
     (),
     OptionQuery,
