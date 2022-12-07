@@ -1,5 +1,5 @@
 use codec::{Decode, Encode, MaxEncodedLen};
-use pallet_support::{DefaultListLengthLimit, IndexOf, LockedAccet, BETTOR_MAX_NUMBER_OF_ROUNDS};
+use pallet_support::{DefaultListLengthLimit, IndexOf, LockedAccet, BETTOR_MAX_NUMBER_OF_ROUNDS, GamerAccount};
 use scale_info::TypeInfo;
 
 use super::*;
@@ -29,7 +29,7 @@ pub enum Mechanic {
 /// The details of the active mechanic
 pub(crate) struct MechanicDetails<AccountId, BlockNumber> {
   /// Owner of the mechanic
-  pub owner: AccountId,
+  pub owner: GamerAccount<AccountId>,
   /// Mechain timeout id
   pub timeout_id: BlockNumber,
   /// List of assets locked by mechanic
@@ -43,7 +43,7 @@ where
   BlockNumber: Copy,
 {
   /// Returns a storage key for the [Pallet::Timeouts] storage
-  pub fn get_tiomeout_strorage_key(&self, nonce: Index) -> (BlockNumber, AccountId, Index) {
+  pub fn get_tiomeout_strorage_key(&self, nonce: Index) -> (BlockNumber, GamerAccount<AccountId>, Index) {
     (self.timeout_id, self.owner.clone(), nonce)
   }
 }
@@ -52,7 +52,7 @@ where
 /// Used for construction new mechanic data struct.
 pub(crate) struct MechanicDetailsBuilder {}
 impl MechanicDetailsBuilder {
-  pub fn build<T: pallet::Config>(owner: T::AccountId, data: MechanicData) -> MechanicDetailsOf<T> {
+  pub fn build<T: pallet::Config>(owner: GamerAccount<T::AccountId>, data: MechanicData) -> MechanicDetailsOf<T> {
     let timeout_id = Pallet::<T>::calc_timeout_block();
     MechanicDetails {
       owner,

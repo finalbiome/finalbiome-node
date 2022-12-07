@@ -28,6 +28,7 @@ use frame_support::{log, traits::Randomness};
 
 #[frame_support::pallet]
 pub mod pallet {
+  use pallet_support::{GameAccountOf};
   use super::*;
 
   #[pallet::pallet]
@@ -64,7 +65,7 @@ pub mod pallet {
   pub(super) type Mechanics<T: Config> = StorageDoubleMap<
     _,
     Blake2_128Concat,
-    T::AccountId,
+    GameAccountOf<T>,
     Blake2_128Concat,
     T::Index,
     MechanicDetailsOf<T>,
@@ -77,7 +78,7 @@ pub mod pallet {
     _,
     (
       NMapKey<Blake2_128Concat, T::BlockNumber>, // when time out will happen
-      NMapKey<Blake2_128Concat, T::AccountId>,
+      NMapKey<Blake2_128Concat, GameAccountOf<T>>,
       NMapKey<Blake2_128Concat, T::Index>,
     ),
     (),
@@ -89,13 +90,13 @@ pub mod pallet {
   pub enum Event<T: Config> {
     /// Mechanics done.
     Finished {
-      owner: T::AccountId,
+      owner: GameAccountOf<T>,
       id: T::Index,
       result: EventMechanicResult,
     },
     /// Mechanics was stopped.
     Stopped {
-      owner: T::AccountId,
+      owner: GameAccountOf<T>,
       id: T::Index,
       reason: EventMechanicStopReason,
     },
@@ -146,19 +147,20 @@ pub mod pallet {
     #[pallet::weight(T::DbWeight::get().reads_writes(1, 1))]
     pub fn exec_buy_nfa(
       origin: OriginFor<T>,
+      organization_id: AccountIdOf<T>,
       class_id: NonFungibleClassId,
       offer_id: u32,
     ) -> DispatchResult {
       // Only a regular user can execute mechanic
       let who = T::ExecuteOrigin::ensure_origin(origin)?;
       // Generate mechanic id
-      let mechanic_id = Self::get_mechanic_id(&who);
+      let mechanic_id = Self::get_mechanic_id(&who, &organization_id);
       let asset_id = Self::do_buy_nfa(&who, &class_id, &offer_id)?;
 
       let result: EventMechanicResult = Some(EventMechanicResultData::BuyNfa(asset_id));
       Self::deposit_event(Event::Finished {
         id: mechanic_id.nonce,
-        owner: mechanic_id.account_id,
+        owner: mechanic_id.gamer_account,
         result,
       });
       Ok(())
@@ -168,21 +170,26 @@ pub mod pallet {
     #[pallet::weight(T::DbWeight::get().reads_writes(5, 5))]
     pub fn exec_bet(
       origin: OriginFor<T>,
+      organization_id: AccountIdOf<T>,
       class_id: NonFungibleClassId,
       asset_id: NonFungibleAssetId,
     ) -> DispatchResult {
       // Only a regular user can execute mechanic
       let who = T::ExecuteOrigin::ensure_origin(origin)?;
-      Self::do_bet(&who, &class_id, &asset_id)?;
+      Self::do_bet(&who, &organization_id, &class_id, &asset_id)?;
       Ok(())
     }
 
     /// Upgrade mechanic
     #[pallet::weight(T::DbWeight::get().reads_writes(1, 1))]
-    pub fn upgrade(origin: OriginFor<T>, upgrage_data: MechanicUpgradeDataOf<T>) -> DispatchResult {
+    pub fn upgrade(
+      origin: OriginFor<T>,
+      organization_id: AccountIdOf<T>,
+      upgrage_data: MechanicUpgradeDataOf<T>
+    ) -> DispatchResult {
       // Only a regular user can upgrade mechanic
       let who = T::ExecuteOrigin::ensure_origin(origin)?;
-      Self::do_upgrade(&who, upgrage_data)?;
+      Self::do_upgrade(&who, &organization_id, upgrage_data)?;
       Ok(())
     }
   }
