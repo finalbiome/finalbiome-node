@@ -162,7 +162,7 @@ pub mod pallet {
       // filling classes
       for (class_id, organization_id, name) in &self.classes {
         assert!(
-          !Classes::<T>::contains_key(&class_id),
+          !Classes::<T>::contains_key(class_id),
           "Class id already in use"
         );
         let details = ClassDetailsBuilder::<T>::new(organization_id.clone(), name.clone())
@@ -190,7 +190,7 @@ pub mod pallet {
       }
       for (class_id, key, value) in &self.text_attributes {
         assert!(
-          Classes::<T>::contains_key(&class_id),
+          Classes::<T>::contains_key(class_id),
           "Class id doesn't exist"
         );
 
@@ -365,7 +365,7 @@ pub mod pallet {
       let class_id = Self::get_next_class_id()?;
 
       Classes::<T>::insert(class_id, class_details);
-      ClassAccounts::<T>::insert(&owner, &class_id, ());
+      ClassAccounts::<T>::insert(&owner, class_id, ());
 
       Self::deposit_event(Event::Created { class_id, owner });
 

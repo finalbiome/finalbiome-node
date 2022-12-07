@@ -32,9 +32,9 @@ impl<T: Config> Pallet<T> {
       if let Some(check_owner) = maybe_check_owner {
         ensure!(class_details.owner == check_owner, Error::<T>::NoPermission);
       }
-      ClassAccounts::<T>::remove(&class_details.owner, &class_id);
+      ClassAccounts::<T>::remove(&class_details.owner, class_id);
       // Remove attributes for class and for all instances
-      _ = ClassAttributes::<T>::clear_prefix(&class_id, u32::MAX, None);
+      _ = ClassAttributes::<T>::clear_prefix(class_id, u32::MAX, None);
       Self::deposit_event(Event::Destroyed { class_id });
       Ok(())
     })
@@ -45,7 +45,7 @@ impl<T: Config> Pallet<T> {
     owner: T::AccountId,
   ) -> DispatchResultAs<NonFungibleAssetId> {
     let mut asset_id = 0u32.into();
-    Classes::<T>::try_mutate(&class_id, |maybe_class_details| -> DispatchResult {
+    Classes::<T>::try_mutate(class_id, |maybe_class_details| -> DispatchResult {
       let class_details = maybe_class_details
         .as_mut()
         .ok_or(Error::<T>::UnknownClass)?;
@@ -63,7 +63,7 @@ impl<T: Config> Pallet<T> {
       Accounts::<T>::insert((&owner, &class_id, &asset_id), ());
 
       let asset_details = AssetDetailsBuilder::<T>::new(owner.clone())?.build()?;
-      Assets::<T>::insert(&class_id, &asset_id, asset_details);
+      Assets::<T>::insert(class_id, asset_id, asset_details);
 
       Self::deposit_event(Event::Issued {
         class_id,
@@ -91,9 +91,9 @@ impl<T: Config> Pallet<T> {
       };
       Accounts::<T>::remove((&asset_details.owner, &class_id, &asset_id));
       // Remove attributes for an instance
-      _ = Attributes::<T>::clear_prefix(&asset_id, u32::MAX, None);
+      _ = Attributes::<T>::clear_prefix(asset_id, u32::MAX, None);
       // decrease class intances counter
-      Classes::<T>::try_mutate(&class_id, |maybe_class_details| -> DispatchResult {
+      Classes::<T>::try_mutate(class_id, |maybe_class_details| -> DispatchResult {
         let class_details = maybe_class_details
           .as_mut()
           .ok_or(Error::<T>::UnknownClass)?;
@@ -128,13 +128,13 @@ impl<T: Config> Pallet<T> {
       ensure!(details.owner == check_owner, Error::<T>::NoPermission);
     }
     // Attribute must not exits
-    if ClassAttributes::<T>::contains_key(&class_id, &attribute.key) {
+    if ClassAttributes::<T>::contains_key(class_id, &attribute.key) {
       return Err(Error::<T>::AttributeAlreadyExists.into());
     }
 
-    ClassAttributes::<T>::insert(&class_id, &attribute.key, &attribute.value);
+    ClassAttributes::<T>::insert(class_id, &attribute.key, &attribute.value);
     details.attributes.saturating_inc();
-    Classes::<T>::insert(&class_id, &details);
+    Classes::<T>::insert(class_id, &details);
     Self::deposit_event(Event::AttributeCreated {
       class_id,
       key: attribute.key,
@@ -153,9 +153,9 @@ impl<T: Config> Pallet<T> {
     if let Some(check_owner) = maybe_check_owner {
       ensure!(details.owner == check_owner, Error::<T>::NoPermission);
     }
-    if ClassAttributes::<T>::take(&class_id, &attribute_name).is_some() {
+    if ClassAttributes::<T>::take(class_id, &attribute_name).is_some() {
       details.attributes.saturating_dec();
-      Classes::<T>::insert(&class_id, &details);
+      Classes::<T>::insert(class_id, &details);
       Self::deposit_event(Event::AttributeRemoved {
         class_id,
         key: attribute_name,
@@ -214,7 +214,7 @@ impl<T: Config> Pallet<T> {
       },
     };
 
-    Classes::<T>::insert(&class_id, &details);
+    Classes::<T>::insert(class_id, &details);
     Self::deposit_event(Event::Updated { class_id });
     Ok(())
   }

@@ -131,11 +131,11 @@ pub mod pallet {
     fn build(&self) {
       for (org_id, name) in &self.organizations {
         assert!(
-          !Organizations::<T>::contains_key(&org_id),
+          !Organizations::<T>::contains_key(org_id),
           "Organization id already in use"
         );
         Organizations::<T>::insert(
-          &org_id,
+          org_id,
           OrganizationDetails::new(
             name
               .clone()
@@ -144,26 +144,26 @@ pub mod pallet {
               .unwrap(),
           ),
         );
-        Members::<T>::insert(&org_id, ());
+        Members::<T>::insert(org_id, ());
       }
       let members_limit = T::MaxMembers::get();
       for (org_id, member_id) in &self.members_of {
         assert!(
-          Organizations::<T>::contains_key(&org_id),
+          Organizations::<T>::contains_key(org_id),
           "Organization does not exist"
         );
         assert!(
-          !MembersOf::<T>::contains_key(&org_id, &member_id),
+          !MembersOf::<T>::contains_key(org_id, member_id),
           "Member id already in organization"
         );
-        let member_count = MemberCount::<T>::get(&org_id);
+        let member_count = MemberCount::<T>::get(org_id);
         assert!(
           member_count < members_limit,
           "The maximum members per organization exceeded"
         );
-        Members::<T>::insert(&member_id, ());
-        MembersOf::<T>::insert(&org_id, &member_id, ());
-        MemberCount::<T>::insert(&org_id, member_count + 1);
+        Members::<T>::insert(member_id, ());
+        MembersOf::<T>::insert(org_id, member_id, ());
+        MemberCount::<T>::insert(org_id, member_count + 1);
       }
     }
   }
@@ -381,7 +381,7 @@ pub mod pallet {
 impl<T: Config> Pallet<T> {
   /// Returns true if account is an organization
   fn is_organization(account: &T::AccountId) -> bool {
-    Organizations::<T>::contains_key(&account)
+    Organizations::<T>::contains_key(account)
   }
   /// Returns true if account is a member of any organization or organization
   fn is_member_or_organization(account: &T::AccountId) -> bool {
@@ -420,7 +420,7 @@ impl<T: Config> EnsureOriginWithArg<T::Origin, OrganizationIdOf<T>>
 
   fn try_origin(o: T::Origin, a: &OrganizationIdOf<T>) -> Result<Self::Success, T::Origin> {
     o.into().and_then(|o| match o {
-      RawOrigin::Signed(ref who) if MembersOf::<T>::contains_key(&a, &who) => Ok(who.clone()),
+      RawOrigin::Signed(ref who) if MembersOf::<T>::contains_key(a, who) => Ok(who.clone()),
       r => Err(T::Origin::from(r)),
     })
   }

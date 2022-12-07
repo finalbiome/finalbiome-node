@@ -24,7 +24,7 @@ impl<T: Config> Pallet<T> {
 
   /// Drop mechanic if it exist and clear timeout
   pub(crate) fn drop_mechanic(id: &MechanicIdOf<T>, asset_action: AssetAction) -> DispatchResult {
-    let mechanic = Mechanics::<T>::take(&id.account_id, &id.nonce);
+    let mechanic = Mechanics::<T>::take(&id.account_id, id.nonce);
     if let Some(mechanic) = mechanic {
       Timeouts::<T>::remove(mechanic.get_tiomeout_strorage_key(id.nonce));
       // clear all locks for this mechanic
@@ -56,7 +56,7 @@ impl<T: Config> Pallet<T> {
   pub(crate) fn try_lock(id: &MechanicIdOf<T>, asset_id: LockedAccet) -> DispatchResult {
     Mechanics::<T>::try_mutate(
       &id.account_id,
-      &id.nonce,
+      id.nonce,
       |maybe_mechanic| -> DispatchResult {
         match maybe_mechanic {
           Some(ref mut mechanic) => {
@@ -80,7 +80,7 @@ impl<T: Config> Pallet<T> {
   pub(crate) fn _clear_lock(id: &MechanicIdOf<T>, asset_id: LockedAccet) -> DispatchResult {
     Mechanics::<T>::try_mutate(
       &id.account_id,
-      &id.nonce,
+      id.nonce,
       |maybe_mechanic| -> DispatchResult {
         match maybe_mechanic {
           Some(ref mut mechanic) => {
@@ -162,7 +162,7 @@ impl<T: Config> Pallet<T> {
     let data = MechanicData::Bet(MechanicDataBet::default());
     let mechanic = MechanicDetailsBuilder::build::<T>(mechanic_id.account_id.clone(), data);
     let timeout_key = mechanic.get_tiomeout_strorage_key(mechanic_id.nonce);
-    Mechanics::<T>::insert(&mechanic_id.account_id, &mechanic_id.nonce, mechanic);
+    Mechanics::<T>::insert(&mechanic_id.account_id, mechanic_id.nonce, mechanic);
     Timeouts::<T>::insert(timeout_key, ());
 
     let _ = Self::try_lock_nfa(&mechanic_id, who, *class_id, *asset_id).map_err(|err| {
@@ -196,7 +196,7 @@ impl<T: Config> Pallet<T> {
     mechanic_id
       .ensure_owner(who)
       .map_err(|_| Error::<T>::MechanicsNotAvailable)?;
-    let mechanic = Mechanics::<T>::try_get(&mechanic_id.account_id, &mechanic_id.nonce)
+    let mechanic = Mechanics::<T>::try_get(&mechanic_id.account_id, mechanic_id.nonce)
       .map_err(|_| Error::<T>::MechanicsNotAvailable)?;
     // get bet asset from mechanic lock
     // for the Bet mechanic only one asset can be using
@@ -422,7 +422,7 @@ impl<T: Config> Pallet<T> {
   pub(crate) fn add_bet_result(id: &MechanicIdOf<T>, outcomes: &[u32]) -> DispatchResult {
     Mechanics::<T>::try_mutate(
       &id.account_id,
-      &id.nonce,
+      id.nonce,
       |maybe_mechanic| -> DispatchResult {
         let outcomes: MechanicDataBetOutcomes = outcomes
           .to_vec()
@@ -481,7 +481,7 @@ impl<T: Config> Pallet<T> {
     // checks an mechanic existance
     let mechanic = Mechanics::<T>::try_get(
       &upgrage_data.mechanic_id.account_id,
-      &upgrage_data.mechanic_id.nonce,
+      upgrage_data.mechanic_id.nonce,
     )
     .map_err(|_| Error::<T>::MechanicsNotAvailable)?;
     // checks mechanic owner

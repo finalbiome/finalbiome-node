@@ -185,7 +185,7 @@ impl<T: Config> Pallet<T> {
     })?;
     // Put an account to the queue for top upped of the balance if it needed
     if target_topup != TopUpConsequence::None {
-      TopUpQueue::<T>::insert(&id, &target, ());
+      TopUpQueue::<T>::insert(id, target, ());
     }
 
     Self::deposit_event(Event::Burned {
@@ -225,7 +225,7 @@ impl<T: Config> Pallet<T> {
       current_topupped.remove(index);
       <TopUppedAssets<T>>::put(current_topupped);
       // remove all records for that asset in TopUpQueue (if exisit)
-      _ = <TopUpQueue<T>>::clear_prefix(&id, u32::MAX, None);
+      _ = <TopUpQueue<T>>::clear_prefix(id, u32::MAX, None);
     };
   }
 
@@ -247,11 +247,11 @@ impl<T: Config> Pallet<T> {
 
     for id in assets.iter() {
       reads.saturating_accrue(1);
-      let details = Assets::<T>::get(&id).unwrap();
+      let details = Assets::<T>::get(id).unwrap();
 
-      for (target, _) in TopUpQueue::<T>::drain_prefix(&id) {
+      for (target, _) in TopUpQueue::<T>::drain_prefix(id) {
         reads.saturating_accrue(2); // drain + get details
-        let account = Accounts::<T>::get(&target, &id).unwrap();
+        let account = Accounts::<T>::get(&target, id).unwrap();
         let target_topup = details.next_step_topup(account.balance);
 
         match target_topup {
@@ -272,7 +272,7 @@ impl<T: Config> Pallet<T> {
     }
     // add to queue all unfinished top ups
     for (id, target) in next_topup {
-      TopUpQueue::<T>::insert(&id, &target, ());
+      TopUpQueue::<T>::insert(id, &target, ());
       writes.saturating_accrue(1);
     }
 

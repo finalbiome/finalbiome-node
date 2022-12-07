@@ -145,7 +145,7 @@ pub mod pallet {
       // filling assets
       for (asset_id, organization_id, name, top_upped, cup_global, cup_local) in &self.assets {
         assert!(
-          !Assets::<T>::contains_key(&asset_id),
+          !Assets::<T>::contains_key(asset_id),
           "Asset id already in use"
         );
         let top_upped = top_upped.as_ref().map(|speed| TopUppedFA { speed: *speed });
@@ -161,8 +161,8 @@ pub mod pallet {
           .unwrap()
           .build()
           .unwrap();
-        Assets::<T>::insert(&asset_id, &ad);
-        AssetsOf::<T>::insert(&organization_id, &asset_id, ());
+        Assets::<T>::insert(asset_id, &ad);
+        AssetsOf::<T>::insert(organization_id, asset_id, ());
         let mut id = *asset_id;
         // WARN: assets ids in the genesis config should be monotonically increasing.
         // TODO: refactor to setting a next id from max id in genesis config.
@@ -178,13 +178,13 @@ pub mod pallet {
       }
       // filling account balances
       for (account_id, asset_id, balance) in &self.accounts {
-        assert!(Assets::<T>::contains_key(&asset_id), "Asset id not exists");
+        assert!(Assets::<T>::contains_key(asset_id), "Asset id not exists");
         Pallet::<T>::increase_balance(*asset_id, account_id, *balance).unwrap();
         // add accounts to top up queue, if needed
-        let details = Assets::<T>::get(&asset_id).unwrap();
+        let details = Assets::<T>::get(asset_id).unwrap();
         let target_topup = details.next_step_topup(*balance);
         if target_topup != TopUpConsequence::None {
-          TopUpQueue::<T>::insert(&asset_id, &account_id, ());
+          TopUpQueue::<T>::insert(asset_id, account_id, ());
         }
       }
     }
@@ -303,7 +303,7 @@ pub mod pallet {
       // asset_ids.push(asset_id);
       // let bounded_ids:BoundedVec<AssetId, T::MaxAssets> =
       // asset_ids.clone().try_into().expect("exceed allowed length");
-      AssetsOf::<T>::insert(&owner, &asset_id, ());
+      AssetsOf::<T>::insert(&owner, asset_id, ());
       // if asset is top upped, add it to top_upped_assets
       if let Some(top_upped) = top_upped {
         if top_upped.speed > Zero::zero() {
@@ -330,8 +330,8 @@ pub mod pallet {
       // Only member if the organization can create an asset
       T::CreateOrigin::ensure_origin(origin, &owner)?;
       // TODO: set limits on the number of assets created by each organization
-      Assets::<T>::remove(&asset_id);
-      AssetsOf::<T>::remove(&owner, &asset_id);
+      Assets::<T>::remove(asset_id);
+      AssetsOf::<T>::remove(&owner, asset_id);
       Self::top_upped_asset_remove(&asset_id);
 
       Self::deposit_event(Event::Destroyed { asset_id, owner });
