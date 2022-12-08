@@ -2121,6 +2121,18 @@ fn process_mechanic_timeouts_dropped() {
 
     System::set_block_number(timeout_id);
     assert_eq!(MechanicsModule::process_mechanic_timeouts(), (0, 1));
+    assert_eq!(
+      System::events(),
+      vec![EventRecord {
+        phase: Phase::Initialization,
+        event: MechanicsEvent::DroppedByTimeout {
+          owner: mid.clone(),
+          id: nonce,
+        }
+        .into(),
+        topics: vec![],
+      },]
+    );
 
     assert!(!Mechanics::<Test>::contains_key(&mid, &nonce));
     assert!(!Timeouts::<Test>::contains_key((&timeout_id, &mid, &nonce)));

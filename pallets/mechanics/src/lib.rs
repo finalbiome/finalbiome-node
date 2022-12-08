@@ -100,6 +100,11 @@ pub mod pallet {
       id: T::Index,
       reason: EventMechanicStopReasonOf<T>,
     },
+    /// Mechanics as dropped by typeout.
+    DroppedByTimeout {
+      owner: GameAccountOf<T>,
+      id: T::Index,
+    }
   }
 
   // Errors inform users that something went wrong.

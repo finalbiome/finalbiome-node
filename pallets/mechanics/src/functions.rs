@@ -525,6 +525,10 @@ impl<T: Config> Pallet<T> {
         nonce: mechanic_id.1,
       };
       let _ = Self::drop_mechanic(&id, AssetAction::Burn);
+      Self::deposit_event(Event::DroppedByTimeout {
+        owner: id.gamer_account,
+        id: id.nonce,
+      });
       mechanics_count = mechanics_count.saturating_add(1);
     }
     (0, mechanics_count)
