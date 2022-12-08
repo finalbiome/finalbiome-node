@@ -25,9 +25,9 @@ pub enum Mechanic {
   Bet,
 }
 
-#[derive(Clone, Encode, Decode, TypeInfo, MaxEncodedLen, PartialEq, RuntimeDebug)]
+#[derive(Clone, Encode, Decode, TypeInfo, MaxEncodedLen, PartialEq, Eq, RuntimeDebug)]
 /// The details of the active mechanic
-pub(crate) struct MechanicDetails<AccountId, BlockNumber> {
+pub struct MechanicDetails<AccountId, BlockNumber> {
   /// Owner of the mechanic
   pub owner: GamerAccount<AccountId>,
   /// Mechain timeout id
@@ -63,8 +63,8 @@ impl MechanicDetailsBuilder {
   }
 }
 
-#[derive(Clone, Encode, Decode, TypeInfo, MaxEncodedLen, RuntimeDebug, PartialEq)]
-pub(crate) enum MechanicData {
+#[derive(Clone, Encode, Decode, TypeInfo, MaxEncodedLen, RuntimeDebug, PartialEq, Eq)]
+pub enum MechanicData {
   /// Data of the BuyNfa mechanic. Stub - no data needed
   BuyNfa,
   /// Data of the Bet mechanic
@@ -81,7 +81,7 @@ impl From<&MechanicData> for Mechanic {
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen, Default)]
 /// Data for the Bet machanic hold results of the outcomes of rounds played.
-pub(crate) struct MechanicDataBet {
+pub struct MechanicDataBet {
   /// Each index of `outcomes` represent the played round and a value - index of the dropped
   /// variant in the bettor respectively
   pub outcomes: MechanicDataBetOutcomes,
@@ -119,9 +119,9 @@ impl From<&MechanicUpgradePayload> for Mechanic {
 }
 
 #[derive(Clone, PartialEq, Eq, RuntimeDebug, Encode, Decode, TypeInfo)]
-pub enum EventMechanicStopReason {
-  /// Needs a mechanical upgrade
-  UpgradeNeeded,
+pub enum EventMechanicStopReason<AccountId, BlockNumber> {
+  /// Needs a mechanics upgrade
+  UpgradeNeeded(MechanicDetails<AccountId, BlockNumber>),
 }
 
 #[derive(Clone, PartialEq, Eq, RuntimeDebug, Encode, Decode, TypeInfo)]
@@ -154,6 +154,7 @@ pub(crate) type MechanicDetailsOf<T> = MechanicDetails<AccountIdOf<T>, BlockNumb
 pub(crate) type MechanicDataBetOutcomes = BoundedVec<u32, ConstU32<BETTOR_MAX_NUMBER_OF_ROUNDS>>;
 
 pub(crate) type MechanicUpgradeDataOf<T> = MechanicUpgradeData<AccountIdOf<T>, IndexOf<T>>;
+pub(crate) type EventMechanicStopReasonOf<T> = EventMechanicStopReason<AccountIdOf<T>, BlockNumberFor<T>>;
 
 /// Type of data that hold a result of finished mechanic.
 ///

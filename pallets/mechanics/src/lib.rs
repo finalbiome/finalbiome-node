@@ -98,7 +98,7 @@ pub mod pallet {
     Stopped {
       owner: GameAccountOf<T>,
       id: T::Index,
-      reason: EventMechanicStopReason,
+      reason: EventMechanicStopReasonOf<T>,
     },
   }
 

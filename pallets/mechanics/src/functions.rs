@@ -247,6 +247,7 @@ impl<T: Config> Pallet<T> {
     let result: u32 = Self::choose_outcome(&mechanic_id, &bettor.outcomes);
     let mut outcomes = outcomes;
     outcomes.push(result);
+    let outcomes = outcomes;
 
     let played_rounds = outcomes.len();
     // trying to determine the final result
@@ -259,11 +260,12 @@ impl<T: Config> Pallet<T> {
     } else {
       debug_assert!(bettor.rounds > 1, "bettor cannot have one round here");
       // save results to mechanic data for future uses
-      Self::add_bet_result(&mechanic_id, &outcomes)?;
+      let details = Self::add_bet_result(&mechanic_id, &outcomes)?;
+
       Self::deposit_event(Event::Stopped {
         id: mechanic_id.nonce,
         owner: mechanic_id.gamer_account,
-        reason: EventMechanicStopReason::UpgradeNeeded,
+        reason: EventMechanicStopReason::UpgradeNeeded(details),
       });
     };
     Ok(())
@@ -420,30 +422,32 @@ impl<T: Config> Pallet<T> {
   }
 
   /// Add intermediate result to the Bet mechanic data
-  pub(crate) fn add_bet_result(id: &MechanicIdOf<T>, outcomes: &[u32]) -> DispatchResult {
-    Mechanics::<T>::try_mutate(
+  pub(crate) fn add_bet_result(id: &MechanicIdOf<T>, outcomes: &[u32]) -> DispatchResultAs<MechanicDetailsOf<T>> {
+    let mechanics_details = Mechanics::<T>::try_mutate(
       &id.gamer_account,
       id.nonce,
-      |maybe_mechanic| -> DispatchResult {
+      |maybe_mechanic| -> DispatchResultAs<MechanicDetailsOf<T>> {
         let outcomes: MechanicDataBetOutcomes = outcomes
           .to_vec()
           .try_into()
           .expect("the number of values cannot exceed the number of rounds");
         let data = MechanicData::Bet(MechanicDataBet { outcomes });
-        match maybe_mechanic {
+        let mechanic = match maybe_mechanic {
           Some(ref mut mechanic) => {
             mechanic.data = data;
+            (*mechanic).clone()
           },
           maybe_mechanic @ None => {
             let mechanic = MechanicDetailsBuilder::build::<T>(id.gamer_account.clone(), data);
             Timeouts::<T>::insert(mechanic.get_tiomeout_strorage_key(id.nonce), ());
-            *maybe_mechanic = Some(mechanic);
+            *maybe_mechanic = Some(mechanic.clone());
+            mechanic
           },
-        }
-        Ok(())
+        };
+        Ok(mechanic)
       },
     )?;
-    Ok(())
+    Ok(mechanics_details)
   }
 
   /// Checks if a class can be used for a given mechanic

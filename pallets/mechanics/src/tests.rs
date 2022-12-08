@@ -274,13 +274,13 @@ fn add_bet_result_first_time() {
       &mechanic_id.gamer_account,
       &mechanic_id.nonce
     ));
-    assert_ok!(MechanicsModule::add_bet_result(&mechanic_id, &outcomes));
+    let md0 = MechanicsModule::add_bet_result(&mechanic_id, &outcomes).unwrap();
     assert!(Mechanics::<Test>::contains_key(
       &mechanic_id.gamer_account,
       &mechanic_id.nonce
     ));
     let md = Mechanics::<Test>::get(&mechanic_id.gamer_account, &mechanic_id.nonce).unwrap();
-    match md.data {
+    match md.clone().data {
       MechanicData::Bet(bet_data) => assert_eq!(bet_data.outcomes.into_inner(), outcomes.to_vec()),
       _ => unreachable!(),
     }
@@ -289,16 +289,19 @@ fn add_bet_result_first_time() {
       &mechanic_id.gamer_account,
       &mechanic_id.nonce
     )));
+    assert_eq!(md0, md);
 
     // second time
     let outcomes = [1, 3];
-    assert_ok!(MechanicsModule::add_bet_result(&mechanic_id, &outcomes));
+    // assert_ok!(MechanicsModule::add_bet_result(&mechanic_id, &outcomes));
+    let md0 = MechanicsModule::add_bet_result(&mechanic_id, &outcomes).unwrap();
+
     assert!(Mechanics::<Test>::contains_key(
       &mechanic_id.gamer_account,
       &mechanic_id.nonce
     ));
     let md = Mechanics::<Test>::get(&mechanic_id.gamer_account, &mechanic_id.nonce).unwrap();
-    match md.data {
+    match md.clone().data {
       MechanicData::Bet(bet_data) => assert_eq!(bet_data.outcomes.into_inner(), outcomes.to_vec()),
       _ => unreachable!(),
     }
@@ -307,6 +310,7 @@ fn add_bet_result_first_time() {
       &mechanic_id.gamer_account,
       &mechanic_id.nonce
     )));
+    assert_eq!(md0, md);
   });
 }
 
@@ -1688,7 +1692,7 @@ fn play_bet_round_three_rounds_win_at_second_round() {
       &mechanic_id.nonce
     ));
     let m = Mechanics::<Test>::get(&mechanic_id.gamer_account, &mechanic_id.nonce).unwrap();
-    if let MechanicData::Bet(data) = m.data {
+    if let MechanicData::Bet(data) = m.clone().data {
       assert_eq!(data.outcomes.to_vec(), [0].to_vec()); // first round was won
     } else {
       unreachable!()
@@ -1707,7 +1711,7 @@ fn play_bet_round_three_rounds_win_at_second_round() {
         event: MechanicsEvent::Stopped {
           id: mechanic_id.nonce,
           owner: mechanic_id.gamer_account.clone(),
-          reason: EventMechanicStopReason::UpgradeNeeded
+          reason: EventMechanicStopReason::UpgradeNeeded(m.clone())
         }
         .into(),
         topics: vec![],
@@ -1864,6 +1868,8 @@ fn do_bet_next_round_two_rounds_work() {
     let timeout_id: <Test as frame_system::Config>::BlockNumber = inner_id.nonce as u64 + 21;
     System::reset_events();
     assert_ok!(MechanicsModule::do_bet(&who, &org, &class_id, &asset_id));
+
+    let m = Mechanics::<Test>::get(&inner_id.gamer_account, &inner_id.nonce).unwrap();
     assert_eq!(
       System::events(),
       vec![EventRecord {
@@ -1871,7 +1877,7 @@ fn do_bet_next_round_two_rounds_work() {
         event: MechanicsEvent::Stopped {
           id: inner_id.nonce,
           owner: inner_id.gamer_account.clone(),
-          reason: EventMechanicStopReason::UpgradeNeeded
+          reason: EventMechanicStopReason::UpgradeNeeded(m)
         }
         .into(),
         topics: vec![],
@@ -1939,6 +1945,8 @@ fn do_do_upgrade_bet_two_rounds_work() {
       class_id,
       asset_id
     ));
+
+    let m = Mechanics::<Test>::get(&inner_id.gamer_account, &inner_id.nonce).unwrap();
     assert_eq!(
       System::events(),
       vec![EventRecord {
@@ -1946,7 +1954,7 @@ fn do_do_upgrade_bet_two_rounds_work() {
         event: MechanicsEvent::Stopped {
           id: inner_id.nonce,
           owner: inner_id.gamer_account.clone(),
-          reason: EventMechanicStopReason::UpgradeNeeded
+          reason: EventMechanicStopReason::UpgradeNeeded(m)
         }
         .into(),
         topics: vec![],
