@@ -159,7 +159,7 @@ pub enum Locker<AccountId, Index> {
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 /// Represents a user associated with the organization
-pub struct  GamerAccount<AccountId> {
+pub struct GamerAccount<AccountId> {
   /// User account
   pub account_id: AccountId,
   /// Organization account
@@ -213,11 +213,17 @@ where
   }
   /// Ensure that `who` equal `account_id` of mechanic id
   pub fn ensure_owner(&self, who: &AccountId) -> Result<(), &str> {
-    self.gamer_account.ensure_owner(who).map_err(|_| "Not owner of mechanic")
+    self
+      .gamer_account
+      .ensure_owner(who)
+      .map_err(|_| "Not owner of the mechanics")
   }
   /// Ensure that `organization` equal `organization_id` of mechanic id
   pub fn ensure_organization(&self, who: &AccountId) -> Result<(), &str> {
-    self.gamer_account.ensure_organization(who).map_err(|_| "Not organization of mechanic")
+    self
+      .gamer_account
+      .ensure_organization(who)
+      .map_err(|_| "Not organization of the mechanics")
   }
 }
 

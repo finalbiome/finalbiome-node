@@ -1,5 +1,7 @@
 use codec::{Decode, Encode, MaxEncodedLen};
-use pallet_support::{DefaultListLengthLimit, IndexOf, LockedAccet, BETTOR_MAX_NUMBER_OF_ROUNDS, GamerAccount};
+use pallet_support::{
+  DefaultListLengthLimit, GamerAccount, IndexOf, LockedAccet, BETTOR_MAX_NUMBER_OF_ROUNDS,
+};
 use scale_info::TypeInfo;
 
 use super::*;
@@ -43,7 +45,10 @@ where
   BlockNumber: Copy,
 {
   /// Returns a storage key for the [Pallet::Timeouts] storage
-  pub fn get_tiomeout_strorage_key(&self, nonce: Index) -> (BlockNumber, GamerAccount<AccountId>, Index) {
+  pub fn get_tiomeout_strorage_key(
+    &self,
+    nonce: Index,
+  ) -> (BlockNumber, GamerAccount<AccountId>, Index) {
     (self.timeout_id, self.owner.clone(), nonce)
   }
 }
@@ -52,7 +57,10 @@ where
 /// Used for construction new mechanic data struct.
 pub(crate) struct MechanicDetailsBuilder {}
 impl MechanicDetailsBuilder {
-  pub fn build<T: pallet::Config>(owner: GamerAccount<T::AccountId>, data: MechanicData) -> MechanicDetailsOf<T> {
+  pub fn build<T: pallet::Config>(
+    owner: GamerAccount<T::AccountId>,
+    data: MechanicData,
+  ) -> MechanicDetailsOf<T> {
     let timeout_id = Pallet::<T>::calc_timeout_block();
     MechanicDetails {
       owner,
@@ -154,7 +162,8 @@ pub(crate) type MechanicDetailsOf<T> = MechanicDetails<AccountIdOf<T>, BlockNumb
 pub(crate) type MechanicDataBetOutcomes = BoundedVec<u32, ConstU32<BETTOR_MAX_NUMBER_OF_ROUNDS>>;
 
 pub(crate) type MechanicUpgradeDataOf<T> = MechanicUpgradeData<AccountIdOf<T>, IndexOf<T>>;
-pub(crate) type EventMechanicStopReasonOf<T> = EventMechanicStopReason<AccountIdOf<T>, BlockNumberFor<T>>;
+pub(crate) type EventMechanicStopReasonOf<T> =
+  EventMechanicStopReason<AccountIdOf<T>, BlockNumberFor<T>>;
 
 /// Type of data that hold a result of finished mechanic.
 ///

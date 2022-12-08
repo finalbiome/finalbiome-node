@@ -11,7 +11,8 @@ use pallet_support::{
   bettor::{Bettor, BettorOutcome, BettorWinning, DrawOutcomeResult, OutcomeResult},
   purchased::{Offer, Purchased},
   types_nfa::ClassDetails,
-  AssetCharacteristic, ClassDetailsOf, DefaultListLengthLimit, LockedAccet, MechanicIdOf, GamerAccount,
+  AssetCharacteristic, ClassDetailsOf, DefaultListLengthLimit, GamerAccount, LockedAccet,
+  MechanicIdOf,
 };
 
 #[macro_export]
@@ -66,7 +67,10 @@ fn drop_mechanic_with_timeout() {
   new_test_ext().execute_with(|| {
     let acc = 222;
     let org = 333;
-    let ga = GamerAccount { account_id: acc, organization_id: org };
+    let ga = GamerAccount {
+      account_id: acc,
+      organization_id: org,
+    };
     System::inc_account_nonce(acc);
     System::set_block_number(2);
 
@@ -77,7 +81,10 @@ fn drop_mechanic_with_timeout() {
     Timeouts::<Test>::insert(timeout_key.clone(), ());
 
     assert_ok!(MechanicsModule::drop_mechanic(&id, AssetAction::Release));
-    assert!(!Mechanics::<Test>::contains_key(&id.gamer_account, &id.nonce));
+    assert!(!Mechanics::<Test>::contains_key(
+      &id.gamer_account,
+      &id.nonce
+    ));
     assert!(!Timeouts::<Test>::contains_key(timeout_key));
   });
 }
@@ -131,7 +138,10 @@ fn do_buy_nfa_worked() {
 #[test]
 fn mechanic_details_default() {
   new_test_ext().execute_with(|| {
-    let ga = GamerAccount {account_id: 1, organization_id: 2};
+    let ga = GamerAccount {
+      account_id: 1,
+      organization_id: 2,
+    };
     let md = MechanicDetailsBuilder::build::<Test>(ga.clone(), MechanicData::BuyNfa);
     assert_eq!(md.owner, ga);
     assert_eq!(md.timeout_id, 21);
@@ -1174,19 +1184,31 @@ fn can_use_mechanic_purchased() {
 fn try_lock_works() {
   new_test_ext().execute_with(|| {
     let id: MechanicIdOf<Test> = MechanicId {
-      gamer_account: GamerAccount { account_id: 1, organization_id: 3 },
+      gamer_account: GamerAccount {
+        account_id: 1,
+        organization_id: 3,
+      },
       nonce: 2,
     };
 
     let asset_id: LockedAccet = LockedAccet::Nfa(1.into(), 2.into());
     let mut locks = [asset_id].to_vec();
 
-    assert!(!Mechanics::<Test>::contains_key(&id.gamer_account, &id.nonce));
-    let ga = GamerAccount { account_id: 1, organization_id: 3 };
+    assert!(!Mechanics::<Test>::contains_key(
+      &id.gamer_account,
+      &id.nonce
+    ));
+    let ga = GamerAccount {
+      account_id: 1,
+      organization_id: 3,
+    };
     let details = MechanicDetailsBuilder::build::<Test>(ga, MechanicData::BuyNfa);
     Mechanics::<Test>::insert(&id.gamer_account, &id.nonce, details);
     assert_ok!(MechanicsModule::try_lock(&id, asset_id));
-    assert!(Mechanics::<Test>::contains_key(&id.gamer_account, &id.nonce));
+    assert!(Mechanics::<Test>::contains_key(
+      &id.gamer_account,
+      &id.nonce
+    ));
 
     let m = Mechanics::<Test>::get(&id.gamer_account, &id.nonce).unwrap();
     assert_eq!(m.locked.to_vec(), locks);
@@ -1212,7 +1234,10 @@ fn try_lock_works() {
 fn clear_lock_works() {
   new_test_ext().execute_with(|| {
     let id: MechanicIdOf<Test> = MechanicId {
-      gamer_account: GamerAccount { account_id: 1, organization_id: 3 },
+      gamer_account: GamerAccount {
+        account_id: 1,
+        organization_id: 3,
+      },
       nonce: 2,
     };
 
@@ -1220,12 +1245,18 @@ fn clear_lock_works() {
     let asset_id_2: LockedAccet = LockedAccet::Nfa(2.into(), 3.into());
     let locks = [asset_id, asset_id_2].to_vec();
 
-    let ga = GamerAccount { account_id: 1, organization_id: 3 };
+    let ga = GamerAccount {
+      account_id: 1,
+      organization_id: 3,
+    };
     let details = MechanicDetailsBuilder::build::<Test>(ga, MechanicData::BuyNfa);
     Mechanics::<Test>::insert(&id.gamer_account, &id.nonce, details);
     assert_ok!(MechanicsModule::try_lock(&id, asset_id));
     assert_ok!(MechanicsModule::try_lock(&id, asset_id_2));
-    assert!(Mechanics::<Test>::contains_key(&id.gamer_account, &id.nonce));
+    assert!(Mechanics::<Test>::contains_key(
+      &id.gamer_account,
+      &id.nonce
+    ));
 
     let m = Mechanics::<Test>::get(&id.gamer_account, &id.nonce).unwrap();
     assert_eq!(m.locked.to_vec(), locks);
@@ -1236,7 +1267,10 @@ fn clear_lock_works() {
 
     // chreck wrong mechanic
     let id_2: MechanicIdOf<Test> = MechanicId {
-      gamer_account: GamerAccount { account_id: 1, organization_id: 3 },
+      gamer_account: GamerAccount {
+        account_id: 1,
+        organization_id: 3,
+      },
       nonce: 3,
     };
     assert_noop!(
@@ -1254,19 +1288,31 @@ fn clear_lock_works() {
 fn try_lock_nfa_works() {
   new_test_ext().execute_with(|| {
     let id: MechanicIdOf<Test> = MechanicId {
-      gamer_account: GamerAccount { account_id: 1, organization_id: 3 },
+      gamer_account: GamerAccount {
+        account_id: 1,
+        organization_id: 3,
+      },
       nonce: 2,
     };
     let who = 1;
     let class_id = 2.into();
     let asset_id = 3.into();
-    let ga = GamerAccount { account_id: 1, organization_id: 3 };
+    let ga = GamerAccount {
+      account_id: 1,
+      organization_id: 3,
+    };
 
-    assert!(!Mechanics::<Test>::contains_key(&id.gamer_account, &id.nonce));
+    assert!(!Mechanics::<Test>::contains_key(
+      &id.gamer_account,
+      &id.nonce
+    ));
     let details = MechanicDetailsBuilder::build::<Test>(ga, MechanicData::BuyNfa);
     Mechanics::<Test>::insert(&id.gamer_account, &id.nonce, details);
     assert_ok!(MechanicsModule::try_lock_nfa(&id, &who, class_id, asset_id));
-    assert!(Mechanics::<Test>::contains_key(&id.gamer_account, &id.nonce));
+    assert!(Mechanics::<Test>::contains_key(
+      &id.gamer_account,
+      &id.nonce
+    ));
   });
 }
 
@@ -1274,21 +1320,33 @@ fn try_lock_nfa_works() {
 fn crear_lock_nfa_works() {
   new_test_ext().execute_with(|| {
     let id: MechanicIdOf<Test> = MechanicId {
-      gamer_account: GamerAccount { account_id: 1, organization_id: 3 },
+      gamer_account: GamerAccount {
+        account_id: 1,
+        organization_id: 3,
+      },
       nonce: 2,
     };
     let who = 1;
-    let ga = GamerAccount { account_id: who, organization_id: 3 };
+    let ga = GamerAccount {
+      account_id: who,
+      organization_id: 3,
+    };
 
     let class_id = 4.into();
     let asset_id = 5.into();
     let locks = [LockedAccet::Nfa(4.into(), 5.into())].to_vec();
-    
-    assert!(!Mechanics::<Test>::contains_key(&id.gamer_account, &id.nonce));
+
+    assert!(!Mechanics::<Test>::contains_key(
+      &id.gamer_account,
+      &id.nonce
+    ));
     let details = MechanicDetailsBuilder::build::<Test>(ga, MechanicData::BuyNfa);
     Mechanics::<Test>::insert(&id.gamer_account, &id.nonce, details);
     assert_ok!(MechanicsModule::try_lock_nfa(&id, &who, class_id, asset_id));
-    assert!(Mechanics::<Test>::contains_key(&id.gamer_account, &id.nonce));
+    assert!(Mechanics::<Test>::contains_key(
+      &id.gamer_account,
+      &id.nonce
+    ));
 
     let m = Mechanics::<Test>::get(&id.gamer_account, &id.nonce).unwrap();
     assert_eq!(m.locked.to_vec(), locks);
@@ -1777,7 +1835,10 @@ fn do_bet_unexisted_bet_asset() {
       sp_runtime::DispatchError::Other("mock_error_asset_doesnt_exist")
     );
 
-    assert!(!Mechanics::<Test>::contains_key(&id.gamer_account, &id.nonce));
+    assert!(!Mechanics::<Test>::contains_key(
+      &id.gamer_account,
+      &id.nonce
+    ));
   });
 }
 
@@ -1980,7 +2041,11 @@ fn do_do_upgrade_bet_two_rounds_work() {
       mechanic_id: inner_id.clone(),
       payload: MechanicUpgradePayload::Bet,
     };
-    assert_ok!(MechanicsModule::upgrade(Origin::signed(who), org, upgrage_data));
+    assert_ok!(MechanicsModule::upgrade(
+      Origin::signed(who),
+      org,
+      upgrage_data
+    ));
     // final result = draw
     // should burn nfa, drop mechanic, deposit event
     assert!(!Mechanics::<Test>::contains_key(
@@ -2019,7 +2084,10 @@ fn do_upgrade_who_not_own_mechanic_id() {
     let org = 220;
     let upgrage_data: MechanicUpgradeDataOf<Test> = MechanicUpgradeData {
       mechanic_id: MechanicId {
-        gamer_account: GamerAccount { account_id: 2, organization_id: 4 },
+        gamer_account: GamerAccount {
+          account_id: 2,
+          organization_id: 4,
+        },
         nonce: 3,
       },
       payload: MechanicUpgradePayload::Bet,
@@ -2038,7 +2106,10 @@ fn do_upgrade_mechanic_not_exist() {
     let org = 240;
     let upgrage_data: MechanicUpgradeDataOf<Test> = MechanicUpgradeData {
       mechanic_id: MechanicId {
-        gamer_account: GamerAccount { account_id: who, organization_id: org } ,
+        gamer_account: GamerAccount {
+          account_id: who,
+          organization_id: org,
+        },
         nonce: 3,
       },
       payload: MechanicUpgradePayload::Bet,
@@ -2055,7 +2126,10 @@ fn do_upgrade_mechanic_wrong_owner() {
   new_test_ext().execute_with(|| {
     let who = 121;
     let org = 232;
-    let ga = GamerAccount { account_id: who, organization_id: org };
+    let ga = GamerAccount {
+      account_id: who,
+      organization_id: org,
+    };
 
     let upgrage_data: MechanicUpgradeDataOf<Test> = MechanicUpgradeData {
       mechanic_id: MechanicId {
@@ -2064,7 +2138,10 @@ fn do_upgrade_mechanic_wrong_owner() {
       },
       payload: MechanicUpgradePayload::Bet,
     };
-    let ga2 = GamerAccount { account_id: 2, organization_id: org };
+    let ga2 = GamerAccount {
+      account_id: 2,
+      organization_id: org,
+    };
     let details = MechanicDetailsBuilder::build::<Test>(ga2, MechanicData::BuyNfa);
     Mechanics::<Test>::insert(&ga, &3, details);
     assert_noop!(
@@ -2079,11 +2156,17 @@ fn do_upgrade_mechanic_incompatible_data() {
   new_test_ext().execute_with(|| {
     let who = 121;
     let org = 232;
-    let ga = GamerAccount { account_id: who, organization_id: org };
+    let ga = GamerAccount {
+      account_id: who,
+      organization_id: org,
+    };
 
     let upgrage_data: MechanicUpgradeDataOf<Test> = MechanicUpgradeData {
       mechanic_id: MechanicId {
-        gamer_account: GamerAccount { account_id: who, organization_id: org },
+        gamer_account: GamerAccount {
+          account_id: who,
+          organization_id: org,
+        },
         nonce: 3,
       },
       payload: MechanicUpgradePayload::Bet,
@@ -2104,7 +2187,10 @@ fn process_mechanic_timeouts_dropped() {
     let org = 233;
     let nonce = 3;
     let timeout_id = 15;
-    let mid = GamerAccount { account_id: who, organization_id: org };
+    let mid = GamerAccount {
+      account_id: who,
+      organization_id: org,
+    };
     // add mechanic with timeout
     let mut details = MechanicDetailsBuilder::build::<Test>(mid.clone(), MechanicData::BuyNfa);
     details.timeout_id = timeout_id;
@@ -2150,7 +2236,10 @@ fn process_mechanic_timeouts_lifecycle() {
     let timeout_id = 15;
     let timeout_id_2 = 150;
     // add mechanic with timeout
-    let mid = GamerAccount { account_id: who, organization_id: org };
+    let mid = GamerAccount {
+      account_id: who,
+      organization_id: org,
+    };
 
     let mut details = MechanicDetailsBuilder::build::<Test>(mid.clone(), MechanicData::BuyNfa);
     details.timeout_id = timeout_id;
@@ -2160,7 +2249,10 @@ fn process_mechanic_timeouts_lifecycle() {
     // add mechanic with timeout 2
     let mut details_2 = MechanicDetailsBuilder::build::<Test>(mid.clone(), MechanicData::BuyNfa);
     details_2.timeout_id = timeout_id_2;
-    let mid33 = GamerAccount { account_id: 33, organization_id: org };
+    let mid33 = GamerAccount {
+      account_id: 33,
+      organization_id: org,
+    };
     Mechanics::<Test>::insert(&mid33, &44, details_2);
     // add timeout records 2
     Timeouts::<Test>::insert((&timeout_id_2, &mid33, &44), ());
@@ -2186,7 +2278,11 @@ fn process_mechanic_timeouts_lifecycle() {
     assert!(Mechanics::<Test>::contains_key(&mid33, &44));
 
     run_to_block(timeout_id_2);
-    assert!(!Timeouts::<Test>::contains_key((&timeout_id_2, &mid33, &44)));
+    assert!(!Timeouts::<Test>::contains_key((
+      &timeout_id_2,
+      &mid33,
+      &44
+    )));
     assert!(!Mechanics::<Test>::contains_key(&mid33, &44));
   });
 }

@@ -3,7 +3,7 @@ use super::*;
 use crate::{mock::*, ClassDetailsBuilder, Error, Event as NfaEvent};
 use frame_support::{assert_noop, assert_ok};
 use frame_system::{EventRecord, Phase};
-use pallet_support::{Locker, MechanicId, GamerAccount};
+use pallet_support::{GamerAccount, Locker, MechanicId};
 
 fn get_next_class_id() -> NonFungibleClassId {
   NextClassId::<Test>::get()
@@ -741,7 +741,10 @@ fn set_lock_try_unlock() {
 #[test]
 fn set_lock_unknown_asset() {
   new_test_ext().execute_with(|| {
-    let ga = GamerAccount { account_id: 1, organization_id: 3 };
+    let ga = GamerAccount {
+      account_id: 1,
+      organization_id: 3,
+    };
     let origin = Locker::Mechanic(MechanicId {
       gamer_account: ga,
       nonce: 2,
@@ -767,7 +770,10 @@ fn set_lock_not_owner() {
     assert_eq!(NonFungibleAssets::do_mint(nfa_id, acc).unwrap(), id);
 
     let origin = Locker::Mechanic(MechanicId {
-      gamer_account: GamerAccount { account_id: acc, organization_id: org },
+      gamer_account: GamerAccount {
+        account_id: acc,
+        organization_id: org,
+      },
       nonce: 2,
     });
     assert_noop!(
@@ -791,7 +797,10 @@ fn set_lock_for_no_locked() {
     assert_eq!(NonFungibleAssets::do_mint(nfa_id, acc).unwrap(), id);
 
     let origin = Locker::Mechanic(MechanicId {
-      gamer_account: GamerAccount { account_id: acc, organization_id: org },
+      gamer_account: GamerAccount {
+        account_id: acc,
+        organization_id: org,
+      },
       nonce: 2,
     });
     let mut details = Assets::<Test>::get(&nfa_id, &id).unwrap();
@@ -806,7 +815,10 @@ fn set_lock_for_no_locked() {
     assert_eq!(minted.locked, origin);
 
     let origin = Locker::Mechanic(MechanicId {
-      gamer_account: GamerAccount { account_id: acc, organization_id: org },
+      gamer_account: GamerAccount {
+        account_id: acc,
+        organization_id: org,
+      },
       nonce: 2,
     });
     assert_ok!(
@@ -830,7 +842,10 @@ fn set_lock_for_locked() {
     assert_eq!(NonFungibleAssets::do_mint(nfa_id, acc).unwrap(), id);
 
     let origin = Locker::Mechanic(MechanicId {
-      gamer_account: GamerAccount { account_id: acc, organization_id: org },
+      gamer_account: GamerAccount {
+        account_id: acc,
+        organization_id: org,
+      },
       nonce: 2,
     });
     let mut details = Assets::<Test>::get(&nfa_id, &id).unwrap();
@@ -845,7 +860,10 @@ fn set_lock_for_locked() {
     assert_eq!(minted.locked, origin);
 
     let origin = Locker::Mechanic(MechanicId {
-      gamer_account: GamerAccount { account_id: 2, organization_id: 3 },
+      gamer_account: GamerAccount {
+        account_id: 2,
+        organization_id: 3,
+      },
       nonce: 4,
     });
     assert_noop!(
@@ -869,7 +887,10 @@ fn unset_lock_for_locked() {
     assert_eq!(NonFungibleAssets::do_mint(nfa_id, acc).unwrap(), id);
 
     let origin = Locker::Mechanic(MechanicId {
-      gamer_account: GamerAccount { account_id: acc, organization_id: org },
+      gamer_account: GamerAccount {
+        account_id: acc,
+        organization_id: org,
+      },
       nonce: 2,
     });
     let mut details = Assets::<Test>::get(&nfa_id, &id).unwrap();
@@ -901,7 +922,10 @@ fn unset_lock_for_locked_other_owner() {
     assert_eq!(NonFungibleAssets::do_mint(nfa_id, acc).unwrap(), id);
 
     let origin = Locker::Mechanic(MechanicId {
-      gamer_account: GamerAccount { account_id: acc, organization_id: org },
+      gamer_account: GamerAccount {
+        account_id: acc,
+        organization_id: org,
+      },
       nonce: 2,
     });
     let mut details = Assets::<Test>::get(&nfa_id, &id).unwrap();
@@ -933,7 +957,10 @@ fn unset_lock_for_locked_other_origin() {
     assert_eq!(NonFungibleAssets::do_mint(nfa_id, acc).unwrap(), id);
 
     let origin = Locker::Mechanic(MechanicId {
-      gamer_account: GamerAccount { account_id: acc, organization_id: org },
+      gamer_account: GamerAccount {
+        account_id: acc,
+        organization_id: org,
+      },
       nonce: 2,
     });
     let mut details = Assets::<Test>::get(&nfa_id, &id).unwrap();
@@ -944,7 +971,10 @@ fn unset_lock_for_locked_other_origin() {
       LockResultOf::<Test>::Locked(details)
     );
     let origin = Locker::Mechanic(MechanicId {
-      gamer_account: GamerAccount { account_id: acc, organization_id: org },
+      gamer_account: GamerAccount {
+        account_id: acc,
+        organization_id: org,
+      },
       nonce: 3,
     });
     assert_noop!(
@@ -963,7 +993,10 @@ fn unset_lock_for_unexisted_asset() {
     let org = 2;
 
     let origin = Locker::Mechanic(MechanicId {
-      gamer_account: GamerAccount { account_id: acc, organization_id: org },
+      gamer_account: GamerAccount {
+        account_id: acc,
+        organization_id: org,
+      },
       nonce: 2,
     });
 

@@ -12,7 +12,10 @@ use super::*;
 
 impl<T: Config> Pallet<T> {
   /// Gets the id of the mechanic
-  pub(crate) fn get_mechanic_id(who: &T::AccountId, organization_id: &T::AccountId) -> MechanicIdOf<T> {
+  pub(crate) fn get_mechanic_id(
+    who: &T::AccountId,
+    organization_id: &T::AccountId,
+  ) -> MechanicIdOf<T> {
     MechanicId::<T::AccountId, T::Index>::from_account_id::<T>(who, organization_id)
   }
 
@@ -422,7 +425,10 @@ impl<T: Config> Pallet<T> {
   }
 
   /// Add intermediate result to the Bet mechanic data
-  pub(crate) fn add_bet_result(id: &MechanicIdOf<T>, outcomes: &[u32]) -> DispatchResultAs<MechanicDetailsOf<T>> {
+  pub(crate) fn add_bet_result(
+    id: &MechanicIdOf<T>,
+    outcomes: &[u32],
+  ) -> DispatchResultAs<MechanicDetailsOf<T>> {
     let mechanics_details = Mechanics::<T>::try_mutate(
       &id.gamer_account,
       id.nonce,
@@ -492,7 +498,10 @@ impl<T: Config> Pallet<T> {
     .map_err(|_| Error::<T>::MechanicsNotAvailable)?;
     // checks mechanic owner
     ensure!(&mechanic.owner.account_id == who, Error::<T>::NoPermission);
-    ensure!(&mechanic.owner.organization_id == organization_id, Error::<T>::NoPermission);
+    ensure!(
+      &mechanic.owner.organization_id == organization_id,
+      Error::<T>::NoPermission
+    );
 
     // validate data
     // ensure compatibility

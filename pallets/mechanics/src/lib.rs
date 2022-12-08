@@ -28,8 +28,8 @@ use frame_support::{log, traits::Randomness};
 
 #[frame_support::pallet]
 pub mod pallet {
-  use pallet_support::GameAccountOf;
   use super::*;
+  use pallet_support::GameAccountOf;
 
   #[pallet::pallet]
   #[pallet::generate_store(pub(super) trait Store)]
@@ -104,7 +104,7 @@ pub mod pallet {
     DroppedByTimeout {
       owner: GameAccountOf<T>,
       id: T::Index,
-    }
+    },
   }
 
   // Errors inform users that something went wrong.
@@ -190,7 +190,7 @@ pub mod pallet {
     pub fn upgrade(
       origin: OriginFor<T>,
       organization_id: AccountIdOf<T>,
-      upgrage_data: MechanicUpgradeDataOf<T>
+      upgrage_data: MechanicUpgradeDataOf<T>,
     ) -> DispatchResult {
       // Only a regular user can upgrade mechanic
       let who = T::ExecuteOrigin::ensure_origin(origin)?;
