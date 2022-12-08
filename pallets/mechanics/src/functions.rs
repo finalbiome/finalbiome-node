@@ -12,8 +12,8 @@ use super::*;
 
 impl<T: Config> Pallet<T> {
   /// Gets the id of the mechanic
-  pub(crate) fn get_mechanic_id(who: &T::AccountId) -> MechanicIdOf<T> {
-    MechanicId::<T::AccountId, T::Index>::from_account_id::<T>(who)
+  pub(crate) fn get_mechanic_id(who: &T::AccountId, organization_id: &T::AccountId) -> MechanicIdOf<T> {
+    MechanicId::<T::AccountId, T::Index>::from_account_id::<T>(who, organization_id)
   }
 
   /// Calculates the block when mechanic should be destroyed
@@ -24,13 +24,13 @@ impl<T: Config> Pallet<T> {
 
   /// Drop mechanic if it exist and clear timeout
   pub(crate) fn drop_mechanic(id: &MechanicIdOf<T>, asset_action: AssetAction) -> DispatchResult {
-    let mechanic = Mechanics::<T>::take(&id.account_id, id.nonce);
+    let mechanic = Mechanics::<T>::take(&id.gamer_account, id.nonce);
     if let Some(mechanic) = mechanic {
       Timeouts::<T>::remove(mechanic.get_tiomeout_strorage_key(id.nonce));
       // clear all locks for this mechanic
       for lock in mechanic.locked {
         let origin = Locker::Mechanic(id.clone());
-        let who = id.account_id.clone();
+        let who = id.gamer_account.account_id.clone();
         match lock {
           LockedAccet::Nfa(class_id, asset_id) => match asset_action {
             AssetAction::Release => {
@@ -55,7 +55,7 @@ impl<T: Config> Pallet<T> {
   /// Don't use it on one's own
   pub(crate) fn try_lock(id: &MechanicIdOf<T>, asset_id: LockedAccet) -> DispatchResult {
     Mechanics::<T>::try_mutate(
-      &id.account_id,
+      &id.gamer_account,
       id.nonce,
       |maybe_mechanic| -> DispatchResult {
         match maybe_mechanic {
@@ -79,7 +79,7 @@ impl<T: Config> Pallet<T> {
   /// Don't use it on one's own
   pub(crate) fn _clear_lock(id: &MechanicIdOf<T>, asset_id: LockedAccet) -> DispatchResult {
     Mechanics::<T>::try_mutate(
-      &id.account_id,
+      &id.gamer_account,
       id.nonce,
       |maybe_mechanic| -> DispatchResult {
         match maybe_mechanic {
@@ -153,16 +153,17 @@ impl<T: Config> Pallet<T> {
   /// Create new mechanic and execute first round.
   pub(crate) fn do_bet(
     who: &T::AccountId,
+    organization_id: &T::AccountId,
     class_id: &NonFungibleClassId,
     asset_id: &NonFungibleAssetId,
   ) -> DispatchResult {
-    let mechanic_id = Self::get_mechanic_id(who);
+    let mechanic_id = Self::get_mechanic_id(who, organization_id);
 
     // create the mechanic data
     let data = MechanicData::Bet(MechanicDataBet::default());
-    let mechanic = MechanicDetailsBuilder::build::<T>(mechanic_id.account_id.clone(), data);
+    let mechanic = MechanicDetailsBuilder::build::<T>(mechanic_id.gamer_account.clone(), data);
     let timeout_key = mechanic.get_tiomeout_strorage_key(mechanic_id.nonce);
-    Mechanics::<T>::insert(&mechanic_id.account_id, mechanic_id.nonce, mechanic);
+    Mechanics::<T>::insert(&mechanic_id.gamer_account, mechanic_id.nonce, mechanic);
     Timeouts::<T>::insert(timeout_key, ());
 
     let _ = Self::try_lock_nfa(&mechanic_id, who, *class_id, *asset_id).map_err(|err| {
@@ -196,7 +197,7 @@ impl<T: Config> Pallet<T> {
     mechanic_id
       .ensure_owner(who)
       .map_err(|_| Error::<T>::MechanicsNotAvailable)?;
-    let mechanic = Mechanics::<T>::try_get(&mechanic_id.account_id, mechanic_id.nonce)
+    let mechanic = Mechanics::<T>::try_get(&mechanic_id.gamer_account, mechanic_id.nonce)
       .map_err(|_| Error::<T>::MechanicsNotAvailable)?;
     // get bet asset from mechanic lock
     // for the Bet mechanic only one asset can be using
@@ -246,6 +247,7 @@ impl<T: Config> Pallet<T> {
     let result: u32 = Self::choose_outcome(&mechanic_id, &bettor.outcomes);
     let mut outcomes = outcomes;
     outcomes.push(result);
+    let outcomes = outcomes;
 
     let played_rounds = outcomes.len();
     // trying to determine the final result
@@ -258,11 +260,12 @@ impl<T: Config> Pallet<T> {
     } else {
       debug_assert!(bettor.rounds > 1, "bettor cannot have one round here");
       // save results to mechanic data for future uses
-      Self::add_bet_result(&mechanic_id, &outcomes)?;
+      let details = Self::add_bet_result(&mechanic_id, &outcomes)?;
+
       Self::deposit_event(Event::Stopped {
         id: mechanic_id.nonce,
-        owner: mechanic_id.account_id,
-        reason: EventMechanicStopReason::UpgradeNeeded,
+        owner: mechanic_id.gamer_account,
+        reason: EventMechanicStopReason::UpgradeNeeded(details),
       });
     };
     Ok(())
@@ -412,37 +415,39 @@ impl<T: Config> Pallet<T> {
       }));
     Self::deposit_event(Event::Finished {
       id: mechanic_id.nonce,
-      owner: mechanic_id.account_id.clone(),
+      owner: mechanic_id.gamer_account.clone(),
       result,
     });
     Ok(())
   }
 
   /// Add intermediate result to the Bet mechanic data
-  pub(crate) fn add_bet_result(id: &MechanicIdOf<T>, outcomes: &[u32]) -> DispatchResult {
-    Mechanics::<T>::try_mutate(
-      &id.account_id,
+  pub(crate) fn add_bet_result(id: &MechanicIdOf<T>, outcomes: &[u32]) -> DispatchResultAs<MechanicDetailsOf<T>> {
+    let mechanics_details = Mechanics::<T>::try_mutate(
+      &id.gamer_account,
       id.nonce,
-      |maybe_mechanic| -> DispatchResult {
+      |maybe_mechanic| -> DispatchResultAs<MechanicDetailsOf<T>> {
         let outcomes: MechanicDataBetOutcomes = outcomes
           .to_vec()
           .try_into()
           .expect("the number of values cannot exceed the number of rounds");
         let data = MechanicData::Bet(MechanicDataBet { outcomes });
-        match maybe_mechanic {
+        let mechanic = match maybe_mechanic {
           Some(ref mut mechanic) => {
             mechanic.data = data;
+            (*mechanic).clone()
           },
           maybe_mechanic @ None => {
-            let mechanic = MechanicDetailsBuilder::build::<T>(id.account_id.clone(), data);
+            let mechanic = MechanicDetailsBuilder::build::<T>(id.gamer_account.clone(), data);
             Timeouts::<T>::insert(mechanic.get_tiomeout_strorage_key(id.nonce), ());
-            *maybe_mechanic = Some(mechanic);
+            *maybe_mechanic = Some(mechanic.clone());
+            mechanic
           },
-        }
-        Ok(())
+        };
+        Ok(mechanic)
       },
     )?;
-    Ok(())
+    Ok(mechanics_details)
   }
 
   /// Checks if a class can be used for a given mechanic
@@ -471,6 +476,7 @@ impl<T: Config> Pallet<T> {
   /// Upgrage mechanic by given data and try to execute it.
   pub(crate) fn do_upgrade(
     who: &AccountIdOf<T>,
+    organization_id: &AccountIdOf<T>,
     upgrage_data: MechanicUpgradeDataOf<T>,
   ) -> DispatchResult {
     // check validity of id
@@ -480,12 +486,13 @@ impl<T: Config> Pallet<T> {
       .map_err(|_| Error::<T>::NoPermission)?;
     // checks an mechanic existance
     let mechanic = Mechanics::<T>::try_get(
-      &upgrage_data.mechanic_id.account_id,
+      &upgrage_data.mechanic_id.gamer_account,
       upgrage_data.mechanic_id.nonce,
     )
     .map_err(|_| Error::<T>::MechanicsNotAvailable)?;
     // checks mechanic owner
-    ensure!(&mechanic.owner == who, Error::<T>::NoPermission);
+    ensure!(&mechanic.owner.account_id == who, Error::<T>::NoPermission);
+    ensure!(&mechanic.owner.organization_id == organization_id, Error::<T>::NoPermission);
 
     // validate data
     // ensure compatibility
@@ -514,10 +521,14 @@ impl<T: Config> Pallet<T> {
     let curr_block = <frame_system::Pallet<T>>::block_number();
     for (mechanic_id, _) in Timeouts::<T>::drain_prefix((curr_block,)) {
       let id = MechanicId {
-        account_id: mechanic_id.0,
+        gamer_account: mechanic_id.0,
         nonce: mechanic_id.1,
       };
       let _ = Self::drop_mechanic(&id, AssetAction::Burn);
+      Self::deposit_event(Event::DroppedByTimeout {
+        owner: id.gamer_account,
+        id: id.nonce,
+      });
       mechanics_count = mechanics_count.saturating_add(1);
     }
     (0, mechanics_count)

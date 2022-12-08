@@ -11,7 +11,7 @@ use pallet_support::{
   bettor::{Bettor, BettorOutcome, BettorWinning, DrawOutcomeResult, OutcomeResult},
   purchased::{Offer, Purchased},
   types_nfa::ClassDetails,
-  AssetCharacteristic, ClassDetailsOf, DefaultListLengthLimit, LockedAccet, MechanicIdOf,
+  AssetCharacteristic, ClassDetailsOf, DefaultListLengthLimit, LockedAccet, MechanicIdOf, GamerAccount,
 };
 
 #[macro_export]
@@ -33,13 +33,15 @@ fn template_test() {
 fn mechanic_id_from_account() {
   new_test_ext().execute_with(|| {
     let acc = 222;
+    let org = 333;
     let n = System::account_nonce(acc);
     System::inc_account_nonce(acc);
     let id = MechanicId::<
       <Test as frame_system::Config>::AccountId,
       <Test as frame_system::Config>::Index,
-    >::from_account_id::<Test>(&acc);
-    assert_eq!(acc, id.account_id);
+    >::from_account_id::<Test>(&acc, &org);
+    assert_eq!(acc, id.gamer_account.account_id);
+    assert_eq!(org, id.gamer_account.organization_id);
     assert_eq!(n + 1, id.nonce);
   });
 }
@@ -48,11 +50,12 @@ fn mechanic_id_from_account() {
 fn drop_mechanic_none_mechanic() {
   new_test_ext().execute_with(|| {
     let acc = 222;
+    let org = 333;
     System::inc_account_nonce(acc);
     System::set_block_number(2);
     let _b = System::block_number();
 
-    let id = MechanicsModule::get_mechanic_id(&acc);
+    let id = MechanicsModule::get_mechanic_id(&acc, &org);
 
     assert_ok!(MechanicsModule::drop_mechanic(&id, AssetAction::Release));
   });
@@ -62,17 +65,19 @@ fn drop_mechanic_none_mechanic() {
 fn drop_mechanic_with_timeout() {
   new_test_ext().execute_with(|| {
     let acc = 222;
+    let org = 333;
+    let ga = GamerAccount { account_id: acc, organization_id: org };
     System::inc_account_nonce(acc);
     System::set_block_number(2);
 
-    let id = MechanicsModule::get_mechanic_id(&acc);
-    let details = MechanicDetailsBuilder::build::<Test>(acc, MechanicData::BuyNfa);
+    let id = MechanicsModule::get_mechanic_id(&acc, &org);
+    let details = MechanicDetailsBuilder::build::<Test>(ga, MechanicData::BuyNfa);
     let timeout_key = details.get_tiomeout_strorage_key(id.nonce);
-    Mechanics::<Test>::insert(&id.account_id, &id.nonce, details);
-    Timeouts::<Test>::insert(timeout_key, ());
+    Mechanics::<Test>::insert(&id.gamer_account, &id.nonce, details);
+    Timeouts::<Test>::insert(timeout_key.clone(), ());
 
     assert_ok!(MechanicsModule::drop_mechanic(&id, AssetAction::Release));
-    assert!(!Mechanics::<Test>::contains_key(&id.account_id, &id.nonce));
+    assert!(!Mechanics::<Test>::contains_key(&id.gamer_account, &id.nonce));
     assert!(!Timeouts::<Test>::contains_key(timeout_key));
   });
 }
@@ -126,8 +131,9 @@ fn do_buy_nfa_worked() {
 #[test]
 fn mechanic_details_default() {
   new_test_ext().execute_with(|| {
-    let md = MechanicDetailsBuilder::build::<Test>(1, MechanicData::BuyNfa);
-    assert_eq!(md.owner, 1);
+    let ga = GamerAccount {account_id: 1, organization_id: 2};
+    let md = MechanicDetailsBuilder::build::<Test>(ga.clone(), MechanicData::BuyNfa);
+    assert_eq!(md.owner, ga);
     assert_eq!(md.timeout_id, 21);
     assert_eq!(md.locked.to_vec(), [].to_vec());
     assert_eq!(md.data, MechanicData::BuyNfa);
@@ -138,10 +144,11 @@ fn mechanic_details_default() {
 fn choose_variant_works() {
   new_test_ext().execute_with(|| {
     let acc = 222;
+    let org = 333;
     let mechanic_id: MechanicIdOf<Test> = MechanicId::<
       <Test as frame_system::Config>::AccountId,
       <Test as frame_system::Config>::Index,
-    >::from_account_id::<Test>(&acc);
+    >::from_account_id::<Test>(&acc, &org);
     for i in 0..100u32 {
       System::set_block_number(i.into());
       for j in 1..255 {
@@ -157,10 +164,11 @@ fn choose_variant_works() {
 fn choose_outcome_works() {
   new_test_ext().execute_with(|| {
     let acc = 222;
+    let org = 333;
     let mechanic_id: MechanicIdOf<Test> = MechanicId::<
       <Test as frame_system::Config>::AccountId,
       <Test as frame_system::Config>::Index,
-    >::from_account_id::<Test>(&acc);
+    >::from_account_id::<Test>(&acc, &org);
     let outcomes: BoundedVec<BettorOutcome, DefaultListLengthLimit> = bvec![
       BettorOutcome {
         name: bvec!(br"o1"),
@@ -190,10 +198,11 @@ fn choose_outcome_with_one_outcome() {
   // it can't be used in pracrice
   new_test_ext().execute_with(|| {
     let acc = 222;
+    let org = 333;
     let mechanic_id: MechanicIdOf<Test> = MechanicId::<
       <Test as frame_system::Config>::AccountId,
       <Test as frame_system::Config>::Index,
-    >::from_account_id::<Test>(&acc);
+    >::from_account_id::<Test>(&acc, &org);
     let outcomes: BoundedVec<BettorOutcome, DefaultListLengthLimit> = bvec![
       BettorOutcome {
         name: bvec!(br"o1"),
@@ -219,10 +228,11 @@ fn choose_outcome_with_one_outcome() {
 fn choose_outcome_with_outcome_as_fraction() {
   new_test_ext().execute_with(|| {
     let acc = 222;
+    let org = 333;
     let mechanic_id: MechanicIdOf<Test> = MechanicId::<
       <Test as frame_system::Config>::AccountId,
       <Test as frame_system::Config>::Index,
-    >::from_account_id::<Test>(&acc);
+    >::from_account_id::<Test>(&acc, &org);
     let outcomes: BoundedVec<BettorOutcome, DefaultListLengthLimit> = bvec![
       BettorOutcome {
         name: bvec!(br"o1"),
@@ -253,49 +263,54 @@ fn choose_outcome_with_outcome_as_fraction() {
 fn add_bet_result_first_time() {
   new_test_ext().execute_with(|| {
     let acc = 222;
+    let org = 333;
     let mechanic_id: MechanicIdOf<Test> = MechanicId::<
       <Test as frame_system::Config>::AccountId,
       <Test as frame_system::Config>::Index,
-    >::from_account_id::<Test>(&acc);
+    >::from_account_id::<Test>(&acc, &org);
     let outcomes = [1];
     System::set_block_number(10);
     assert!(!Mechanics::<Test>::contains_key(
-      &mechanic_id.account_id,
+      &mechanic_id.gamer_account,
       &mechanic_id.nonce
     ));
-    assert_ok!(MechanicsModule::add_bet_result(&mechanic_id, &outcomes));
+    let md0 = MechanicsModule::add_bet_result(&mechanic_id, &outcomes).unwrap();
     assert!(Mechanics::<Test>::contains_key(
-      &mechanic_id.account_id,
+      &mechanic_id.gamer_account,
       &mechanic_id.nonce
     ));
-    let md = Mechanics::<Test>::get(&mechanic_id.account_id, &mechanic_id.nonce).unwrap();
-    match md.data {
+    let md = Mechanics::<Test>::get(&mechanic_id.gamer_account, &mechanic_id.nonce).unwrap();
+    match md.clone().data {
       MechanicData::Bet(bet_data) => assert_eq!(bet_data.outcomes.into_inner(), outcomes.to_vec()),
       _ => unreachable!(),
     }
     assert!(Timeouts::<Test>::contains_key((
       &30,
-      &mechanic_id.account_id,
+      &mechanic_id.gamer_account,
       &mechanic_id.nonce
     )));
+    assert_eq!(md0, md);
 
     // second time
     let outcomes = [1, 3];
-    assert_ok!(MechanicsModule::add_bet_result(&mechanic_id, &outcomes));
+    // assert_ok!(MechanicsModule::add_bet_result(&mechanic_id, &outcomes));
+    let md0 = MechanicsModule::add_bet_result(&mechanic_id, &outcomes).unwrap();
+
     assert!(Mechanics::<Test>::contains_key(
-      &mechanic_id.account_id,
+      &mechanic_id.gamer_account,
       &mechanic_id.nonce
     ));
-    let md = Mechanics::<Test>::get(&mechanic_id.account_id, &mechanic_id.nonce).unwrap();
-    match md.data {
+    let md = Mechanics::<Test>::get(&mechanic_id.gamer_account, &mechanic_id.nonce).unwrap();
+    match md.clone().data {
       MechanicData::Bet(bet_data) => assert_eq!(bet_data.outcomes.into_inner(), outcomes.to_vec()),
       _ => unreachable!(),
     }
     assert!(Timeouts::<Test>::contains_key((
       &30,
-      &mechanic_id.account_id,
+      &mechanic_id.gamer_account,
       &mechanic_id.nonce
     )));
+    assert_eq!(md0, md);
   });
 }
 
@@ -687,10 +702,11 @@ fn try_finalize_bet_works() {
 fn do_bet_result_processing_win_nfa() {
   new_test_ext().execute_with(|| {
     let who = 222;
+    let org = 333;
     let mechanic_id: MechanicIdOf<Test> = MechanicId::<
       <Test as frame_system::Config>::AccountId,
       <Test as frame_system::Config>::Index,
-    >::from_account_id::<Test>(&who);
+    >::from_account_id::<Test>(&who, &org);
     let _class_id = 22;
     let _asset_id = 33;
     let bettor: Bettor = Bettor {
@@ -733,7 +749,7 @@ fn do_bet_result_processing_win_nfa() {
         phase: Phase::Initialization,
         event: MechanicsEvent::Finished {
           id: mechanic_id.nonce,
-          owner: mechanic_id.account_id,
+          owner: mechanic_id.gamer_account,
           result: Some(EventMechanicResultData::Bet(EventMechanicResultDataBet {
             outcomes: bvec![1, 2, 3],
             result,
@@ -750,10 +766,11 @@ fn do_bet_result_processing_win_nfa() {
 fn do_bet_result_processing_lose() {
   new_test_ext().execute_with(|| {
     let who = 222;
+    let org = 333;
     let mechanic_id: MechanicIdOf<Test> = MechanicId::<
       <Test as frame_system::Config>::AccountId,
       <Test as frame_system::Config>::Index,
-    >::from_account_id::<Test>(&who);
+    >::from_account_id::<Test>(&who, &org);
     let _class_id = 23;
     let _asset_id = 34;
     let bettor: Bettor = Bettor {
@@ -795,7 +812,7 @@ fn do_bet_result_processing_lose() {
         phase: Phase::Initialization,
         event: MechanicsEvent::Finished {
           id: mechanic_id.nonce,
-          owner: mechanic_id.account_id,
+          owner: mechanic_id.gamer_account,
           result: Some(EventMechanicResultData::Bet(EventMechanicResultDataBet {
             outcomes: bvec![1, 2, 3],
             result,
@@ -812,10 +829,11 @@ fn do_bet_result_processing_lose() {
 fn do_bet_result_processing_draw_win() {
   new_test_ext().execute_with(|| {
     let who = 222;
+    let org = 333;
     let mechanic_id: MechanicIdOf<Test> = MechanicId::<
       <Test as frame_system::Config>::AccountId,
       <Test as frame_system::Config>::Index,
-    >::from_account_id::<Test>(&who);
+    >::from_account_id::<Test>(&who, &org);
     let _class_id = 24;
     let _asset_id = 35;
     let bettor: Bettor = Bettor {
@@ -858,7 +876,7 @@ fn do_bet_result_processing_draw_win() {
         phase: Phase::Initialization,
         event: MechanicsEvent::Finished {
           id: mechanic_id.nonce,
-          owner: mechanic_id.account_id,
+          owner: mechanic_id.gamer_account,
           result: Some(EventMechanicResultData::Bet(EventMechanicResultDataBet {
             outcomes: bvec![1, 2, 3],
             result: BetResult::Won,
@@ -875,10 +893,11 @@ fn do_bet_result_processing_draw_win() {
 fn do_bet_result_processing_draw_lose() {
   new_test_ext().execute_with(|| {
     let who = 222;
+    let org = 333;
     let mechanic_id: MechanicIdOf<Test> = MechanicId::<
       <Test as frame_system::Config>::AccountId,
       <Test as frame_system::Config>::Index,
-    >::from_account_id::<Test>(&who);
+    >::from_account_id::<Test>(&who, &org);
     let _class_id = 25;
     let _asset_id = 36;
     let bettor: Bettor = Bettor {
@@ -920,7 +939,7 @@ fn do_bet_result_processing_draw_lose() {
         phase: Phase::Initialization,
         event: MechanicsEvent::Finished {
           id: mechanic_id.nonce,
-          owner: mechanic_id.account_id,
+          owner: mechanic_id.gamer_account,
           result: Some(EventMechanicResultData::Bet(EventMechanicResultDataBet {
             outcomes: bvec![1, 2, 3],
             result: BetResult::Lost,
@@ -937,10 +956,11 @@ fn do_bet_result_processing_draw_lose() {
 fn do_bet_result_processing_draw_keep() {
   new_test_ext().execute_with(|| {
     let who = 222;
+    let org = 333;
     let mechanic_id: MechanicIdOf<Test> = MechanicId::<
       <Test as frame_system::Config>::AccountId,
       <Test as frame_system::Config>::Index,
-    >::from_account_id::<Test>(&who);
+    >::from_account_id::<Test>(&who, &org);
     let _class_id = 26;
     let _asset_id = 37;
     let bettor: Bettor = Bettor {
@@ -982,7 +1002,7 @@ fn do_bet_result_processing_draw_keep() {
         phase: Phase::Initialization,
         event: MechanicsEvent::Finished {
           id: mechanic_id.nonce,
-          owner: mechanic_id.account_id,
+          owner: mechanic_id.gamer_account,
           result: Some(EventMechanicResultData::Bet(EventMechanicResultDataBet {
             outcomes: bvec![1, 2, 3],
             result,
@@ -1154,20 +1174,21 @@ fn can_use_mechanic_purchased() {
 fn try_lock_works() {
   new_test_ext().execute_with(|| {
     let id: MechanicIdOf<Test> = MechanicId {
-      account_id: 1,
+      gamer_account: GamerAccount { account_id: 1, organization_id: 3 },
       nonce: 2,
     };
 
     let asset_id: LockedAccet = LockedAccet::Nfa(1.into(), 2.into());
     let mut locks = [asset_id].to_vec();
 
-    assert!(!Mechanics::<Test>::contains_key(&id.account_id, &id.nonce));
-    let details = MechanicDetailsBuilder::build::<Test>(1, MechanicData::BuyNfa);
-    Mechanics::<Test>::insert(&id.account_id, &id.nonce, details);
+    assert!(!Mechanics::<Test>::contains_key(&id.gamer_account, &id.nonce));
+    let ga = GamerAccount { account_id: 1, organization_id: 3 };
+    let details = MechanicDetailsBuilder::build::<Test>(ga, MechanicData::BuyNfa);
+    Mechanics::<Test>::insert(&id.gamer_account, &id.nonce, details);
     assert_ok!(MechanicsModule::try_lock(&id, asset_id));
-    assert!(Mechanics::<Test>::contains_key(&id.account_id, &id.nonce));
+    assert!(Mechanics::<Test>::contains_key(&id.gamer_account, &id.nonce));
 
-    let m = Mechanics::<Test>::get(&id.account_id, &id.nonce).unwrap();
+    let m = Mechanics::<Test>::get(&id.gamer_account, &id.nonce).unwrap();
     assert_eq!(m.locked.to_vec(), locks);
 
     for i in 1..256 {
@@ -1180,7 +1201,7 @@ fn try_lock_works() {
         );
       } else {
         assert_ok!(MechanicsModule::try_lock(&id, asset_id));
-        let m = Mechanics::<Test>::get(&id.account_id, &id.nonce).unwrap();
+        let m = Mechanics::<Test>::get(&id.gamer_account, &id.nonce).unwrap();
         assert_eq!(m.locked.to_vec(), locks);
       }
     }
@@ -1191,7 +1212,7 @@ fn try_lock_works() {
 fn clear_lock_works() {
   new_test_ext().execute_with(|| {
     let id: MechanicIdOf<Test> = MechanicId {
-      account_id: 1,
+      gamer_account: GamerAccount { account_id: 1, organization_id: 3 },
       nonce: 2,
     };
 
@@ -1199,13 +1220,14 @@ fn clear_lock_works() {
     let asset_id_2: LockedAccet = LockedAccet::Nfa(2.into(), 3.into());
     let locks = [asset_id, asset_id_2].to_vec();
 
-    let details = MechanicDetailsBuilder::build::<Test>(1, MechanicData::BuyNfa);
-    Mechanics::<Test>::insert(&id.account_id, &id.nonce, details);
+    let ga = GamerAccount { account_id: 1, organization_id: 3 };
+    let details = MechanicDetailsBuilder::build::<Test>(ga, MechanicData::BuyNfa);
+    Mechanics::<Test>::insert(&id.gamer_account, &id.nonce, details);
     assert_ok!(MechanicsModule::try_lock(&id, asset_id));
     assert_ok!(MechanicsModule::try_lock(&id, asset_id_2));
-    assert!(Mechanics::<Test>::contains_key(&id.account_id, &id.nonce));
+    assert!(Mechanics::<Test>::contains_key(&id.gamer_account, &id.nonce));
 
-    let m = Mechanics::<Test>::get(&id.account_id, &id.nonce).unwrap();
+    let m = Mechanics::<Test>::get(&id.gamer_account, &id.nonce).unwrap();
     assert_eq!(m.locked.to_vec(), locks);
 
     // ignoring not existed asset
@@ -1214,7 +1236,7 @@ fn clear_lock_works() {
 
     // chreck wrong mechanic
     let id_2: MechanicIdOf<Test> = MechanicId {
-      account_id: 2,
+      gamer_account: GamerAccount { account_id: 1, organization_id: 3 },
       nonce: 3,
     };
     assert_noop!(
@@ -1223,7 +1245,7 @@ fn clear_lock_works() {
     );
 
     assert_ok!(MechanicsModule::_clear_lock(&id, asset_id));
-    let m = Mechanics::<Test>::get(&id.account_id, &id.nonce).unwrap();
+    let m = Mechanics::<Test>::get(&id.gamer_account, &id.nonce).unwrap();
     assert_eq!(m.locked.to_vec(), [asset_id_2].to_vec());
   });
 }
@@ -1232,18 +1254,19 @@ fn clear_lock_works() {
 fn try_lock_nfa_works() {
   new_test_ext().execute_with(|| {
     let id: MechanicIdOf<Test> = MechanicId {
-      account_id: 1,
+      gamer_account: GamerAccount { account_id: 1, organization_id: 3 },
       nonce: 2,
     };
     let who = 1;
     let class_id = 2.into();
     let asset_id = 3.into();
+    let ga = GamerAccount { account_id: 1, organization_id: 3 };
 
-    assert!(!Mechanics::<Test>::contains_key(&id.account_id, &id.nonce));
-    let details = MechanicDetailsBuilder::build::<Test>(1, MechanicData::BuyNfa);
-    Mechanics::<Test>::insert(&id.account_id, &id.nonce, details);
+    assert!(!Mechanics::<Test>::contains_key(&id.gamer_account, &id.nonce));
+    let details = MechanicDetailsBuilder::build::<Test>(ga, MechanicData::BuyNfa);
+    Mechanics::<Test>::insert(&id.gamer_account, &id.nonce, details);
     assert_ok!(MechanicsModule::try_lock_nfa(&id, &who, class_id, asset_id));
-    assert!(Mechanics::<Test>::contains_key(&id.account_id, &id.nonce));
+    assert!(Mechanics::<Test>::contains_key(&id.gamer_account, &id.nonce));
   });
 }
 
@@ -1251,27 +1274,29 @@ fn try_lock_nfa_works() {
 fn crear_lock_nfa_works() {
   new_test_ext().execute_with(|| {
     let id: MechanicIdOf<Test> = MechanicId {
-      account_id: 1,
+      gamer_account: GamerAccount { account_id: 1, organization_id: 3 },
       nonce: 2,
     };
     let who = 1;
+    let ga = GamerAccount { account_id: who, organization_id: 3 };
+
     let class_id = 4.into();
     let asset_id = 5.into();
     let locks = [LockedAccet::Nfa(4.into(), 5.into())].to_vec();
-
-    assert!(!Mechanics::<Test>::contains_key(&id.account_id, &id.nonce));
-    let details = MechanicDetailsBuilder::build::<Test>(1, MechanicData::BuyNfa);
-    Mechanics::<Test>::insert(&id.account_id, &id.nonce, details);
+    
+    assert!(!Mechanics::<Test>::contains_key(&id.gamer_account, &id.nonce));
+    let details = MechanicDetailsBuilder::build::<Test>(ga, MechanicData::BuyNfa);
+    Mechanics::<Test>::insert(&id.gamer_account, &id.nonce, details);
     assert_ok!(MechanicsModule::try_lock_nfa(&id, &who, class_id, asset_id));
-    assert!(Mechanics::<Test>::contains_key(&id.account_id, &id.nonce));
+    assert!(Mechanics::<Test>::contains_key(&id.gamer_account, &id.nonce));
 
-    let m = Mechanics::<Test>::get(&id.account_id, &id.nonce).unwrap();
+    let m = Mechanics::<Test>::get(&id.gamer_account, &id.nonce).unwrap();
     assert_eq!(m.locked.to_vec(), locks);
 
     assert_ok!(MechanicsModule::_clear_lock_nfa(
       &id, &who, class_id, asset_id
     ));
-    let m = Mechanics::<Test>::get(&id.account_id, &id.nonce).unwrap();
+    let m = Mechanics::<Test>::get(&id.gamer_account, &id.nonce).unwrap();
     assert_eq!(m.locked.to_vec().len(), 0);
   });
 }
@@ -1301,9 +1326,10 @@ fn play_bet_round_single_round_win() {
     assert!(bettor.is_valid()); // bettor must be valid
 
     let who = 112;
+    let org = 223;
     let _n = System::account_nonce(who);
     System::inc_account_nonce(who);
-    let mechanic_id = MechanicsModule::get_mechanic_id(&who);
+    let mechanic_id = MechanicsModule::get_mechanic_id(&who, &org);
     let _class_id = 8;
     let _asset_id = 8;
     let outcomes = Vec::new();
@@ -1319,7 +1345,7 @@ fn play_bet_round_single_round_win() {
     ));
 
     assert!(!Mechanics::<Test>::contains_key(
-      &mechanic_id.account_id,
+      &mechanic_id.gamer_account,
       &mechanic_id.nonce
     ));
 
@@ -1329,7 +1355,7 @@ fn play_bet_round_single_round_win() {
         phase: Phase::Initialization,
         event: MechanicsEvent::Finished {
           id: mechanic_id.nonce,
-          owner: mechanic_id.account_id,
+          owner: mechanic_id.gamer_account,
           result: Some(EventMechanicResultData::Bet(EventMechanicResultDataBet {
             outcomes: bvec![0,],
             result: BetResult::Won,
@@ -1367,9 +1393,10 @@ fn play_bet_round_single_round_lose() {
     assert!(bettor.is_valid()); // bettor must be valid
 
     let who = 113;
+    let org = 224;
     let _n = System::account_nonce(who);
     System::inc_account_nonce(who);
-    let mechanic_id = MechanicsModule::get_mechanic_id(&who);
+    let mechanic_id = MechanicsModule::get_mechanic_id(&who, &org);
     let _class_id = 9;
     let _asset_id = 9;
     let outcomes = Vec::new();
@@ -1385,7 +1412,7 @@ fn play_bet_round_single_round_lose() {
     ));
 
     assert!(!Mechanics::<Test>::contains_key(
-      &mechanic_id.account_id,
+      &mechanic_id.gamer_account,
       &mechanic_id.nonce
     ));
 
@@ -1395,7 +1422,7 @@ fn play_bet_round_single_round_lose() {
         phase: Phase::Initialization,
         event: MechanicsEvent::Finished {
           id: mechanic_id.nonce,
-          owner: mechanic_id.account_id,
+          owner: mechanic_id.gamer_account,
           result: Some(EventMechanicResultData::Bet(EventMechanicResultDataBet {
             outcomes: bvec![1,],
             result: BetResult::Lost,
@@ -1436,9 +1463,10 @@ fn play_bet_round_single_round_draw_keep() {
     assert!(bettor.is_valid()); // bettor must be valid
 
     let who = 114;
+    let org = 225;
     let _n = System::account_nonce(who);
     System::inc_account_nonce(who);
-    let mechanic_id = MechanicsModule::get_mechanic_id(&who);
+    let mechanic_id = MechanicsModule::get_mechanic_id(&who, &org);
     let _class_id = 31;
     let _asset_id = 31;
     let outcomes = Vec::new();
@@ -1454,7 +1482,7 @@ fn play_bet_round_single_round_draw_keep() {
     ));
 
     assert!(!Mechanics::<Test>::contains_key(
-      &mechanic_id.account_id,
+      &mechanic_id.gamer_account,
       &mechanic_id.nonce
     ));
 
@@ -1464,7 +1492,7 @@ fn play_bet_round_single_round_draw_keep() {
         phase: Phase::Initialization,
         event: MechanicsEvent::Finished {
           id: mechanic_id.nonce,
-          owner: mechanic_id.account_id,
+          owner: mechanic_id.gamer_account,
           result: Some(EventMechanicResultData::Bet(EventMechanicResultDataBet {
             outcomes: bvec![2,],
             result: BetResult::Draw,
@@ -1505,9 +1533,10 @@ fn play_bet_round_single_round_draw_lose() {
     assert!(bettor.is_valid()); // bettor must be valid
 
     let who = 115;
+    let org = 226;
     let _n = System::account_nonce(who);
     System::inc_account_nonce(who);
-    let mechanic_id = MechanicsModule::get_mechanic_id(&who);
+    let mechanic_id = MechanicsModule::get_mechanic_id(&who, &org);
     let _class_id = 32;
     let _asset_id = 32;
     let outcomes = Vec::new();
@@ -1523,7 +1552,7 @@ fn play_bet_round_single_round_draw_lose() {
     ));
 
     assert!(!Mechanics::<Test>::contains_key(
-      &mechanic_id.account_id,
+      &mechanic_id.gamer_account,
       &mechanic_id.nonce
     ));
 
@@ -1533,7 +1562,7 @@ fn play_bet_round_single_round_draw_lose() {
         phase: Phase::Initialization,
         event: MechanicsEvent::Finished {
           id: mechanic_id.nonce,
-          owner: mechanic_id.account_id,
+          owner: mechanic_id.gamer_account,
           result: Some(EventMechanicResultData::Bet(EventMechanicResultDataBet {
             outcomes: bvec![2,],
             result: BetResult::Lost,
@@ -1574,9 +1603,10 @@ fn play_bet_round_single_round_draw_win() {
     assert!(bettor.is_valid()); // bettor must be valid
 
     let who = 115;
+    let org = 226;
     let _n = System::account_nonce(who);
     System::inc_account_nonce(who);
-    let mechanic_id = MechanicsModule::get_mechanic_id(&who);
+    let mechanic_id = MechanicsModule::get_mechanic_id(&who, &org);
     let _class_id = 33;
     let _asset_id = 33;
     let outcomes = Vec::new();
@@ -1592,7 +1622,7 @@ fn play_bet_round_single_round_draw_win() {
     ));
 
     assert!(!Mechanics::<Test>::contains_key(
-      &mechanic_id.account_id,
+      &mechanic_id.gamer_account,
       &mechanic_id.nonce
     ));
 
@@ -1602,7 +1632,7 @@ fn play_bet_round_single_round_draw_win() {
         phase: Phase::Initialization,
         event: MechanicsEvent::Finished {
           id: mechanic_id.nonce,
-          owner: mechanic_id.account_id,
+          owner: mechanic_id.gamer_account,
           result: Some(EventMechanicResultData::Bet(EventMechanicResultDataBet {
             outcomes: bvec![2,],
             result: BetResult::Won,
@@ -1640,9 +1670,10 @@ fn play_bet_round_three_rounds_win_at_second_round() {
     assert!(bettor.is_valid()); // bettor must be valid
 
     let who = 114;
+    let org = 225;
     let _n = System::account_nonce(who);
     System::inc_account_nonce(who);
-    let mechanic_id = MechanicsModule::get_mechanic_id(&who);
+    let mechanic_id = MechanicsModule::get_mechanic_id(&who, &org);
     let _class_id = 30;
     let _asset_id = 30;
     let outcomes = Vec::new();
@@ -1657,11 +1688,11 @@ fn play_bet_round_three_rounds_win_at_second_round() {
       outcomes
     ));
     assert!(Mechanics::<Test>::contains_key(
-      &mechanic_id.account_id,
+      &mechanic_id.gamer_account,
       &mechanic_id.nonce
     ));
-    let m = Mechanics::<Test>::get(&mechanic_id.account_id, &mechanic_id.nonce).unwrap();
-    if let MechanicData::Bet(data) = m.data {
+    let m = Mechanics::<Test>::get(&mechanic_id.gamer_account, &mechanic_id.nonce).unwrap();
+    if let MechanicData::Bet(data) = m.clone().data {
       assert_eq!(data.outcomes.to_vec(), [0].to_vec()); // first round was won
     } else {
       unreachable!()
@@ -1669,7 +1700,7 @@ fn play_bet_round_three_rounds_win_at_second_round() {
     // after first round mechanic must have timeout
     assert!(Timeouts::<Test>::contains_key((
       m.timeout_id,
-      &mechanic_id.account_id,
+      &mechanic_id.gamer_account,
       &mechanic_id.nonce
     )));
 
@@ -1679,8 +1710,8 @@ fn play_bet_round_three_rounds_win_at_second_round() {
         phase: Phase::Initialization,
         event: MechanicsEvent::Stopped {
           id: mechanic_id.nonce,
-          owner: mechanic_id.account_id,
-          reason: EventMechanicStopReason::UpgradeNeeded
+          owner: mechanic_id.gamer_account.clone(),
+          reason: EventMechanicStopReason::UpgradeNeeded(m.clone())
         }
         .into(),
         topics: vec![],
@@ -1699,14 +1730,14 @@ fn play_bet_round_three_rounds_win_at_second_round() {
       outcomes
     ));
     assert!(!Mechanics::<Test>::contains_key(
-      &mechanic_id.account_id,
+      &mechanic_id.gamer_account,
       &mechanic_id.nonce
     ));
 
     // after second, t.e. final round, mechanic must clean a timeout
     assert!(!Timeouts::<Test>::contains_key((
       m.timeout_id,
-      &mechanic_id.account_id,
+      &mechanic_id.gamer_account,
       &mechanic_id.nonce
     )));
 
@@ -1716,7 +1747,7 @@ fn play_bet_round_three_rounds_win_at_second_round() {
         phase: Phase::Initialization,
         event: MechanicsEvent::Finished {
           id: mechanic_id.nonce,
-          owner: mechanic_id.account_id,
+          owner: mechanic_id.gamer_account,
           result: Some(EventMechanicResultData::Bet(EventMechanicResultDataBet {
             outcomes: bvec![0, 0],
             result: BetResult::Won,
@@ -1733,19 +1764,20 @@ fn play_bet_round_three_rounds_win_at_second_round() {
 fn do_bet_unexisted_bet_asset() {
   new_test_ext().execute_with(|| {
     let who = 222;
+    let org = 333;
     let _n = System::account_nonce(who);
     System::inc_account_nonce(who);
-    let id = MechanicsModule::get_mechanic_id(&who);
+    let id = MechanicsModule::get_mechanic_id(&who, &org);
 
     let class_id = 5.into();
     let asset_id = 6.into();
 
     assert_noop!(
-      MechanicsModule::do_bet(&who, &class_id, &asset_id),
+      MechanicsModule::do_bet(&who, &org, &class_id, &asset_id),
       sp_runtime::DispatchError::Other("mock_error_asset_doesnt_exist")
     );
 
-    assert!(!Mechanics::<Test>::contains_key(&id.account_id, &id.nonce));
+    assert!(!Mechanics::<Test>::contains_key(&id.gamer_account, &id.nonce));
   });
 }
 
@@ -1753,20 +1785,21 @@ fn do_bet_unexisted_bet_asset() {
 fn do_bet_asset_not_bettor() {
   new_test_ext().execute_with(|| {
     let who = 222;
+    let org = 222;
     let _n = System::account_nonce(who);
     System::inc_account_nonce(who);
-    let inner_id = MechanicsModule::get_mechanic_id(&who);
+    let inner_id = MechanicsModule::get_mechanic_id(&who, &org);
 
     let class_id = 7.into();
     let asset_id = 7.into();
 
     assert_noop!(
-      MechanicsModule::do_bet(&who, &class_id, &asset_id),
+      MechanicsModule::do_bet(&who, &org, &class_id, &asset_id),
       Error::<Test>::IncompatibleAsset
     );
 
     assert!(!Mechanics::<Test>::contains_key(
-      &inner_id.account_id,
+      &inner_id.gamer_account,
       &inner_id.nonce
     ));
   });
@@ -1776,26 +1809,27 @@ fn do_bet_asset_not_bettor() {
 fn do_bet_asset_one_round_work() {
   new_test_ext().execute_with(|| {
     let who = 116;
+    let org = 227;
     let _n = System::account_nonce(who);
     System::inc_account_nonce(who);
-    let inner_id = MechanicsModule::get_mechanic_id(&who);
+    let inner_id = MechanicsModule::get_mechanic_id(&who, &org);
 
     let class_id = 34.into();
     let asset_id = 34.into();
 
     System::set_block_number(2); // rnd(2) % total_outcomes(2) = 0; 0 = win
     System::reset_events();
-    assert_ok!(MechanicsModule::do_bet(&who, &class_id, &asset_id));
+    assert_ok!(MechanicsModule::do_bet(&who, &org, &class_id, &asset_id));
 
     // should mint Nfa(20), drop mechanic, deposit event
 
     assert!(!Mechanics::<Test>::contains_key(
-      &inner_id.account_id,
+      &inner_id.gamer_account,
       &inner_id.nonce
     ));
     assert!(!Timeouts::<Test>::contains_key((
       22,
-      &inner_id.account_id,
+      &inner_id.gamer_account,
       &inner_id.nonce
     )));
 
@@ -1805,7 +1839,7 @@ fn do_bet_asset_one_round_work() {
         phase: Phase::Initialization,
         event: MechanicsEvent::Finished {
           id: inner_id.nonce,
-          owner: inner_id.account_id,
+          owner: inner_id.gamer_account,
           result: Some(EventMechanicResultData::Bet(EventMechanicResultDataBet {
             outcomes: bvec![0,],
             result: BetResult::Won,
@@ -1822,6 +1856,7 @@ fn do_bet_asset_one_round_work() {
 fn do_bet_next_round_two_rounds_work() {
   new_test_ext().execute_with(|| {
     let who = 117;
+    let org = 228;
     let _n = System::account_nonce(who);
     System::inc_account_nonce(who);
 
@@ -1829,18 +1864,20 @@ fn do_bet_next_round_two_rounds_work() {
     let asset_id = 35.into();
 
     System::set_block_number(2); // rnd(2) % total_outcomes(2) = 0; 0 = win
-    let inner_id = MechanicsModule::get_mechanic_id(&who);
+    let inner_id = MechanicsModule::get_mechanic_id(&who, &org);
     let timeout_id: <Test as frame_system::Config>::BlockNumber = inner_id.nonce as u64 + 21;
     System::reset_events();
-    assert_ok!(MechanicsModule::do_bet(&who, &class_id, &asset_id));
+    assert_ok!(MechanicsModule::do_bet(&who, &org, &class_id, &asset_id));
+
+    let m = Mechanics::<Test>::get(&inner_id.gamer_account, &inner_id.nonce).unwrap();
     assert_eq!(
       System::events(),
       vec![EventRecord {
         phase: Phase::Initialization,
         event: MechanicsEvent::Stopped {
           id: inner_id.nonce,
-          owner: inner_id.account_id,
-          reason: EventMechanicStopReason::UpgradeNeeded
+          owner: inner_id.gamer_account.clone(),
+          reason: EventMechanicStopReason::UpgradeNeeded(m)
         }
         .into(),
         topics: vec![],
@@ -1848,13 +1885,13 @@ fn do_bet_next_round_two_rounds_work() {
     );
     // at first round should save mechanic
     assert!(Mechanics::<Test>::contains_key(
-      &inner_id.account_id,
+      &inner_id.gamer_account,
       &inner_id.nonce
     ));
     // and set the timeout
     assert!(Timeouts::<Test>::contains_key((
       timeout_id,
-      &inner_id.account_id,
+      &inner_id.gamer_account,
       &inner_id.nonce
     )));
 
@@ -1864,7 +1901,7 @@ fn do_bet_next_round_two_rounds_work() {
     // final result = draw
     // should burn nfa, drop mechanic, deposit event
     assert!(!Mechanics::<Test>::contains_key(
-      &inner_id.account_id,
+      &inner_id.gamer_account,
       &inner_id.nonce
     ));
 
@@ -1874,7 +1911,7 @@ fn do_bet_next_round_two_rounds_work() {
         phase: Phase::Initialization,
         event: MechanicsEvent::Finished {
           id: inner_id.nonce,
-          owner: inner_id.account_id,
+          owner: inner_id.gamer_account.clone(),
           result: Some(EventMechanicResultData::Bet(EventMechanicResultDataBet {
             outcomes: bvec![0, 1],
             result: BetResult::Lost,
@@ -1891,9 +1928,10 @@ fn do_bet_next_round_two_rounds_work() {
 fn do_do_upgrade_bet_two_rounds_work() {
   new_test_ext().execute_with(|| {
     let who = 118;
+    let org = 229;
     let _n = System::account_nonce(who);
     System::inc_account_nonce(who);
-    let inner_id = MechanicsModule::get_mechanic_id(&who);
+    let inner_id = MechanicsModule::get_mechanic_id(&who, &org);
     let timeout_id: <Test as frame_system::Config>::BlockNumber = inner_id.nonce as u64 + 21;
 
     let class_id = 36.into();
@@ -1903,17 +1941,20 @@ fn do_do_upgrade_bet_two_rounds_work() {
     System::reset_events();
     assert_ok!(MechanicsModule::exec_bet(
       Origin::signed(who),
+      org,
       class_id,
       asset_id
     ));
+
+    let m = Mechanics::<Test>::get(&inner_id.gamer_account, &inner_id.nonce).unwrap();
     assert_eq!(
       System::events(),
       vec![EventRecord {
         phase: Phase::Initialization,
         event: MechanicsEvent::Stopped {
           id: inner_id.nonce,
-          owner: inner_id.account_id,
-          reason: EventMechanicStopReason::UpgradeNeeded
+          owner: inner_id.gamer_account.clone(),
+          reason: EventMechanicStopReason::UpgradeNeeded(m)
         }
         .into(),
         topics: vec![],
@@ -1922,13 +1963,13 @@ fn do_do_upgrade_bet_two_rounds_work() {
 
     // at first round should save mechanic
     assert!(Mechanics::<Test>::contains_key(
-      &inner_id.account_id,
+      &inner_id.gamer_account,
       &inner_id.nonce
     ));
     // and set the timeout
     assert!(Timeouts::<Test>::contains_key((
       timeout_id,
-      &inner_id.account_id,
+      &inner_id.gamer_account,
       &inner_id.nonce
     )));
 
@@ -1939,16 +1980,16 @@ fn do_do_upgrade_bet_two_rounds_work() {
       mechanic_id: inner_id.clone(),
       payload: MechanicUpgradePayload::Bet,
     };
-    assert_ok!(MechanicsModule::upgrade(Origin::signed(who), upgrage_data));
+    assert_ok!(MechanicsModule::upgrade(Origin::signed(who), org, upgrage_data));
     // final result = draw
     // should burn nfa, drop mechanic, deposit event
     assert!(!Mechanics::<Test>::contains_key(
-      &inner_id.account_id,
+      &inner_id.gamer_account,
       &inner_id.nonce
     ));
     assert!(!Timeouts::<Test>::contains_key((
       timeout_id,
-      &inner_id.account_id,
+      &inner_id.gamer_account,
       &inner_id.nonce
     )));
 
@@ -1958,7 +1999,7 @@ fn do_do_upgrade_bet_two_rounds_work() {
         phase: Phase::Initialization,
         event: MechanicsEvent::Finished {
           id: inner_id.nonce,
-          owner: inner_id.account_id,
+          owner: inner_id.gamer_account.clone(),
           result: Some(EventMechanicResultData::Bet(EventMechanicResultDataBet {
             outcomes: bvec![0u32, 1],
             result: BetResult::Lost,
@@ -1975,15 +2016,16 @@ fn do_do_upgrade_bet_two_rounds_work() {
 fn do_upgrade_who_not_own_mechanic_id() {
   new_test_ext().execute_with(|| {
     let who = 119;
+    let org = 220;
     let upgrage_data: MechanicUpgradeDataOf<Test> = MechanicUpgradeData {
       mechanic_id: MechanicId {
-        account_id: 2,
+        gamer_account: GamerAccount { account_id: 2, organization_id: 4 },
         nonce: 3,
       },
       payload: MechanicUpgradePayload::Bet,
     };
     assert_noop!(
-      MechanicsModule::do_upgrade(&who, upgrage_data),
+      MechanicsModule::do_upgrade(&who, &org, upgrage_data),
       Error::<Test>::NoPermission
     );
   });
@@ -1993,15 +2035,16 @@ fn do_upgrade_who_not_own_mechanic_id() {
 fn do_upgrade_mechanic_not_exist() {
   new_test_ext().execute_with(|| {
     let who = 120;
+    let org = 240;
     let upgrage_data: MechanicUpgradeDataOf<Test> = MechanicUpgradeData {
       mechanic_id: MechanicId {
-        account_id: who,
+        gamer_account: GamerAccount { account_id: who, organization_id: org } ,
         nonce: 3,
       },
       payload: MechanicUpgradePayload::Bet,
     };
     assert_noop!(
-      MechanicsModule::do_upgrade(&who, upgrage_data),
+      MechanicsModule::do_upgrade(&who, &org, upgrage_data),
       Error::<Test>::MechanicsNotAvailable
     );
   });
@@ -2011,17 +2054,21 @@ fn do_upgrade_mechanic_not_exist() {
 fn do_upgrade_mechanic_wrong_owner() {
   new_test_ext().execute_with(|| {
     let who = 121;
+    let org = 232;
+    let ga = GamerAccount { account_id: who, organization_id: org };
+
     let upgrage_data: MechanicUpgradeDataOf<Test> = MechanicUpgradeData {
       mechanic_id: MechanicId {
-        account_id: who,
+        gamer_account: ga.clone(),
         nonce: 3,
       },
       payload: MechanicUpgradePayload::Bet,
     };
-    let details = MechanicDetailsBuilder::build::<Test>(2, MechanicData::BuyNfa);
-    Mechanics::<Test>::insert(&who, &3, details);
+    let ga2 = GamerAccount { account_id: 2, organization_id: org };
+    let details = MechanicDetailsBuilder::build::<Test>(ga2, MechanicData::BuyNfa);
+    Mechanics::<Test>::insert(&ga, &3, details);
     assert_noop!(
-      MechanicsModule::do_upgrade(&who, upgrage_data),
+      MechanicsModule::do_upgrade(&who, &org, upgrage_data),
       Error::<Test>::NoPermission
     );
   });
@@ -2031,17 +2078,20 @@ fn do_upgrade_mechanic_wrong_owner() {
 fn do_upgrade_mechanic_incompatible_data() {
   new_test_ext().execute_with(|| {
     let who = 121;
+    let org = 232;
+    let ga = GamerAccount { account_id: who, organization_id: org };
+
     let upgrage_data: MechanicUpgradeDataOf<Test> = MechanicUpgradeData {
       mechanic_id: MechanicId {
-        account_id: who,
+        gamer_account: GamerAccount { account_id: who, organization_id: org },
         nonce: 3,
       },
       payload: MechanicUpgradePayload::Bet,
     };
-    let details = MechanicDetailsBuilder::build::<Test>(who, MechanicData::BuyNfa);
-    Mechanics::<Test>::insert(&who, &3, details);
+    let details = MechanicDetailsBuilder::build::<Test>(ga.clone(), MechanicData::BuyNfa);
+    Mechanics::<Test>::insert(&ga, &3, details);
     assert_noop!(
-      MechanicsModule::do_upgrade(&who, upgrage_data),
+      MechanicsModule::do_upgrade(&who, &org, upgrage_data),
       Error::<Test>::IncompatibleData
     );
   });
@@ -2051,27 +2101,41 @@ fn do_upgrade_mechanic_incompatible_data() {
 fn process_mechanic_timeouts_dropped() {
   new_test_ext().execute_with(|| {
     let who = 122;
+    let org = 233;
     let nonce = 3;
     let timeout_id = 15;
+    let mid = GamerAccount { account_id: who, organization_id: org };
     // add mechanic with timeout
-    let mut details = MechanicDetailsBuilder::build::<Test>(who, MechanicData::BuyNfa);
+    let mut details = MechanicDetailsBuilder::build::<Test>(mid.clone(), MechanicData::BuyNfa);
     details.timeout_id = timeout_id;
-    Mechanics::<Test>::insert(&who, &nonce, details);
+    Mechanics::<Test>::insert(&mid, &nonce, details);
     // add timeout records
-    Timeouts::<Test>::insert((&timeout_id, &who, &nonce), ());
-    assert!(Timeouts::<Test>::contains_key((&timeout_id, &who, &nonce)));
-    assert!(Mechanics::<Test>::contains_key(&who, &nonce));
+    Timeouts::<Test>::insert((&timeout_id, &mid, &nonce), ());
+    assert!(Timeouts::<Test>::contains_key((&timeout_id, &mid, &nonce)));
+    assert!(Mechanics::<Test>::contains_key(&mid, &nonce));
 
     System::set_block_number(2);
     assert_eq!(MechanicsModule::process_mechanic_timeouts(), (0, 0));
-    assert!(Timeouts::<Test>::contains_key((&timeout_id, &who, &nonce)));
-    assert!(Mechanics::<Test>::contains_key(&who, &nonce));
+    assert!(Timeouts::<Test>::contains_key((&timeout_id, &mid, &nonce)));
+    assert!(Mechanics::<Test>::contains_key(&mid, &nonce));
 
     System::set_block_number(timeout_id);
     assert_eq!(MechanicsModule::process_mechanic_timeouts(), (0, 1));
+    assert_eq!(
+      System::events(),
+      vec![EventRecord {
+        phase: Phase::Initialization,
+        event: MechanicsEvent::DroppedByTimeout {
+          owner: mid.clone(),
+          id: nonce,
+        }
+        .into(),
+        topics: vec![],
+      },]
+    );
 
-    assert!(!Mechanics::<Test>::contains_key(&who, &nonce));
-    assert!(!Timeouts::<Test>::contains_key((&timeout_id, &who, &nonce)));
+    assert!(!Mechanics::<Test>::contains_key(&mid, &nonce));
+    assert!(!Timeouts::<Test>::contains_key((&timeout_id, &mid, &nonce)));
     System::set_block_number(timeout_id + 1);
     assert_eq!(MechanicsModule::process_mechanic_timeouts(), (0, 0));
   });
@@ -2081,44 +2145,48 @@ fn process_mechanic_timeouts_dropped() {
 fn process_mechanic_timeouts_lifecycle() {
   new_test_ext().execute_with(|| {
     let who = 122;
+    let org = 233;
     let nonce = 3;
     let timeout_id = 15;
     let timeout_id_2 = 150;
     // add mechanic with timeout
-    let mut details = MechanicDetailsBuilder::build::<Test>(who, MechanicData::BuyNfa);
+    let mid = GamerAccount { account_id: who, organization_id: org };
+
+    let mut details = MechanicDetailsBuilder::build::<Test>(mid.clone(), MechanicData::BuyNfa);
     details.timeout_id = timeout_id;
-    Mechanics::<Test>::insert(&who, &nonce, details);
+    Mechanics::<Test>::insert(&mid, &nonce, details);
     // add timeout records
-    Timeouts::<Test>::insert((&timeout_id, &who, &nonce), ());
+    Timeouts::<Test>::insert((&timeout_id, &mid, &nonce), ());
     // add mechanic with timeout 2
-    let mut details_2 = MechanicDetailsBuilder::build::<Test>(who, MechanicData::BuyNfa);
+    let mut details_2 = MechanicDetailsBuilder::build::<Test>(mid.clone(), MechanicData::BuyNfa);
     details_2.timeout_id = timeout_id_2;
-    Mechanics::<Test>::insert(&33, &44, details_2);
+    let mid33 = GamerAccount { account_id: 33, organization_id: org };
+    Mechanics::<Test>::insert(&mid33, &44, details_2);
     // add timeout records 2
-    Timeouts::<Test>::insert((&timeout_id_2, &33, &44), ());
+    Timeouts::<Test>::insert((&timeout_id_2, &mid33, &44), ());
     // add mechanic with timeout 3
-    let mut details_3 = MechanicDetailsBuilder::build::<Test>(who, MechanicData::BuyNfa);
+    let mut details_3 = MechanicDetailsBuilder::build::<Test>(mid.clone(), MechanicData::BuyNfa);
     details_3.timeout_id = timeout_id;
-    Mechanics::<Test>::insert(&who, &44, details_3);
+    Mechanics::<Test>::insert(&mid, &44, details_3);
     // add timeout records 3
-    Timeouts::<Test>::insert((&timeout_id, &who, &44), ());
-    assert!(Timeouts::<Test>::contains_key((&timeout_id, &who, &nonce)));
-    assert!(Mechanics::<Test>::contains_key(&who, &nonce));
-    assert!(Timeouts::<Test>::contains_key((&timeout_id, &who, &nonce)));
-    assert!(Mechanics::<Test>::contains_key(&who, &nonce));
-    assert!(Timeouts::<Test>::contains_key((&timeout_id_2, &33, &44)));
-    assert!(Mechanics::<Test>::contains_key(&who, &nonce));
+    Timeouts::<Test>::insert((&timeout_id, &mid, &44), ());
+    assert!(Timeouts::<Test>::contains_key((&timeout_id, &mid, &nonce)));
+    assert!(Mechanics::<Test>::contains_key(&mid, &nonce));
+    assert!(Timeouts::<Test>::contains_key((&timeout_id, &mid, &nonce)));
+    assert!(Mechanics::<Test>::contains_key(&mid, &nonce));
+    assert!(Timeouts::<Test>::contains_key((&timeout_id_2, &mid33, &44)));
+    assert!(Mechanics::<Test>::contains_key(&mid, &nonce));
 
     run_to_block(timeout_id);
-    assert!(!Timeouts::<Test>::contains_key((&timeout_id, &who, &nonce)));
-    assert!(!Mechanics::<Test>::contains_key(&who, &nonce));
-    assert!(!Timeouts::<Test>::contains_key((&timeout_id, &who, &nonce)));
-    assert!(!Mechanics::<Test>::contains_key(&who, &nonce));
-    assert!(Timeouts::<Test>::contains_key((&timeout_id_2, &33, &44)));
-    assert!(Mechanics::<Test>::contains_key(&33, &44));
+    assert!(!Timeouts::<Test>::contains_key((&timeout_id, &mid, &nonce)));
+    assert!(!Mechanics::<Test>::contains_key(&mid, &nonce));
+    assert!(!Timeouts::<Test>::contains_key((&timeout_id, &mid, &nonce)));
+    assert!(!Mechanics::<Test>::contains_key(&mid, &nonce));
+    assert!(Timeouts::<Test>::contains_key((&timeout_id_2, &mid33, &44)));
+    assert!(Mechanics::<Test>::contains_key(&mid33, &44));
 
     run_to_block(timeout_id_2);
-    assert!(!Timeouts::<Test>::contains_key((&timeout_id_2, &33, &44)));
-    assert!(!Mechanics::<Test>::contains_key(&33, &44));
+    assert!(!Timeouts::<Test>::contains_key((&timeout_id_2, &mid33, &44)));
+    assert!(!Mechanics::<Test>::contains_key(&mid33, &44));
   });
 }

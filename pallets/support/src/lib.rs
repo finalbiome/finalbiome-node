@@ -39,6 +39,8 @@ pub type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 /// Account index (aka nonce) type. This stores the number of previous transactions associated with
 /// a sender account.
 pub type IndexOf<T> = <T as frame_system::Config>::Index;
+/// Type alias for GamerAccount with config type
+pub type GameAccountOf<T> = GamerAccount<AccountIdOf<T>>;
 /// Type alias for Mechanic Id with config type
 pub type MechanicIdOf<T> = MechanicId<AccountIdOf<T>, IndexOf<T>>;
 /// Type alias for ClassDetails with config type
@@ -156,32 +158,66 @@ pub enum Locker<AccountId, Index> {
 }
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
+/// Represents a user associated with the organization
+pub struct  GamerAccount<AccountId> {
+  /// User account
+  pub account_id: AccountId,
+  /// Organization account
+  pub organization_id: AccountId,
+}
+impl<AccountId> GamerAccount<AccountId>
+where
+  AccountId: PartialEq,
+{
+  /// Ensure that `who` equal `account_id` of the gamer account
+  pub fn ensure_owner(&self, who: &AccountId) -> Result<(), &str> {
+    if &self.account_id == who {
+      Ok(())
+    } else {
+      Err("The owner is not this gamer")
+    }
+  }
+  /// Ensure that `organization` equal `organization_id` of the gamer account
+  pub fn ensure_organization(&self, who: &AccountId) -> Result<(), &str> {
+    if &self.organization_id == who {
+      Ok(())
+    } else {
+      Err("The organization is not this gamer")
+    }
+  }
+}
+
+#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 /// Structure to represent of the Mechanic Id
 pub struct MechanicId<AccountId, Index> {
-  pub account_id: AccountId,
+  pub gamer_account: GamerAccount<AccountId>,
   pub nonce: Index,
 }
 impl<AccountId, Index> MechanicId<AccountId, Index>
 where
   AccountId: PartialEq,
 {
-  /// Creates mechanic id from an account id
+  /// Creates mechanic id from an account id and organization id
   pub fn from_account_id<T: frame_system::Config>(
     account_id: &T::AccountId,
+    organization_id: &T::AccountId,
   ) -> MechanicId<T::AccountId, T::Index> {
     let nonce = <frame_system::Pallet<T>>::account_nonce(account_id);
     MechanicId {
-      account_id: account_id.clone(),
+      gamer_account: GamerAccount {
+        account_id: account_id.clone(),
+        organization_id: organization_id.clone(),
+      },
       nonce,
     }
   }
   /// Ensure that `who` equal `account_id` of mechanic id
   pub fn ensure_owner(&self, who: &AccountId) -> Result<(), &str> {
-    if &self.account_id == who {
-      Ok(())
-    } else {
-      Err("Not owner of mechanic")
-    }
+    self.gamer_account.ensure_owner(who).map_err(|_| "Not owner of mechanic")
+  }
+  /// Ensure that `organization` equal `organization_id` of mechanic id
+  pub fn ensure_organization(&self, who: &AccountId) -> Result<(), &str> {
+    self.gamer_account.ensure_organization(who).map_err(|_| "Not organization of mechanic")
   }
 }
 
