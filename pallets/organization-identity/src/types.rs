@@ -1,4 +1,6 @@
 //! Various basic types for use in the assets pallet.
+#[cfg(feature = "std")]
+use sp_std::vec::Vec;
 
 use frame_support::pallet_prelude::*;
 use pallet_support::{
@@ -32,3 +34,11 @@ pub enum AirDropAsset {
 /// Type alias for `frame_system`'s account id as an organization id.
 pub type OrganizationIdOf<T> = <T as frame_system::Config>::AccountId;
 pub type OnboardingAssets = Option<BoundedVec<AirDropAsset, AttributeListLengthLimit>>;
+
+// region: Genesis Types
+#[cfg(feature = "std")]
+pub type GenesisOnboardingFaConfigOf<T> = Vec<(
+  OrganizationIdOf<T>,
+  Vec<(FungibleAssetId, FungibleAssetBalance)>,
+)>;
+// endregion: Genesis Types

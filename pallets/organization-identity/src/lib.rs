@@ -110,10 +110,12 @@ pub mod pallet {
 
   #[pallet::genesis_config]
   pub struct GenesisConfig<T: Config> {
-    /// Genesis assets: account_id, name
+    /// Genesis organizations: account_id, name
     pub organizations: Vec<(OrganizationIdOf<T>, Vec<u8>)>,
-    /// Genesis metadata: organization_id, account_id
+    /// Genesis organization members: organization_id, account_id
     pub members_of: Vec<(OrganizationIdOf<T>, T::AccountId)>,
+    /// Genesis onboarded fa: organization_id, fa_id, ba_ballance
+    pub onboarding_fa_assets: GenesisOnboardingFaConfigOf<T>,
   }
 
   #[cfg(feature = "std")]
@@ -122,6 +124,7 @@ pub mod pallet {
       Self {
         organizations: Default::default(),
         members_of: Default::default(),
+        onboarding_fa_assets: Default::default(),
       }
     }
   }
@@ -164,6 +167,16 @@ pub mod pallet {
         Members::<T>::insert(member_id, ());
         MembersOf::<T>::insert(org_id, member_id, ());
         MemberCount::<T>::insert(org_id, member_count + 1);
+      }
+      for (org_id, fa) in &self.onboarding_fa_assets {
+        assert!(
+          Organizations::<T>::contains_key(org_id),
+          "Organization does not exist"
+        );
+        let assets: Vec<AirDropAsset> = fa.iter().map(|a| AirDropAsset::Fa(a.0, a.1)).collect();
+        let onboarding_assets: OnboardingAssets =
+          Some(assets.try_into().expect("count of assets exceed of limit"));
+        Pallet::<T>::do_set_onboarding_assets(org_id, onboarding_assets).unwrap();
       }
     }
   }

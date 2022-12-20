@@ -98,6 +98,11 @@ pub fn development_config() -> Result<ChainSpec, String> {
             get_account_id_from_seed::<sr25519::Public>("Mike"),
           ),
         ],
+        // Organization Fa Onboarding
+        vec![(
+          get_account_id_from_seed::<sr25519::Public>("Eve"),
+          vec![(0.into(), 2000.into()), (1.into(), 1000.into())],
+        )],
         // Fungible Assets
         vec![
           (
@@ -264,6 +269,11 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
             get_account_id_from_seed::<sr25519::Public>("Mike"),
           ),
         ],
+        // Organization Fa Onboarding
+        vec![(
+          get_account_id_from_seed::<sr25519::Public>("Eve"),
+          vec![(0.into(), 2000.into()), (1.into(), 1000.into())],
+        )],
         // Fungible Assets
         vec![
           (
@@ -373,6 +383,7 @@ fn testnet_genesis(
   endowed_accounts: Vec<AccountId>,
   organization_accounts: Vec<(AccountId, Vec<u8>)>,
   organization_members: Vec<(AccountId, AccountId)>,
+  onboarding_fa_assets: Vec<(AccountId, Vec<(AssetId, AssetBalance)>)>,
   fungible_assets: Vec<(
     AssetId,
     AccountId,
@@ -418,6 +429,7 @@ fn testnet_genesis(
     organization_identity: OrganizationIdentityConfig {
       organizations: organization_accounts,
       members_of: organization_members,
+      onboarding_fa_assets,
     },
     fungible_assets: FungibleAssetsConfig {
       assets: fungible_assets,
