@@ -7,6 +7,11 @@ The document contains data that is included in the genesis block.
       Members:
         * Ferdie `5CiPPseXPECbkjWCa6MnjNokrgYjMqmKndv2rSnekmSK2DjL`  
         * Pat `5CFtdwPMWowm2Qwq7AuTRmSAHTZD6ixocQVXLo6ZoAXzorHZ` (non-standard)  
+     
+     
+      Onboarding Assets
+        * FA `0` - 2000
+        * FA `1` - 1000
   2.  Oscar `5EvqsKF64Qo6KsYZP753zdCjCdwX1L3vNjVoJZKYN7j5KQpF` (non-standard)  
       Organization Name - `Skyrim`  
       Members:
