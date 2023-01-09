@@ -7,5 +7,6 @@
   "pallets/non-fungible-assets": "0.1.0",
   "pallets/organization-identity": "0.1.0",
   "pallets/support": "0.1.0",
+  "pallets/users": "0.1.0",
   "pallets/template": "0.1.0"
 }

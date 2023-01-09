@@ -44,6 +44,7 @@ pub use sp_runtime::{Perbill, Permill};
 /// Import the template pallet.
 pub use pallet_template;
 
+pub use pallet_users;
 pub use pallet_fungible_assets;
 pub use pallet_mechanics;
 pub use pallet_non_fungible_assets;
@@ -276,6 +277,10 @@ impl pallet_template::Config for Runtime {
   type Event = Event;
 }
 
+impl pallet_users::Config for Runtime {
+  type Event = Event;
+}
+
 impl pallet_organization_identity::Config for Runtime {
   type Event = Event;
   type FungibleAssets = FungibleAssets;
@@ -328,6 +333,7 @@ construct_runtime!(
     TransactionPayment: pallet_transaction_payment,
     Sudo: pallet_sudo,
     TemplateModule: pallet_template,
+    Users: pallet_users,
     OrganizationIdentity: pallet_organization_identity,
     FungibleAssets: pallet_fungible_assets,
     NonFungibleAssets: pallet_non_fungible_assets,
@@ -377,6 +383,7 @@ mod benches {
     [pallet_balances, Balances]
     [pallet_timestamp, Timestamp]
     [pallet_template, TemplateModule]
+    [pallet_users, Users]
     [pallet_organization_identity, OrganizationIdentity]
     [pallet_fungible_assets, FungibleAssets]
     [pallet_non_fungible_assets, NonFungibleAssets]

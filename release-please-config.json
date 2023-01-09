@@ -10,6 +10,7 @@
   "packages": {
     "pallets/template": {},
     "pallets/support": {},
+    "pallets/users": {},
     "pallets/mechanics": {},
     "pallets/non-fungible-assets": {},
     "pallets/fungible-assets": {},

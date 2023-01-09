@@ -6,6 +6,7 @@ members = [
     "pallets/non-fungible-assets",
     "pallets/mechanics",
     "pallets/support",
+    "pallets/users",
     "pallets/template",
     "runtime",
 ]
