@@ -277,8 +277,20 @@ impl pallet_template::Config for Runtime {
   type Event = Event;
 }
 
+// Max capacity of the utility tokens for each user account.
+const MAX_CAPACITY: u128 = 10 * u128::pow(10, 12);
+// How often is the recovery of the number of tokens. In v1 unchanged, and equal to 24 hours in blocks.
+const RECOVERY_PERIOD: BlockNumber = 1 * DAYS;
+// How much slots can be exist in the storage. In v1 unchanged, and must be equal to RecoveryPeriod in blocks.
+const NUMBER_OF_SLOTS: BlockNumber = RECOVERY_PERIOD;
+
 impl pallet_users::Config for Runtime {
   type Event = Event;
+  type RecoveryPeriod = ConstU32<RECOVERY_PERIOD>;
+  type Currency = Balances;
+  type Capacity = ConstU128<MAX_CAPACITY>;
+  type NumberOfSlots = ConstU32<NUMBER_OF_SLOTS>;
+  type AccountsInSlotLimit = ConstU32<128>; // 11059200 accounts max
 }
 
 impl pallet_organization_identity::Config for Runtime {

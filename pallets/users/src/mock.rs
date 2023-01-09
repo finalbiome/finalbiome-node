@@ -1,5 +1,5 @@
-use crate as pallet_template;
-use frame_support::traits::{ConstU16, ConstU64};
+use crate as users;
+use frame_support::traits::{ConstU16, ConstU32, ConstU64, GenesisBuild};
 use frame_system as system;
 use sp_core::H256;
 use sp_runtime::{
@@ -10,6 +10,7 @@ use sp_runtime::{
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 
+type Balance = u64;
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
   pub enum Test where
@@ -18,7 +19,8 @@ frame_support::construct_runtime!(
     UncheckedExtrinsic = UncheckedExtrinsic,
   {
     System: frame_system,
-    TemplateModule: pallet_template,
+    Users: users,
+    Balances: pallet_balances,
   }
 );
 
@@ -40,7 +42,7 @@ impl system::Config for Test {
   type BlockHashCount = ConstU64<250>;
   type Version = ();
   type PalletInfo = PalletInfo;
-  type AccountData = ();
+  type AccountData = pallet_balances::AccountData<Balance>;
   type OnNewAccount = ();
   type OnKilledAccount = ();
   type SystemWeightInfo = ();
@@ -49,14 +51,37 @@ impl system::Config for Test {
   type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
-impl pallet_template::Config for Test {
+impl users::Config for Test {
   type Event = Event;
+  type RecoveryPeriod = ConstU64<5>;
+  type Currency = Balances;
+  type Capacity = ConstU64<100>;
+  type NumberOfSlots = ConstU64<5>;
+  type AccountsInSlotLimit = ConstU32<3>;
 }
 
-// Build genesis storage according to the mock runtime.
-pub fn new_test_ext() -> sp_io::TestExternalities {
-  system::GenesisConfig::default()
+impl pallet_balances::Config for Test {
+  type MaxLocks = ConstU32<50u32>;
+  type MaxReserves = ();
+  type ReserveIdentifier = [u8; 8];
+  /// The type for recording an account's balance.
+  type Balance = Balance;
+  /// The ubiquitous event type.
+  type Event = Event;
+  type DustRemoval = ();
+  type ExistentialDeposit = ConstU64<10>;
+  type AccountStore = System;
+  type WeightInfo = pallet_balances::weights::SubstrateWeight<Test>;
+}
+
+// Build test environment by setting the registrar `key` for the Genesis.
+pub fn new_test_ext(registrar_key: u64) -> sp_io::TestExternalities {
+  let mut t = frame_system::GenesisConfig::default()
     .build_storage::<Test>()
-    .unwrap()
-    .into()
+    .unwrap();
+  
+	users::GenesisConfig::<Test> { registrar_key: Some(registrar_key) }
+		.assimilate_storage(&mut t)
+		.unwrap();
+	t.into()
 }

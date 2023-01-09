@@ -3,7 +3,7 @@ use finalbiome_node_runtime::{
   pallet_non_fungible_assets::{GenesisPurchasedClassesConfig, NonFungibleClassId},
   AccountId, AuraConfig, BalancesConfig, FungibleAssetsConfig, GenesisConfig, GrandpaConfig,
   NonFungibleAssetsConfig, OrganizationIdentityConfig, Signature, SudoConfig, SystemConfig,
-  WASM_BINARY,
+  WASM_BINARY, UsersConfig,
 };
 
 use sc_service::ChainType;
@@ -187,6 +187,7 @@ pub fn development_config() -> Result<ChainSpec, String> {
             vec![(br"Price".to_vec(), Some(159), None, None)],
           ),
         ],
+        get_account_id_from_seed::<sr25519::Public>("Bob"),
         true,
       )
     },
@@ -358,6 +359,7 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
             vec![(br"Price".to_vec(), Some(159), None, None)],
           ),
         ],
+        get_account_id_from_seed::<sr25519::Public>("Bob"),
         true,
       )
     },
@@ -397,6 +399,7 @@ fn testnet_genesis(
   non_fungible_num_attributes: Vec<(NonFungibleClassId, Vec<u8>, u32, Option<u32>)>,
   non_fungible_text_attributes: Vec<(NonFungibleClassId, Vec<u8>, Vec<u8>)>,
   non_fungible_characteristics_purchased: GenesisPurchasedClassesConfig,
+  registrar_key: AccountId,
   _enable_println: bool,
 ) -> GenesisConfig {
   GenesisConfig {
@@ -441,5 +444,9 @@ fn testnet_genesis(
       text_attributes: non_fungible_text_attributes,
       characteristics_purchased: non_fungible_characteristics_purchased,
     },
+    users: UsersConfig {
+      // Assign quota management admin rights.
+      registrar_key: Some(registrar_key),
+    }
   }
 }

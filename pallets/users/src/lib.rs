@@ -1,6 +1,9 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub use pallet::*;
+use sp_runtime::traits::StaticLookup;
+
+mod functions;
 
 #[cfg(test)]
 mod mock;
@@ -11,10 +14,16 @@ mod tests;
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
+type AccountIdLookupOf<T> = <<T as frame_system::Config>::Lookup as StaticLookup>::Source;
+
 #[frame_support::pallet]
 pub mod pallet {
+  use super::*;
   use frame_support::pallet_prelude::*;
   use frame_system::pallet_prelude::*;
+  use frame_support::traits::Currency;
+
+use crate::AccountIdLookupOf;
 
   #[pallet::pallet]
   #[pallet::generate_store(pub(super) trait Store)]
@@ -25,6 +34,16 @@ pub mod pallet {
   pub trait Config: frame_system::Config {
     /// Because this pallet emits events, it depends on the runtime's definition of an event.
     type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+    /// How often is the recovery of the number of tokens. In v1 unchanged, and equal to 24 hours in blocks.
+    type RecoveryPeriod: Get<Self::BlockNumber>;
+    /// The type for recording an account's balance.
+	  type Currency: Currency<Self::AccountId>;
+    /// The max capacity of the utility tokens for each user account.
+    type Capacity: Get<<<Self as Config>::Currency as frame_support::traits::Currency<<Self as frame_system::Config>::AccountId>>::Balance>;
+    /// How much slots can be exist in the storage. In v1 unchanged, and equal to RecoveryPeriod in blocks.
+    type NumberOfSlots: Get<Self::BlockNumber>;
+    /// Max number of accounts which can hold one slot.
+    type AccountsInSlotLimit: Get<u32>;
   }
 
   // The pallet's runtime storage items.
@@ -35,24 +54,54 @@ pub mod pallet {
   // // https://docs.substrate.io/main-docs/build/runtime-storage/#declaring-storage-items
   pub type Something<T> = StorageValue<_, u32>;
 
-  // Pallets use events to inform users when important changes are made.
-  // https://docs.substrate.io/main-docs/build/events-errors/
+  /// The `AccountId` of the Registrar key.
+	#[pallet::storage]
+	#[pallet::getter(fn registrar_key)]
+	pub(super) type RegistrarKey<T: Config> = StorageValue<_, T::AccountId, OptionQuery>;
+
+  /// Events of the Users pallet.
   #[pallet::event]
   #[pallet::generate_deposit(pub(super) fn deposit_event)]
   pub enum Event<T: Config> {
     /// Event documentation should end with an array that provides descriptive names for event
     /// parameters. [something, who]
     SomethingStored(u32, T::AccountId),
+    /// The \[Registrar\] just switched identity; the old key is supplied if one existed.
+		KeyChanged { old_registrar: Option<T::AccountId> },
   }
 
-  // Errors inform users that something went wrong.
+  /// Errors of the Users pallet.
   #[pallet::error]
   pub enum Error<T> {
     /// Error names should be descriptive.
     NoneValue,
     /// Errors should have helpful documentation associated with them.
     StorageOverflow,
+    /// Sender must be the Registrar account
+    RequireRegistrar,
   }
+
+  #[pallet::genesis_config]
+	pub struct GenesisConfig<T: Config> {
+		/// The `AccountId` of the registrar key.
+		pub registrar_key: Option<T::AccountId>,
+	}
+
+  #[cfg(feature = "std")]
+	impl<T: Config> Default for GenesisConfig<T> {
+		fn default() -> Self {
+			Self { registrar_key: None }
+		}
+	}
+
+  #[pallet::genesis_build]
+	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+		fn build(&self) {
+			if let Some(ref key) = self.registrar_key {
+				RegistrarKey::<T>::put(key);
+			}
+		}
+	}
 
   // Dispatchable functions allows users to interact with the pallet and invoke state changes.
   // These functions materialize as "extrinsics", which are often compared to transactions.
@@ -94,6 +143,30 @@ pub mod pallet {
           Ok(())
         },
       }
+    }
+  
+    /// Authenticates the current registrar key and sets the given AccountId (`new`) as the new registrar
+		/// key.
+		///
+		/// The dispatch origin for this call must be _Signed_.
+		///
+		/// # <weight>
+		/// - O(1).
+		/// - One DB read.
+		/// - One DB change.
+		/// # </weight>
+    #[pallet::weight(0)]
+    pub fn set_registrar_key(origin: OriginFor<T>, new: AccountIdLookupOf<T>) -> DispatchResultWithPostInfo {
+      // This is a public call, so we ensure that the origin is some signed account.
+      let sender = ensure_signed(origin)?;
+      Self::ensure_registrar(sender)?;
+
+      let new = T::Lookup::lookup(new)?;
+      Self::deposit_event(Event::KeyChanged { old_registrar: RegistrarKey::<T>::get() });
+			RegistrarKey::<T>::put(&new);
+
+      // Registrar user does not pay a fee.
+			Ok(Pays::No.into())
     }
   }
 }
