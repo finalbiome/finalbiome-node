@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.3.0](https://github.com/finalbiome/finalbiome-node/compare/finalbiome-v0.2.1...finalbiome-v0.3.0) (2023-01-10)
+
+
+### Features
+
+* impl GamerAccount type [#59](https://github.com/finalbiome/finalbiome-node/issues/59) ([a0bf808](https://github.com/finalbiome/finalbiome-node/commit/a0bf80844de592c86939738030980495a4504add))
+* Impl returning of the intermediate result ([db5ed53](https://github.com/finalbiome/finalbiome-node/commit/db5ed5326e2277059728323fbfb23be43a195ea7)), closes [#60](https://github.com/finalbiome/finalbiome-node/issues/60)
+* **mechanics:** added event DroppedByTimeout ([d5c0cd1](https://github.com/finalbiome/finalbiome-node/commit/d5c0cd1321e67c165ac07cb92ddbf38204b36653)), closes [#61](https://github.com/finalbiome/finalbiome-node/issues/61)
+* quota management impl ([44607ab](https://github.com/finalbiome/finalbiome-node/commit/44607abf4c8f8c682b3822069a4c43c0ae3e82ba))
+* storage hasher in the mechanics changed ([d15aa5c](https://github.com/finalbiome/finalbiome-node/commit/d15aa5ccc5ec233fc1704a70491c79f8bc78d086))
+* **users:** added registrar ([8a20097](https://github.com/finalbiome/finalbiome-node/commit/8a2009710c0c8f16efc6c607545f79b531c9d3bb))
+
+
+### Bug Fixes
+
+* **deps:** update actions/checkout action to v3.1.0 ([28e8864](https://github.com/finalbiome/finalbiome-node/commit/28e8864a2ef739d0fd8270757149cecf958eabe9))
+* **deps:** update renovatebot/github-action action to v34 ([bfc79c5](https://github.com/finalbiome/finalbiome-node/commit/bfc79c5261fbede70ab2b884a355e7934e329920))
+* **deps:** update rust crate clap to 3.2.22 ([63ad645](https://github.com/finalbiome/finalbiome-node/commit/63ad645d1136ecdbc7ac98ec7524cf4655ce3968))
+* **deps:** update rust crate clap to 3.2.23 ([03c84a5](https://github.com/finalbiome/finalbiome-node/commit/03c84a5af0167be8851c68d03a59449c60bac6f9))
+* **deps:** update rust crate codec to 3.2.1 ([ab129f8](https://github.com/finalbiome/finalbiome-node/commit/ab129f848175f6358bf5a9b6af07081e1d195d78))
+* **deps:** update rust crate scale-info to 2.2.0 ([9425939](https://github.com/finalbiome/finalbiome-node/commit/9425939119b8fcb7a468ed6dfbcb462887725605))
+* **deps:** update rust crate scale-info to 2.3.0 ([830a533](https://github.com/finalbiome/finalbiome-node/commit/830a53370462fc9eedf82a5cc6103f377906dc31))
+* **deps:** update rust crate serde to 1.0.145 ([430df24](https://github.com/finalbiome/finalbiome-node/commit/430df24277c5a80cc1b7001e9964e1f6e401425e))
+* **deps:** update rust crate serde to 1.0.150 ([fcdcfe8](https://github.com/finalbiome/finalbiome-node/commit/fcdcfe8f3dbafdce3da37c2dcbf762c48797bb65))
+
 ## [0.2.1](https://github.com/finalbiome/finalbiome-node/compare/finalbiome-v0.2.0...finalbiome-v0.2.1) (2022-09-13)
 
 

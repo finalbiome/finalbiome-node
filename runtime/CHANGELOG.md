@@ -1,5 +1,33 @@
 # Changelog
 
+## [0.2.0](https://github.com/finalbiome/finalbiome-node/compare/finalbiome-node-runtime-v0.1.0...finalbiome-node-runtime-v0.2.0) (2023-01-10)
+
+
+### Features
+
+* quota management impl ([44607ab](https://github.com/finalbiome/finalbiome-node/commit/44607abf4c8f8c682b3822069a4c43c0ae3e82ba))
+* **users:** added registrar ([8a20097](https://github.com/finalbiome/finalbiome-node/commit/8a2009710c0c8f16efc6c607545f79b531c9d3bb))
+
+
+### Bug Fixes
+
+* **deps:** update rust crate codec to 3.2.1 ([ab129f8](https://github.com/finalbiome/finalbiome-node/commit/ab129f848175f6358bf5a9b6af07081e1d195d78))
+* **deps:** update rust crate scale-info to 2.2.0 ([9425939](https://github.com/finalbiome/finalbiome-node/commit/9425939119b8fcb7a468ed6dfbcb462887725605))
+* **deps:** update rust crate scale-info to 2.3.0 ([830a533](https://github.com/finalbiome/finalbiome-node/commit/830a53370462fc9eedf82a5cc6103f377906dc31))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * pallet-template bumped from 0.1.0 to 0.1.1
+    * pallet-users bumped from 0.1.0 to 0.2.0
+    * pallet-organization-identity bumped from 0.1.0 to 0.1.1
+    * pallet-fungible-assets bumped from 0.1.0 to 0.1.1
+    * pallet-non-fungible-assets bumped from 0.1.0 to 0.2.0
+    * pallet-mechanics bumped from 0.1.0 to 0.2.0
+    * pallet-support bumped from 0.1.0 to 0.2.0
+
 ## 0.1.0 (2022-09-12)
 
 
