@@ -3,7 +3,7 @@ use finalbiome_node_runtime::{
   pallet_non_fungible_assets::{GenesisPurchasedClassesConfig, NonFungibleClassId},
   AccountId, AuraConfig, BalancesConfig, FungibleAssetsConfig, GenesisConfig, GrandpaConfig,
   NonFungibleAssetsConfig, OrganizationIdentityConfig, Signature, SudoConfig, SystemConfig,
-  WASM_BINARY, UsersConfig,
+  UsersConfig, WASM_BINARY,
 };
 
 use sc_service::ChainType;
@@ -447,6 +447,6 @@ fn testnet_genesis(
     users: UsersConfig {
       // Assign quota management admin rights.
       registrar_key: Some(registrar_key),
-    }
+    },
   }
 }

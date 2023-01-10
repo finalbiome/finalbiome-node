@@ -44,13 +44,13 @@ pub use sp_runtime::{Perbill, Permill};
 /// Import the template pallet.
 pub use pallet_template;
 
-pub use pallet_users;
 pub use pallet_fungible_assets;
 pub use pallet_mechanics;
 pub use pallet_non_fungible_assets;
 /// Import the organization identity pallet.
 pub use pallet_organization_identity;
 pub use pallet_support;
+pub use pallet_users;
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -279,9 +279,11 @@ impl pallet_template::Config for Runtime {
 
 // Max capacity of the utility tokens for each user account.
 const MAX_CAPACITY: u128 = 10 * u128::pow(10, 12);
-// How often is the recovery of the number of tokens. In v1 unchanged, and equal to 24 hours in blocks.
+// How often is the recovery of the number of tokens. In v1 unchanged, and equal to 24 hours in
+// blocks.
 const RECOVERY_PERIOD: BlockNumber = 1 * DAYS;
-// How much slots can be exist in the storage. In v1 unchanged, and must be equal to RecoveryPeriod in blocks.
+// How much slots can be exist in the storage. In v1 unchanged, and must be equal to RecoveryPeriod
+// in blocks.
 const NUMBER_OF_SLOTS: BlockNumber = RECOVERY_PERIOD;
 
 impl pallet_users::Config for Runtime {
