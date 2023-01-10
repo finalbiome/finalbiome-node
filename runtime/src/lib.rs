@@ -50,6 +50,7 @@ pub use pallet_non_fungible_assets;
 /// Import the organization identity pallet.
 pub use pallet_organization_identity;
 pub use pallet_support;
+pub use pallet_users;
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -276,6 +277,24 @@ impl pallet_template::Config for Runtime {
   type Event = Event;
 }
 
+// Max capacity of the utility tokens for each user account.
+const MAX_CAPACITY: u128 = 10 * u128::pow(10, 12);
+// How often is the recovery of the number of tokens. In v1 unchanged, and equal to 24 hours in
+// blocks.
+const RECOVERY_PERIOD: BlockNumber = 1 * DAYS;
+// How much slots can be exist in the storage. In v1 unchanged, and must be equal to RecoveryPeriod
+// in blocks.
+const NUMBER_OF_SLOTS: BlockNumber = RECOVERY_PERIOD;
+
+impl pallet_users::Config for Runtime {
+  type Event = Event;
+  type RecoveryPeriod = ConstU32<RECOVERY_PERIOD>;
+  type Currency = Balances;
+  type Capacity = ConstU128<MAX_CAPACITY>;
+  type NumberOfSlots = ConstU32<NUMBER_OF_SLOTS>;
+  type AccountsPerSlotLimit = ConstU32<128>; // 11059200 accounts max
+}
+
 impl pallet_organization_identity::Config for Runtime {
   type Event = Event;
   type FungibleAssets = FungibleAssets;
@@ -328,6 +347,7 @@ construct_runtime!(
     TransactionPayment: pallet_transaction_payment,
     Sudo: pallet_sudo,
     TemplateModule: pallet_template,
+    Users: pallet_users,
     OrganizationIdentity: pallet_organization_identity,
     FungibleAssets: pallet_fungible_assets,
     NonFungibleAssets: pallet_non_fungible_assets,
@@ -377,6 +397,7 @@ mod benches {
     [pallet_balances, Balances]
     [pallet_timestamp, Timestamp]
     [pallet_template, TemplateModule]
+    [pallet_users, Users]
     [pallet_organization_identity, OrganizationIdentity]
     [pallet_fungible_assets, FungibleAssets]
     [pallet_non_fungible_assets, NonFungibleAssets]
