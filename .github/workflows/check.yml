@@ -75,56 +75,56 @@ jobs:
         run: |
           cargo test --locked
       
-      # - name: Check Build
-      #   run: |
-      #     SKIP_WASM_BUILD=1 cargo check --release
+      - name: Check Build
+        run: |
+          SKIP_WASM_BUILD=1 cargo check --release
 
       # - name: Check Build for Benchmarking
       #   run: >
       #     pushd node &&
       #     cargo check --features=runtime-benchmarks --release
 
-  build:
-    runs-on: ubuntu-20.04
-    needs: check
-    steps:
-      - uses: actions/checkout@v3
-      - name: Set-Up
-        run: sudo apt install -y git clang lldb lld curl libssl-dev llvm libudev-dev
+  # build:
+  #   runs-on: ubuntu-20.04
+  #   needs: check
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - name: Set-Up
+  #       run: sudo apt install -y git clang lldb lld curl libssl-dev llvm libudev-dev
 
-      - name: Install Rustup
-        run: |
-          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-          source ~/.cargo/env
-          rustup default stable
-          rustup update nightly
-          rustup update stable
-          rustup target add wasm32-unknown-unknown --toolchain nightly
-          rustup component add clippy
-          rustflags=(
-            "-C link-arg=-fuse-ld=lld"
-            "-C link-arg=-Wl,--compress-debug-sections=zlib"
-            "-C force-frame-pointers=yes"
-            )
-          export RUSTFLAGS="${rustflags[*]}"
+  #     - name: Install Rustup
+  #       run: |
+  #         curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+  #         source ~/.cargo/env
+  #         rustup default stable
+  #         rustup update nightly
+  #         rustup update stable
+  #         rustup target add wasm32-unknown-unknown --toolchain nightly
+  #         rustup component add clippy
+  #         rustflags=(
+  #           "-C link-arg=-fuse-ld=lld"
+  #           "-C link-arg=-Wl,--compress-debug-sections=zlib"
+  #           "-C force-frame-pointers=yes"
+  #           )
+  #         export RUSTFLAGS="${rustflags[*]}"
           
 
-      - name: Toolchain info
-        run: |
-          clang --version
-          cargo --version --verbose
-          rustc --version
-          cargo clippy --version 
+  #     - name: Toolchain info
+  #       run: |
+  #         clang --version
+  #         cargo --version --verbose
+  #         rustc --version
+  #         cargo clippy --version 
       
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-      - name: Build
-        run: |
-          cargo build --release
+  #     - uses: actions/cache@v3
+  #       with:
+  #         path: |
+  #           ~/.cargo/bin/
+  #           ~/.cargo/registry/index/
+  #           ~/.cargo/registry/cache/
+  #           ~/.cargo/git/db/
+  #           target/
+  #         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+  #     - name: Build
+  #       run: |
+  #         cargo build --release
