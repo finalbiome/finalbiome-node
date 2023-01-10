@@ -1500,7 +1500,7 @@ dependencies = [
 
 [[package]]
 name = "finalbiome-node"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "clap",
  "finalbiome-node-runtime",
@@ -1542,7 +1542,7 @@ dependencies = [
 
 [[package]]
 name = "finalbiome-node-runtime"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "frame-benchmarking",
  "frame-executive",
@@ -4089,7 +4089,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-fungible-assets"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -4128,7 +4128,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-mechanics"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -4145,7 +4145,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-non-fungible-assets"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -4161,7 +4161,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-organization-identity"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -4226,7 +4226,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-support"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -4243,7 +4243,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-template"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -4318,7 +4318,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-users"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "frame-benchmarking",
  "frame-support",

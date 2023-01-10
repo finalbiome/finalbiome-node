@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.2.0](https://github.com/finalbiome/finalbiome-node/compare/pallet-non-fungible-assets-v0.1.0...pallet-non-fungible-assets-v0.2.0) (2023-01-10)
+
+
+### Features
+
+* impl GamerAccount type [#59](https://github.com/finalbiome/finalbiome-node/issues/59) ([a0bf808](https://github.com/finalbiome/finalbiome-node/commit/a0bf80844de592c86939738030980495a4504add))
+
+
+### Bug Fixes
+
+* **deps:** update rust crate codec to 3.2.1 ([ab129f8](https://github.com/finalbiome/finalbiome-node/commit/ab129f848175f6358bf5a9b6af07081e1d195d78))
+* **deps:** update rust crate scale-info to 2.2.0 ([9425939](https://github.com/finalbiome/finalbiome-node/commit/9425939119b8fcb7a468ed6dfbcb462887725605))
+* **deps:** update rust crate scale-info to 2.3.0 ([830a533](https://github.com/finalbiome/finalbiome-node/commit/830a53370462fc9eedf82a5cc6103f377906dc31))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * pallet-support bumped from 0.1.0 to 0.2.0
+
 ## 0.1.0 (2022-09-12)
 
 

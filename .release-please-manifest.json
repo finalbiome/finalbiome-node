@@ -1,12 +1,12 @@
 {
-  ".": "0.2.1",
-  "node": "0.1.1",
-  "runtime": "0.1.0",
-  "pallets/fungible-assets": "0.1.0",
-  "pallets/mechanics": "0.1.0",
-  "pallets/non-fungible-assets": "0.1.0",
-  "pallets/organization-identity": "0.1.0",
-  "pallets/support": "0.1.0",
-  "pallets/users": "0.1.0",
-  "pallets/template": "0.1.0"
+  ".": "0.3.0",
+  "node": "0.2.0",
+  "runtime": "0.2.0",
+  "pallets/fungible-assets": "0.1.1",
+  "pallets/mechanics": "0.2.0",
+  "pallets/non-fungible-assets": "0.2.0",
+  "pallets/organization-identity": "0.1.1",
+  "pallets/support": "0.2.0",
+  "pallets/users": "0.2.0",
+  "pallets/template": "0.1.1"
 }

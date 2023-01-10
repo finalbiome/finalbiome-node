@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.2.0](https://github.com/finalbiome/finalbiome-node/compare/pallet-support-v0.1.0...pallet-support-v0.2.0) (2023-01-10)
+
+
+### Features
+
+* impl GamerAccount type [#59](https://github.com/finalbiome/finalbiome-node/issues/59) ([a0bf808](https://github.com/finalbiome/finalbiome-node/commit/a0bf80844de592c86939738030980495a4504add))
+
+
+### Bug Fixes
+
+* **deps:** update rust crate codec to 3.2.1 ([ab129f8](https://github.com/finalbiome/finalbiome-node/commit/ab129f848175f6358bf5a9b6af07081e1d195d78))
+* **deps:** update rust crate scale-info to 2.2.0 ([9425939](https://github.com/finalbiome/finalbiome-node/commit/9425939119b8fcb7a468ed6dfbcb462887725605))
+* **deps:** update rust crate scale-info to 2.3.0 ([830a533](https://github.com/finalbiome/finalbiome-node/commit/830a53370462fc9eedf82a5cc6103f377906dc31))
+* **deps:** update rust crate serde to 1.0.145 ([430df24](https://github.com/finalbiome/finalbiome-node/commit/430df24277c5a80cc1b7001e9964e1f6e401425e))
+* **deps:** update rust crate serde to 1.0.150 ([fcdcfe8](https://github.com/finalbiome/finalbiome-node/commit/fcdcfe8f3dbafdce3da37c2dcbf762c48797bb65))
+
 ## 0.1.0 (2022-09-12)
 
 

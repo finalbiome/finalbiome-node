@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.2.0](https://github.com/finalbiome/finalbiome-node/compare/finalbiome-node-v0.1.1...finalbiome-node-v0.2.0) (2023-01-10)
+
+
+### Features
+
+* **users:** added registrar ([8a20097](https://github.com/finalbiome/finalbiome-node/commit/8a2009710c0c8f16efc6c607545f79b531c9d3bb))
+
+
+### Bug Fixes
+
+* **deps:** update rust crate clap to 3.2.22 ([63ad645](https://github.com/finalbiome/finalbiome-node/commit/63ad645d1136ecdbc7ac98ec7524cf4655ce3968))
+* **deps:** update rust crate clap to 3.2.23 ([03c84a5](https://github.com/finalbiome/finalbiome-node/commit/03c84a5af0167be8851c68d03a59449c60bac6f9))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * finalbiome-node-runtime bumped from 0.1.0 to 0.2.0
+
 ## [0.1.1](https://github.com/finalbiome/finalbiome-node/compare/finalbiome-node-v0.1.0...finalbiome-node-v0.1.1) (2022-09-13)
 
 
