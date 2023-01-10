@@ -1,5 +1,5 @@
 use crate as users;
-use frame_support::traits::{ConstU16, ConstU32, ConstU64, GenesisBuild};
+use frame_support::traits::{ConstU16, ConstU32, ConstU64, GenesisBuild, Hooks};
 use frame_system as system;
 use sp_core::H256;
 use sp_runtime::{
@@ -57,7 +57,7 @@ impl users::Config for Test {
   type Currency = Balances;
   type Capacity = ConstU64<100>;
   type NumberOfSlots = ConstU64<5>;
-  type AccountsInSlotLimit = ConstU32<3>;
+  type AccountsPerSlotLimit = ConstU32<4>;
 }
 
 impl pallet_balances::Config for Test {
@@ -79,9 +79,27 @@ pub fn new_test_ext(registrar_key: u64) -> sp_io::TestExternalities {
   let mut t = frame_system::GenesisConfig::default()
     .build_storage::<Test>()
     .unwrap();
-  
-	users::GenesisConfig::<Test> { registrar_key: Some(registrar_key) }
-		.assimilate_storage(&mut t)
-		.unwrap();
-	t.into()
+
+  users::GenesisConfig::<Test> {
+    registrar_key: Some(registrar_key),
+  }
+  .assimilate_storage(&mut t)
+  .unwrap();
+  t.into()
+}
+
+/// Progress to the given block.
+///
+/// This will finalize the previous block, initialize up to the given block, essentially simulating
+/// a block import/propose process where we first initialize the block, then execute some stuff (not
+/// in the function), and then finalize the block.
+pub fn run_to_block(n: u64) {
+  while System::block_number() < n {
+    Users::on_finalize(System::block_number());
+    System::on_finalize(System::block_number());
+
+    System::set_block_number(System::block_number() + 1);
+    System::on_initialize(System::block_number());
+    Users::on_initialize(System::block_number());
+  }
 }

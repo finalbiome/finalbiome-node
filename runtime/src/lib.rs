@@ -290,7 +290,7 @@ impl pallet_users::Config for Runtime {
   type Currency = Balances;
   type Capacity = ConstU128<MAX_CAPACITY>;
   type NumberOfSlots = ConstU32<NUMBER_OF_SLOTS>;
-  type AccountsInSlotLimit = ConstU32<128>; // 11059200 accounts max
+  type AccountsPerSlotLimit = ConstU32<128>; // 11059200 accounts max
 }
 
 impl pallet_organization_identity::Config for Runtime {
