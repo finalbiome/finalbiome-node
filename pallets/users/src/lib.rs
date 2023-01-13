@@ -21,6 +21,10 @@ pub mod pallet {
   use super::*;
   use frame_support::{pallet_prelude::*, traits::Currency};
   use frame_system::pallet_prelude::*;
+  use sp_runtime::{
+    traits::{IdentifyAccount, Verify},
+    MultiSignature,
+  };
 
   use crate::AccountIdLookupOf;
 
@@ -30,7 +34,11 @@ pub mod pallet {
 
   /// Configure the pallet by specifying the parameters and types on which it depends.
   #[pallet::config]
-  pub trait Config: frame_system::Config {
+  pub trait Config:
+    frame_system::Config<
+    AccountId = <<MultiSignature as Verify>::Signer as IdentifyAccount>::AccountId,
+  >
+  {
     /// Because this pallet emits events, it depends on the runtime's definition of an event.
     type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
     /// How often is the recovery of the number of tokens. In v1 unchanged, and equal to 24 hours in
@@ -92,6 +100,10 @@ pub mod pallet {
     Exhausted,
     /// The account is already registered.
     Registered,
+    /// The provided signature is invalid.
+    InvalidSignature,
+    /// Registrar not defined.
+    UnknownRegistrar,
   }
 
   #[pallet::genesis_config]
@@ -152,7 +164,7 @@ pub mod pallet {
       Self::deposit_event(Event::KeyChanged {
         old_registrar: RegistrarKey::<T>::get(),
       });
-      RegistrarKey::<T>::put(&new);
+      RegistrarKey::<T>::put(new);
 
       // Registrar user does not pay a fee.
       Ok(Pays::No.into())
@@ -161,15 +173,21 @@ pub mod pallet {
     /// Register a new account.
     ///
     /// User can register only once.
-    #[pallet::weight(0)]
-    pub fn sign_up(origin: OriginFor<T>, who: AccountIdLookupOf<T>) -> DispatchResultWithPostInfo {
+    #[pallet::weight((
+			T::DbWeight::get().reads_writes(6, 4),
+			DispatchClass::Normal,
+			Pays::No
+		))]
+    pub fn sign_up(
+      origin: OriginFor<T>,
+      sign: BoundedVec<u8, ConstU32<64>>,
+    ) -> DispatchResultWithPostInfo {
       // This is a public call, so we ensure that the origin is some signed account.
       let sender = ensure_signed(origin)?;
-      // Only registrar can make this call
-      Self::ensure_registrar(sender)?;
+      // Sender must provide valid signature
+      Self::verify_signature(&sender, sign)?;
 
-      let target = T::Lookup::lookup(who)?;
-      Self::do_sign_up(target)?;
+      Self::do_sign_up(sender)?;
 
       // Registrar user does not pay a fee.
       Ok(Pays::No.into())

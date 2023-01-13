@@ -4,10 +4,12 @@ use super::*;
 use frame_support::{
   ensure,
   pallet_prelude::DispatchResult,
-  traits::{tokens::imbalance::Imbalance, Currency},
+  traits::{tokens::imbalance::Imbalance, ConstU32, Currency},
   weights::Weight,
+  BoundedVec,
 };
-use sp_runtime::traits::Get;
+
+use sp_runtime::traits::{Get, Verify};
 
 type PositiveImbalanceOf<T> =
   <<T as Config>::Currency as frame_support::traits::tokens::currency::Currency<
@@ -21,6 +23,33 @@ impl<T: Config> Pallet<T> {
       Self::registrar_key().map_or(false, |k| sender == k),
       Error::<T>::RequireRegistrar
     );
+    Ok(())
+  }
+
+  pub(crate) fn verify_signature(
+    sender: &T::AccountId,
+    raw_signature: BoundedVec<u8, ConstU32<64>>,
+  ) -> DispatchResult {
+    use sp_core::crypto::ByteArray;
+
+    let registrar = Self::registrar_key().ok_or(Error::<T>::UnknownRegistrar)?;
+
+    // The signed message is the public address of the caller
+    let message = sp_core::sr25519::Public::from_slice(sender.as_ref())
+      .map_err(|_| Error::<T>::InvalidSignature)?;
+
+    let verified = match sp_core::sr25519::Signature::try_from(&raw_signature[..]) {
+      Ok(signature) => match sp_core::sr25519::Public::from_slice(registrar.as_ref()) {
+        Ok(signer) => signature.verify(&message[..], &signer),
+        _ => false,
+      },
+      _ => false,
+    };
+
+    if !verified {
+      return Err(Error::<T>::InvalidSignature.into());
+    }
+
     Ok(())
   }
 
