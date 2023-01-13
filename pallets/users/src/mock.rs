@@ -4,7 +4,8 @@ use frame_system as system;
 use sp_core::H256;
 use sp_runtime::{
   testing::Header,
-  traits::{BlakeTwo256, IdentityLookup},
+  traits::{BlakeTwo256, IdentifyAccount, IdentityLookup, Verify},
+  AccountId32, MultiSignature,
 };
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
@@ -35,7 +36,7 @@ impl system::Config for Test {
   type BlockNumber = u64;
   type Hash = H256;
   type Hashing = BlakeTwo256;
-  type AccountId = u64;
+  type AccountId = <<MultiSignature as Verify>::Signer as IdentifyAccount>::AccountId;
   type Lookup = IdentityLookup<Self::AccountId>;
   type Header = Header;
   type Event = Event;
@@ -75,13 +76,13 @@ impl pallet_balances::Config for Test {
 }
 
 // Build test environment by setting the registrar `key` for the Genesis.
-pub fn new_test_ext(registrar_key: u64) -> sp_io::TestExternalities {
+pub fn new_test_ext(registrar_key: &AccountId32) -> sp_io::TestExternalities {
   let mut t = frame_system::GenesisConfig::default()
     .build_storage::<Test>()
     .unwrap();
 
   users::GenesisConfig::<Test> {
-    registrar_key: Some(registrar_key),
+    registrar_key: Some(registrar_key.clone()),
   }
   .assimilate_storage(&mut t)
   .unwrap();
