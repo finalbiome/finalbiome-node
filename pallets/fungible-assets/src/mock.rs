@@ -1,7 +1,5 @@
 use crate as pallet_fungible_assets;
-use frame_support::traits::{
-  AsEnsureOriginWithArg, ConstU16, ConstU32, ConstU64, GenesisBuild, Hooks,
-};
+use frame_support::traits::{AsEnsureOriginWithArg, ConstU16, ConstU32, ConstU64, Hooks};
 use frame_system as system;
 use sp_core::H256;
 use sp_runtime::{
@@ -65,31 +63,9 @@ impl pallet_fungible_assets::Config for Test {
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-  let mut storage = system::GenesisConfig::default()
+  let storage = system::GenesisConfig::default()
     .build_storage::<Test>()
     .unwrap();
-  let config: pallet_fungible_assets::GenesisConfig<Test> = pallet_fungible_assets::GenesisConfig {
-    // assets: asset_id, organization_id, name, top_upped_speed, cup_global, cup_local
-    assets: vec![
-      (0.into(), 2, "asset01".into(), None, None, None),
-      (
-        1.into(),
-        2,
-        "asset02".into(),
-        Some(5.into()),
-        None,
-        Some(20.into()),
-      ),
-    ],
-    // account_balances: account_id, asset_id, balance
-    accounts: vec![
-      (1, 0.into(), 1_000.into()),
-      (3, 1.into(), 20.into()),
-      (4, 1.into(), 5.into()),
-      (5, 0.into(), 10_000.into()),
-    ],
-  };
-  config.assimilate_storage(&mut storage).unwrap();
   let mut ext: sp_io::TestExternalities = storage.into();
   ext.execute_with(|| {
     System::set_block_number(1);
