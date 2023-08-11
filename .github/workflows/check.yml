@@ -71,7 +71,8 @@ jobs:
 
       - name: Check Format Code
         run: |
-          cargo +nightly fmt -- --check
+          # cargo +nightly fmt -- --check
+          rustup run $WASM_BUILD_TOOLCHAIN cargo fmt -- --check
 
       - name: Check Code
         run: |
