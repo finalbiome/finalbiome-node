@@ -14,6 +14,8 @@ on:
 env:
   CARGO_INCREMENTAL: 0
   CARGO_PROFILE_RELEASE_LTO: thin
+  WASM_BUILD_TOOLCHAIN: nightly-2023-01-10
+  RUST_STABLE_VERSION: 1.66
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -33,11 +35,14 @@ jobs:
         run: |
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
           source ~/.cargo/env
-          rustup default stable
-          rustup update nightly
-          rustup update stable
+          # rustup default stable
+          # rustup update nightly
+          # rustup update stable
+          rustup install $RUST_STABLE_VERSION
+          rustup override set $RUST_STABLE_VERSION
+          rustup install $WASM_BUILD_TOOLCHAIN
           rustup target add wasm32-unknown-unknown
-          rustup target add wasm32-unknown-unknown --toolchain nightly
+          rustup target add wasm32-unknown-unknown --toolchain $WASM_BUILD_TOOLCHAIN
           rustup component add clippy
           rustflags=(
             "-C link-arg=-fuse-ld=lld"
