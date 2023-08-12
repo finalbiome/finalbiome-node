@@ -31,6 +31,9 @@ jobs:
       - name: Set-Up
         run: |
           sudo apt install -y lldb lld llvm libudev-dev
+      - name: Uninstall Rust
+        run: |
+          rustup self uninstall
 
       - name: Install Rustup
         run: |
