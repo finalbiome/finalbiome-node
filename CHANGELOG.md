@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/finalbiome/finalbiome-node/compare/finalbiome-v0.3.0...finalbiome-v0.4.0) (2023-08-12)
+
+
+### Features
+
+* **users:** signature required for registration ([c934310](https://github.com/finalbiome/finalbiome-node/commit/c934310a0d536dd694cd4dce28030a086525fa97))
+
 ## [0.3.0](https://github.com/finalbiome/finalbiome-node/compare/finalbiome-v0.2.1...finalbiome-v0.3.0) (2023-01-10)
 
 

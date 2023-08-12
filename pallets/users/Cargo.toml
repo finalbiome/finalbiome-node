@@ -1,6 +1,6 @@
 [package]
 name = "pallet-users"
-version = "0.2.0"
+version = "0.3.0"
 description = "Quota management and other user context tasks."
 authors = ["FinalBiome Devs <https://github.com/finalbiome>"]
 homepage = "https://finalbiome.net/"
