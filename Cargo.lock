@@ -1500,7 +1500,7 @@ dependencies = [
 
 [[package]]
 name = "finalbiome-node"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "clap",
  "finalbiome-node-runtime",
@@ -1542,7 +1542,7 @@ dependencies = [
 
 [[package]]
 name = "finalbiome-node-runtime"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "frame-benchmarking",
  "frame-executive",
@@ -4318,7 +4318,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-users"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "frame-benchmarking",
  "frame-support",

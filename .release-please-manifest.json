@@ -1,12 +1,12 @@
 {
-  ".": "0.3.0",
-  "node": "0.2.0",
-  "runtime": "0.2.0",
+  ".": "0.4.0",
+  "node": "0.2.1",
+  "runtime": "0.2.1",
   "pallets/fungible-assets": "0.1.1",
   "pallets/mechanics": "0.2.0",
   "pallets/non-fungible-assets": "0.2.0",
   "pallets/organization-identity": "0.1.1",
   "pallets/support": "0.2.0",
-  "pallets/users": "0.2.0",
+  "pallets/users": "0.3.0",
   "pallets/template": "0.1.1"
 }
