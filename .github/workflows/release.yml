@@ -3,11 +3,16 @@ on:
     branches:
       - main
 name: Release
+
+# release-please grooms a single release PR; concurrent runs would race on it.
+concurrency:
+  group: release-please
+  cancel-in-progress: false
+
 jobs:
   release-please:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: google-github-actions/release-please-action@v3.7.1
+      - uses: googleapis/release-please-action@v4
         with:
-          command: manifest
           token: ${{ secrets.RELEASE_TOKEN }}

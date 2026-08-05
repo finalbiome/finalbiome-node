@@ -11,9 +11,16 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
+# Superseded runs (e.g. a Renovate rebase) are cancelled instead of burning a
+# full ~30 min Substrate build. Pushes to main are never cancelled.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 env:
   CARGO_INCREMENTAL: 0
   CARGO_PROFILE_RELEASE_LTO: thin
+  CARGO_TERM_COLOR: always
   RUST_STABLE_VERSION: 1.66.1
   RUST_NIGHTLY_VERSION: nightly-2023-01-10
 
@@ -21,16 +28,31 @@ env:
 jobs:
   check:
     # The type of runner that the job will run on
+    # NOTE: pinned; the vendored Substrate tree (polkadot-v0.9.28 / Rust 1.66.1)
+    # is not validated against ubuntu-24.04. Bump in a separate PR.
     runs-on: ubuntu-22.04
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+
+      - name: Free disk space
+        # A full Substrate debug + release target/ does not fit alongside the
+        # preinstalled toolchains. Reclaiming these frees ~25 GB, which is what
+        # allows the per-step `cargo clean` calls to be dropped.
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/share/boost
+          sudo docker image prune --all --force || true
+          df -h /
 
       - name: Set-Up
         run: |
-          sudo apt install -y lldb lld llvm libudev-dev
+          # `apt-get update` is required: the runner image ships a stale package
+          # index, so `install` 404s whenever Ubuntu publishes a point release.
+          sudo apt-get update
+          sudo apt-get install -y lldb lld llvm libudev-dev
+
       - name: Uninstall Rust
         run: |
           rustup self uninstall -y
@@ -43,51 +65,54 @@ jobs:
           rustup toolchain install $RUST_NIGHTLY_VERSION --allow-downgrade --profile minimal --component rustfmt
           rustup target add wasm32-unknown-unknown
           rustup target add wasm32-unknown-unknown --toolchain $RUST_NIGHTLY_VERSION
-          rustflags=(
-            "-C link-arg=-fuse-ld=lld"
-            "-C link-arg=-Wl,--compress-debug-sections=zlib"
-            "-C force-frame-pointers=yes"
-            )
-          export RUSTFLAGS="${rustflags[*]}"
-          
 
       - name: Toolchain info
         run: |
           clang --version
           cargo --version --verbose
           rustc --version
-          cargo clippy --version 
-      
-      - uses: actions/cache@v3
+          cargo clippy --version
+
+      - name: Verify Cargo.lock format
+        run: |
+          # Cargo <1.78 cannot parse lock file format v4. Renovate regenerates the
+          # lock with a modern cargo unless constraints.rust is honoured, which
+          # otherwise fails later with an opaque "failed to parse lock file".
+          lock_version=$(sed -n 's/^version = \([0-9]*\)$/\1/p' Cargo.lock | head -n1)
+          echo "Cargo.lock format version: ${lock_version:-1or2}"
+          if [ -n "$lock_version" ] && [ "$lock_version" -gt 3 ]; then
+            echo "::error file=Cargo.lock::Cargo.lock is v$lock_version, but the pinned toolchain ($RUST_STABLE_VERSION) only understands v3."
+            echo "Regenerate it with the pinned cargo ('cargo +$RUST_STABLE_VERSION update -w'), or bump RUST_STABLE_VERSION."
+            exit 1
+          fi
+
+      # `cache-targets: false`: a Substrate target/ dir is far larger than the
+      # 10 GB per-repository cache quota, so only the registry is cached. Within
+      # a run, artifacts are still shared between the steps below.
+      - uses: Swatinem/rust-cache@v2
         with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          cache-targets: false
+          cache-on-failure: true
 
       - name: Check Format Code
         run: |
-          # cargo +nightly fmt -- --check
           rustup run $RUST_NIGHTLY_VERSION cargo fmt -- --check
-          cargo clean
 
       - name: Check Code
         run: |
           cargo clippy --locked -p "pallet-*" -- -D warnings
-          cargo clean
-      
+
       - name: Tests
         run: |
           cargo test --locked
-          cargo clean
-      
+
       - name: Check Build
         run: |
           SKIP_WASM_BUILD=1 cargo check --release
-          cargo clean
+
+      - name: Disk usage
+        if: always()
+        run: df -h /
 
       # - name: Check Build for Benchmarking
       #   run: >

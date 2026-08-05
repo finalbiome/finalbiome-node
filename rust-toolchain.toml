@@ -1,0 +1,7 @@
+[toolchain]
+# Pinned to match the Substrate (polkadot-v0.9.28) vendored code.
+# NOTE: this version of cargo can only read Cargo.lock format v3.
+channel = "1.66.1"
+components = ["clippy"]
+targets = ["wasm32-unknown-unknown"]
+profile = "minimal"
