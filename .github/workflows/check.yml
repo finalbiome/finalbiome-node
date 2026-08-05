@@ -37,15 +37,6 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v4
 
-      - name: Free disk space
-        # A full Substrate debug + release target/ does not fit alongside the
-        # preinstalled toolchains. Reclaiming these frees ~25 GB, which is what
-        # allows the per-step `cargo clean` calls to be dropped.
-        run: |
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/share/boost
-          sudo docker image prune --all --force || true
-          df -h /
-
       - name: Set-Up
         run: |
           # `apt-get update` is required: the runner image ships a stale package
@@ -110,6 +101,9 @@ jobs:
         run: |
           SKIP_WASM_BUILD=1 cargo check --release
 
+      # Kept as a canary for the `cargo clean` removal: a full debug + release
+      # build measured 20 GB of a 146 GB runner disk (43 -> 63 GB used), so the
+      # per-step `cargo clean` calls were not buying disk headroom.
       - name: Disk usage
         if: always()
         run: df -h /
