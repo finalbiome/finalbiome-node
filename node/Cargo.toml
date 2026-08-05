@@ -1,6 +1,6 @@
 [package]
 name = "finalbiome-node"
-version = "0.2.0"
+version = "0.2.1"
 description = "A FinalBiome node"
 authors = ["FinalBiome Devs <https://github.com/finalbiome>"]
 homepage = "https://finalbiome.net"
@@ -57,7 +57,7 @@ frame-benchmarking = { version = "4.0.0-dev", git = "https://github.com/parityte
 frame-benchmarking-cli = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.28" }
 
 # Local Dependencies
-finalbiome-node-runtime = { version = "0.2.0", path = "../runtime" }
+finalbiome-node-runtime = { version = "0.2.1", path = "../runtime" }
 
 # CLI-specific dependencies
 try-runtime-cli = { version = "0.10.0-dev", optional = true, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.28" }

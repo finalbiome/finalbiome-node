@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.4.0](https://github.com/finalbiome/finalbiome-node/compare/finalbiome-v0.3.0...finalbiome-v0.4.0) (2026-08-05)
+
+
+### Features
+
+* **users:** signature required for registration ([3ea223e](https://github.com/finalbiome/finalbiome-node/commit/3ea223e9e06464866791e2f47ae28d489fbfc033))
+* **users:** signature required for registration ([c934310](https://github.com/finalbiome/finalbiome-node/commit/c934310a0d536dd694cd4dce28030a086525fa97))
+
+
+### Bug Fixes
+
+* **deps:** update actions/checkout action to v3.3.0 ([d58ee3e](https://github.com/finalbiome/finalbiome-node/commit/d58ee3ed2efb88ec1ce25a5d2589d12a108fbd9f))
+* **deps:** update google-github-actions/release-please-action action to v3.7.1 ([45b2ab9](https://github.com/finalbiome/finalbiome-node/commit/45b2ab9b8c0d30b6631e7b56ee4ba54fa62fe020))
+* **deps:** update renovatebot/github-action action to v34.94.0 ([ffb4d6c](https://github.com/finalbiome/finalbiome-node/commit/ffb4d6c4fef8a68bb29df75ccacee293e74bdae3))
+
 ## [0.3.0](https://github.com/finalbiome/finalbiome-node/compare/finalbiome-v0.2.1...finalbiome-v0.3.0) (2023-01-10)
 
 
