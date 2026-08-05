@@ -3,11 +3,26 @@ on:
     branches:
       - main
 name: Release
+
+# release-please grooms a single release PR; concurrent runs would race on it.
+concurrency:
+  group: release-please
+  cancel-in-progress: false
+
+# Required for the secrets.GITHUB_TOKEN fallback below; a no-op when a PAT is used.
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   release-please:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: google-github-actions/release-please-action@v3.7.1
+      - uses: googleapis/release-please-action@v4
         with:
-          command: manifest
-          token: ${{ secrets.RELEASE_TOKEN }}
+          # RELEASE_TOKEN is a PAT because releases published with it DO
+          # trigger other workflows, which the default GITHUB_TOKEN
+          # deliberately cannot do. The fallback only covers an *absent*
+          # secret; an expired or revoked PAT still fails with "Bad
+          # credentials" and must be rotated.
+          token: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}

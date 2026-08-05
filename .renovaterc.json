@@ -4,41 +4,51 @@
   "branchPrefix": "renovate/",
   "semanticCommitType": "fix",
   "platform": "github",
+  "constraints": {
+    "rust": "1.66.1"
+  },
   "repositories": [
     "finalbiome/finalbiome-node"
   ],
   "packageRules": [
     {
-      "matchPackagePatterns": [
-        "^finalbiome[-_]?"
+      "matchPackageNames": [
+        "/^finalbiome[-_]?/"
       ],
       "groupName": "finalbiome packages"
     },
     {
-      "matchPackagePatterns": [
-        "^pallet[-_]?"
+      "matchPackageNames": [
+        "/^pallet[-_]?/"
       ],
       "groupName": "finalbiome pallet packages"
     },
     {
-      "matchPackagePatterns": [
-        "^serde[-_]?"
+      "matchPackageNames": [
+        "/^serde[-_]?/"
       ],
       "groupName": "serde packages"
     },
     {
-      "matchSourceUrlPrefixes": ["https://github.com/paritytech/substrate"],
+      "matchSourceUrls": [
+        "https://github.com/paritytech/substrate{,/**}"
+      ],
       "groupName": "substrate packages"
     },
     {
-      "matchPackageNames": ["renovatebot/github-action"],
-      "extends": ["schedule:monthly"]
+      "matchPackageNames": [
+        "renovatebot/github-action"
+      ],
+      "extends": [
+        "schedule:monthly"
+      ]
     }
   ],
-  "regexManagers": [
+  "customManagers": [
     {
-      "fileMatch": [
-        "^rust-toolchain\\.toml?$"
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^rust-toolchain\\.toml?$/"
       ],
       "matchStrings": [
         "channel\\s*=\\s*\"(?<currentValue>\\d+\\.\\d+\\.\\d+)\""

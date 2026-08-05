@@ -4,14 +4,20 @@ on:
     - cron: '0 1 * * *'
   workflow_dispatch:
 
+# Never run two Renovate passes over the same repo at once (schedule +
+# manual dispatch can otherwise overlap and duplicate branches).
+concurrency:
+  group: renovate
+  cancel-in-progress: false
+
 jobs:
   renovate:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v3.3.0
+        uses: actions/checkout@v4
       - name: Self-hosted Renovate
-        uses: renovatebot/github-action@v34.94.0
+        uses: renovatebot/github-action@v46.2.1
         with:
           configurationFile: .renovaterc.json
           token: ${{ secrets.RENOVATE_TOKEN }}
