@@ -4,6 +4,16 @@
 # polkadot-v0.9.28 Substrate tree). Dependabot has no MSRV awareness and opened
 # PRs that can never compile, so the cargo ecosystem is intentionally not listed
 # here. Do not re-enable it without removing the cargo manager from Renovate.
+#
+# Dependabot *security* updates are configured outside this file (repository
+# settings -> Code security). They are disabled for the same reason: every
+# attempt failed at resolution, e.g.
+#
+#   "Dependabot Updates" / cargo in /. for wasmtime  -> failure
+#
+# Dependabot *alerts* remain enabled, so the vulnerability signal is preserved;
+# only the automatic pull requests are off. The real remediation for those
+# alerts is the polkadot-sdk upgrade, not per-crate bumps.
 
 version: 2
 updates: []
