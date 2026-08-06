@@ -30,7 +30,7 @@ jobs:
     # The type of runner that the job will run on
     # NOTE: pinned; the vendored Substrate tree (polkadot-v0.9.28 / Rust 1.66.1)
     # is not validated against ubuntu-24.04. Bump in a separate PR.
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
