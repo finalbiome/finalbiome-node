@@ -21,3 +21,10 @@ jobs:
         with:
           configurationFile: .renovaterc.json
           token: ${{ secrets.RENOVATE_TOKEN }}
+        env:
+          # Let containerbase install the toolchain declared in
+          # `.renovaterc.json` -> constraints.rust (1.66.1) instead of using the
+          # modern cargo baked into the image. Without this, lock-file updates
+          # are resolved by cargo >=1.78 and land as `version = 4`, which the
+          # pinned CI toolchain refuses to parse.
+          RENOVATE_BINARY_SOURCE: install

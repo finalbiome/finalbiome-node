@@ -1,11 +1,9 @@
-# To get started with Dependabot version updates, you'll need to specify which
-# package ecosystems to update and where the package manifests are located.
-# Please see the documentation for all configuration options:
-# https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
+# Dependency updates are handled by self-hosted Renovate
+# (.renovaterc.json + .github/workflows/renovate.yml), which is the only updater
+# that honours `constraints.rust = 1.66.1` (the MSRV of the vendored
+# polkadot-v0.9.28 Substrate tree). Dependabot has no MSRV awareness and opened
+# PRs that can never compile, so the cargo ecosystem is intentionally not listed
+# here. Do not re-enable it without removing the cargo manager from Renovate.
 
 version: 2
-updates:
-  - package-ecosystem: "cargo" # See documentation for possible values
-    directory: "/" # Location of package manifests
-    schedule:
-      interval: "weekly"
+updates: []

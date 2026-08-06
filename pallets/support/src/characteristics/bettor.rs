@@ -22,7 +22,7 @@ impl AssetCharacteristic for Bettor {
       return false;
     }
     // count if winings must be more than 0
-    if self.winnings.len() == 0 {
+    if self.winnings.is_empty() {
       return false;
     }
     // rounds must be in [1..BETTOR_MAX_NUMBER_OF_ROUNDS]

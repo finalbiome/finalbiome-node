@@ -7,10 +7,35 @@
   "constraints": {
     "rust": "1.66.1"
   },
+  "description": [
+    "The vendored Substrate tree (polkadot-v0.9.28) only builds on Rust 1.66.1.",
+    "'constraints' alone is NOT enough: without constraintsFiltering Renovate",
+    "still proposes releases whose crates.io 'rust_version' (MSRV) is higher,",
+    "e.g. hex-literal 1.1.0 (MSRV 1.85) or hashbrown 0.17.1 (MSRV 1.85.0),",
+    "which cargo 1.66 cannot even parse ('older than the 2024 edition')."
+  ],
+  "constraintsFiltering": "strict",
   "repositories": [
     "finalbiome/finalbiome-node"
   ],
   "packageRules": [
+    {
+      "description": "The Rust toolchain is pinned to the Substrate fork; never bump it automatically. Surfaced on the Dependency Dashboard for manual approval only.",
+      "matchDepNames": [
+        "rust"
+      ],
+      "dependencyDashboardApproval": true
+    },
+    {
+      "description": "No cargo major bump can work on a frozen 2022 Substrate stack (clap v4, hex-literal v1, ...). Require manual approval instead of opening PRs that can never go green.",
+      "matchManagers": [
+        "cargo"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "dependencyDashboardApproval": true
+    },
     {
       "matchPackageNames": [
         "/^finalbiome[-_]?/"
