@@ -9,10 +9,20 @@
   },
   "description": [
     "The vendored Substrate tree (polkadot-v0.9.28) only builds on Rust 1.66.1.",
-    "'constraints' alone is NOT enough: without constraintsFiltering Renovate",
-    "still proposes releases whose crates.io 'rust_version' (MSRV) is higher,",
-    "e.g. hex-literal 1.1.0 (MSRV 1.85) or hashbrown 0.17.1 (MSRV 1.85.0),",
-    "which cargo 1.66 cannot even parse ('older than the 2024 edition')."
+    "Two independent problems follow from that, and they need different fixes:",
+    "1. DIRECT deps whose crates.io 'rust_version' (MSRV) is higher than 1.66.1,",
+    "   e.g. hex-literal 1.1.0 (1.85) or clap 4.x (1.85). Solved by",
+    "   constraintsFiltering: strict, which drops them from lookup entirely.",
+    "2. TRANSITIVE deps pulled in when the lock file is regenerated, e.g. a",
+    "   scale-info 2.11.6 lock update dragging in indexmap 2.14.0 (edition",
+    "   2024). No Renovate setting can fix this: cargo 1.66 has no MSRV-aware",
+    "   resolver, and it refuses to even parse an edition-2024 manifest that is",
+    "   anywhere in the graph. Renovate resolves the lock with its own modern",
+    "   cargo, so the breakage is only discovered by CI.",
+    "Hence every cargo update is gated behind Dependency Dashboard approval:",
+    "they stay visible and one click away, but they no longer open PRs that can",
+    "only ever be red. GitHub Actions updates are left fully automatic.",
+    "Revisit all of this after the polkadot-sdk upgrade."
   ],
   "constraintsFiltering": "strict",
   "repositories": [
@@ -27,12 +37,16 @@
       "dependencyDashboardApproval": true
     },
     {
-      "description": "No cargo major bump can work on a frozen 2022 Substrate stack (clap v4, hex-literal v1, ...). Require manual approval instead of opening PRs that can never go green.",
+      "description": "Cargo updates are gated: on a frozen 2022 Substrate stack a lock regeneration can always drag an edition-2024 transitive dep into the graph, which cargo 1.66 cannot parse. Approve from the Dependency Dashboard when you actually want to try one.",
       "matchManagers": [
         "cargo"
       ],
-      "matchUpdateTypes": [
-        "major"
+      "dependencyDashboardApproval": true
+    },
+    {
+      "description": "The CI runner is pinned to ubuntu-22.04 on purpose (see check.yml); the Substrate 0.9.28 build is not validated against 24.04.",
+      "matchDepNames": [
+        "ubuntu"
       ],
       "dependencyDashboardApproval": true
     },
