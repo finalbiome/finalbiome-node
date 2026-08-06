@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/finalbiome/finalbiome-node/compare/pallet-users-v0.3.0...pallet-users-v0.3.1) (2026-08-06)
+
+
+### Bug Fixes
+
+* **deps:** update rust crate hex-literal to 0.4.0 ([#87](https://github.com/finalbiome/finalbiome-node/issues/87)) ([c3ca2f1](https://github.com/finalbiome/finalbiome-node/commit/c3ca2f103a4186094cea80730976a2730516b6f4))
+
 ## [0.3.0](https://github.com/finalbiome/finalbiome-node/compare/pallet-users-v0.2.0...pallet-users-v0.3.0) (2026-08-05)
 
 

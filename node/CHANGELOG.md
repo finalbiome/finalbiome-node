@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.2.2](https://github.com/finalbiome/finalbiome-node/compare/finalbiome-node-v0.2.1...finalbiome-node-v0.2.2) (2026-08-06)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * finalbiome-node-runtime bumped from 0.2.1 to 0.2.2
+
 ## [0.2.1](https://github.com/finalbiome/finalbiome-node/compare/finalbiome-node-v0.2.0...finalbiome-node-v0.2.1) (2026-08-05)
 
 
