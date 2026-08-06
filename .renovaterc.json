@@ -5,7 +5,7 @@
   "semanticCommitType": "fix",
   "platform": "github",
   "constraints": {
-    "rust": "1.66.1"
+    "rust": "1.97.1"
   },
   "repositories": [
     "finalbiome/finalbiome-node"
