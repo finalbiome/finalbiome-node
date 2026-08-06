@@ -22,9 +22,13 @@ jobs:
           configurationFile: .renovaterc.json
           token: ${{ secrets.RENOVATE_TOKEN }}
         env:
-          # Let containerbase install the toolchain declared in
-          # `.renovaterc.json` -> constraints.rust (1.66.1) instead of using the
-          # modern cargo baked into the image. Without this, lock-file updates
-          # are resolved by cargo >=1.78 and land as `version = 4`, which the
-          # pinned CI toolchain refuses to parse.
+          # Best-effort: ask containerbase to install the toolchain declared in
+          # `.renovaterc.json` -> constraints.rust rather than using the modern
+          # cargo baked into the image.
+          #
+          # NOTE: this is not sufficient on its own. Run 31091525406 still
+          # resolved `indexmap 2.14.0` (edition 2024) into the lock for PR #111,
+          # which then failed CI. cargo 1.66 has no MSRV-aware resolver, so
+          # there is no configuration that makes lock regeneration safe here —
+          # that is why cargo updates are behind dependencyDashboardApproval.
           RENOVATE_BINARY_SOURCE: install
