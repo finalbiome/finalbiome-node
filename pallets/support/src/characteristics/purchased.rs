@@ -10,7 +10,7 @@ pub struct Purchased {
 impl AssetCharacteristic for Purchased {
   fn is_valid(&self) -> bool {
     // number of offers must be more than 0
-    if self.offers.len() == 0 {
+    if self.offers.is_empty() {
       return false;
     }
     // price must be more than 0
