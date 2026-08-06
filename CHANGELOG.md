@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.4.1](https://github.com/finalbiome/finalbiome-node/compare/finalbiome-v0.4.0...finalbiome-v0.4.1) (2026-08-06)
+
+
+### Bug Fixes
+
+* **deps:** update actions/checkout action to v7 ([#102](https://github.com/finalbiome/finalbiome-node/issues/102)) ([88d705b](https://github.com/finalbiome/finalbiome-node/commit/88d705b5a6ab17b0edbe086ce9ded0fd5b6d01f2))
+* **deps:** update rust crate clap to v3.2.25 ([#105](https://github.com/finalbiome/finalbiome-node/issues/105)) ([f130b90](https://github.com/finalbiome/finalbiome-node/commit/f130b903354aace8f45b8e2d55f19265cc15e0f6))
+* **deps:** update rust crate hex-literal to 0.4.0 ([#87](https://github.com/finalbiome/finalbiome-node/issues/87)) ([c3ca2f1](https://github.com/finalbiome/finalbiome-node/commit/c3ca2f103a4186094cea80730976a2730516b6f4))
+* **deps:** update rust crate num-traits to v0.2.19 ([#106](https://github.com/finalbiome/finalbiome-node/issues/106)) ([7969b60](https://github.com/finalbiome/finalbiome-node/commit/7969b60a811a93be442e947fceef2bf39f615b88))
+
 ## [0.4.0](https://github.com/finalbiome/finalbiome-node/compare/finalbiome-v0.3.0...finalbiome-v0.4.0) (2026-08-05)
 
 

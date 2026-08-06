@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.2.2](https://github.com/finalbiome/finalbiome-node/compare/finalbiome-node-runtime-v0.2.1...finalbiome-node-runtime-v0.2.2) (2026-08-06)
+
+
+### Bug Fixes
+
+* **deps:** update rust crate hex-literal to 0.4.0 ([#87](https://github.com/finalbiome/finalbiome-node/issues/87)) ([c3ca2f1](https://github.com/finalbiome/finalbiome-node/commit/c3ca2f103a4186094cea80730976a2730516b6f4))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * pallet-users bumped from 0.3.0 to 0.3.1
+
 ## [0.2.1](https://github.com/finalbiome/finalbiome-node/compare/finalbiome-node-runtime-v0.2.0...finalbiome-node-runtime-v0.2.1) (2026-08-05)
 
 
