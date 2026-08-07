@@ -18,7 +18,7 @@ jobs:
   release-please:
     runs-on: ubuntu-24.04
     steps:
-      - uses: googleapis/release-please-action@v4
+      - uses: googleapis/release-please-action@v5
         with:
           # RELEASE_TOKEN is a PAT because releases published with it DO
           # trigger other workflows, which the default GITHUB_TOKEN
